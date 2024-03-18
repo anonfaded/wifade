@@ -4,7 +4,7 @@
 
 **An automated bash script for Wi-Fi password brute-forcing, designed to seamlessly unlock network secrets across linux and macOS**
 
-[![GitHub all releases](https://img.shields.io/github/downloads/anonfaded/fadeboard/total?label=Downloads&logo=github)](https://github.com/anonfaded/fadeboard/releases/)
+[![GitHub all releases](https://img.shields.io/github/downloads/anonfaded/wifade/total?label=Downloads&logo=github)](https://github.com/anonfaded/wifade/releases/)
 
 </div>
 
@@ -13,7 +13,7 @@
 ## 📱 Screenshot
 
 <div align="center">
-<img src="/img/1.jpg" style="width: 300px; height: auto;" >
+<img src="/img/1.jpg" style="width: 700px; height: auto;" >
 </div>
 
 ## ⬇️ Download
