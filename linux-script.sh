@@ -75,5 +75,5 @@ for SSID in "${SSIDS[@]}"; do
     done
 done
 
-echo -e "\e[32m\n\t\t\t💀 Wi-Fi Hacked💀\n\n"
+echo -e "\e[32m\n\t\t\t💀 Wi-Fi Hacked 💀\n\n"
 
