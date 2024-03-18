@@ -52,7 +52,7 @@ git clone https://github.com/anonfaded/wifade.git
 Navigate to the WiFade directory:
 
 ```
-cd WiFade
+cd wifade
 ```
 
 Make the script executable:
@@ -85,7 +85,7 @@ SSIDS=("YourSSID1" "YourSSID2" "YourSSID3")
 2. Passwords: In the PASSWORDS array, list all the passwords you want to attempt.
 
 ```bash
-    PASSWORDS=("password1" "password2" "password3")
+PASSWORDS=("password1" "password2" "password3")
 ```
 
 Please ensure you only edit these sections to avoid unexpected script behavior.
