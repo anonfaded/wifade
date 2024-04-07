@@ -50,7 +50,7 @@ Before using Wifade, ensure you have the necessary package installed to enable t
 Install xdotool for simulating key presses:
 
 ```bash
-    sudo apt-get install xdotool
+sudo apt-get install xdotool
 ```
 
 After installing xdotool, follow the installation instructions below for Wifade to set up the script on your system.
