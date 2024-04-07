@@ -47,7 +47,7 @@ The script systematically attempts to connect to Wi-Fi networks using a list of 
 
 Before using Wifade, ensure you have the necessary package installed to enable the escape key functionality for dismissing authentication dialogs on Linux:
 
-    Install xdotool for simulating key presses:
+Install xdotool for simulating key presses:
 
 ```bash
     sudo apt-get install xdotool
