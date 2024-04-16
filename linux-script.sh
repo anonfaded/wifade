@@ -25,15 +25,15 @@ echo -e "\e[31m===============================================\e[0m"
 
 # List of Wi-Fi SSIDs to try
 
-ssid_file=ssid.txt
-password_file=passwords.txt
+ssid_file=$(cat ssid.txt)
+password_file=$(cat passwords.txt)
 
 while [ "$1" != "" ]; do
     case $1 in
         -s | --ssid )       shift
-                            ssid_file="$1"
+                            ssid_file=$(cat "$1")
                             ;;
-        -w | --wordlist )   password_file="$1"
+        -w | --wordlist )   password_file=$(cat "$2")
                             ;;
         -h | --help )       usage 
                             exit
@@ -41,18 +41,17 @@ while [ "$1" != "" ]; do
     shift
 done
 
-SSIDS=() # replace the 'Anonymous' with your hotspot/wifi name (by default script will search for WiFi "Anonymous").
-# To use this tool with multiple Wi-Fi networks, add the SSID names to the SSIDS array above. For example: SSIDS=("Anonymous" "Second WiFi" "Third WiFi") and all of them will be brute forced with the passwords that we specify below.
+SSIDS=()
+PASSWORDS=()
 
 for line in $ssid_file; do
-    SSID+=("$line")
+    SSIDS+=("$line")
+    (( index++ ))
 done
 
-# List of passwords to try
-PASSWORDS=() ## Add the passwords in double quotes you want to use for brute forcing. This is version 1.0, so there's no option to use a password dictionary yet, but it may be included in future versions.
-
-for password in $password_file; do
-    PASSWORDS+=("$password")
+for pass in $password_file; do
+        PASSWORDS+=("$pass")
+        (( index++ ))
 done
 
 # Check current connection status
