@@ -13,7 +13,7 @@
 ## 📱 Screenshot
 
 <div align="center">
-<img src="/img/1.jpg" style="width: 700px; height: auto;" >
+<img src="img/1.jpg" style="width: 700px; height: auto;" >
 </div>
 
 ## ⬇️ Download
@@ -37,23 +37,17 @@ The script systematically attempts to connect to Wi-Fi networks using a list of 
 - A Linux or macOS system with bash support.
 - Necessary network permissions for ethical testing.
 
-
-
-### Usage
-
-#### Installation
-
-### Prerequisites
-
 Before using Wifade, ensure you have the necessary package installed to enable the escape key functionality for dismissing authentication dialogs on Linux:
 
-Install xdotool for simulating key presses:
+- Install xdotool for simulating key presses:
 
 ```bash
 sudo apt-get install xdotool
 ```
 
 After installing xdotool, follow the installation instructions below for Wifade to set up the script on your system.
+
+### Installation
 
 Clone the repository:
 
@@ -72,7 +66,7 @@ Make the script executable:
 ```bash
 chmod +x linux-script.sh
 ```
-
+### Usage
 Run the script from your terminal:
 
 1. For linux version of script:
@@ -83,24 +77,17 @@ Run the script from your terminal:
 ```bash
 ./macOS-script.sh
 ```
-
 ### Configuration
-
-Edit the script to specify your target Wi-Fi networks and passwords:
-
-1. SSIDs: Locate the SSIDS array and add the SSIDs(WiFi names) of the networks you wish to test.
-
+Add the SSIDs you want to test in the `ssid.txt` file:
 ```bash
-SSIDS=("YourSSID1" "YourSSID2" "YourSSID3")
+nano ssid.txt
+Anonymous
 ```
-
-2. Passwords: In the PASSWORDS array, list all the passwords you want to attempt.
-
+Specify the password file with the `-w` switch:
 ```bash
-PASSWORDS=("password1" "password2" "password3")
+./linux-script.sh -s ssid.txt -w /path/to/file.txt
 ```
-
-Please ensure you only edit these sections to avoid unexpected script behavior.
+If no password file is provided, the script will use the default `passwords.txt` file.
 
 ## Script Execution
 
@@ -110,7 +97,7 @@ Once initiated, the script begins its operation. Simply observe the terminal out
 
 Contributions are welcome! If you're interested in improving **Wifade** or adding new features, feel free to fork the repository, make your changes, and submit a pull request. 
 
-### Issues and macOS Testing
+## Issues and macOS Testing
 
 If you encounter any issues while using this script, especially with macOS, as it has not been extensively tested on this platform, please don't hesitate to open an issue on GitHub. When reporting, kindly include detailed information about the problem and the context in which it occurs to help us make improvements. Your feedback and contributions are highly appreciated as they help enhance the tool's reliability and functionality across different environments.
 
