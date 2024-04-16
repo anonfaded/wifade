@@ -44,8 +44,6 @@ while [ "$1" != "" ]; do
         -w | --wordlist )   password_file=$(cat "$2")
                             ;;
         -h | --help )       usage
-                            ;;
-        * )                 usage 
                             exit
     esac
     shift
