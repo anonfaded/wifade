@@ -54,7 +54,8 @@
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     ScriptsToProcess = @(
         'Classes\BaseClasses.ps1',
-        'Classes\DataModels.ps1'
+        'Classes\DataModels.ps1',
+        'Classes\ConfigurationManager.ps1'
     )
     
     # Type files (.ps1xml) to be loaded when importing this module
@@ -89,7 +90,8 @@
         'WifadePS.ps1',
         'WifadePS.psd1',
         'Classes\BaseClasses.ps1',
-        'Classes\DataModels.ps1'
+        'Classes\DataModels.ps1',
+        'Classes\ConfigurationManager.ps1'
     )
     
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.

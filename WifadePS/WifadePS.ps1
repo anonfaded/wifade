@@ -89,13 +89,15 @@ $ErrorActionPreference = "Stop"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 . "$ScriptRoot\Classes\BaseClasses.ps1"
 . "$ScriptRoot\Classes\DataModels.ps1"
+. "$ScriptRoot\Classes\ConfigurationManager.ps1"
 
 # Application constants
 $Script:APP_NAME = "WifadePS"
 $Script:APP_VERSION = "1.0.0"
 $Script:APP_DESCRIPTION = "Windows PowerShell Wi-Fi Security Testing Tool"
 
-# Global configuration object
+# Global configuration manager and configuration object
+$Script:ConfigManager = $null
 $Script:Config = $null
 
 function Show-Banner {
@@ -240,28 +242,32 @@ function Show-EthicalWarning {
 function Initialize-Configuration {
     <#
     .SYNOPSIS
-        Initialize the global configuration object with command-line parameters
+        Initialize the global configuration manager and configuration object
     #>
     
     try {
-        $Script:Config = [WifadeConfiguration]::new()
+        # Create ConfigurationManager instance
+        $Script:ConfigManager = [ConfigurationManager]::new()
         
-        # Set configuration from parameters
-        $Script:Config.SSIDFilePath = $SSIDFile
-        $Script:Config.PasswordFilePath = $PasswordFile
-        $Script:Config.ShowHelp = $Help.IsPresent
-        $Script:Config.VerboseMode = $VerboseOutput.IsPresent
-        $Script:Config.StealthMode = $Stealth.IsPresent
-        $Script:Config.RateLimitMs = $RateLimit
-        $Script:Config.ConnectionTimeoutSeconds = $Timeout
-        $Script:Config.MaxAttemptsPerSSID = $MaxAttempts
-        
-        # Set log level based on verbose mode
-        if ($Script:Config.VerboseMode) {
-            $Script:Config.LogLevel = [LogLevel]::Debug
+        # Build configuration hashtable from PowerShell parameters
+        $configHash = @{
+            'SSIDFile' = $SSIDFile
+            'PasswordFile' = $PasswordFile
+            'Help' = $Help.IsPresent
+            'Verbose' = $VerboseOutput.IsPresent
+            'Stealth' = $Stealth.IsPresent
+            'RateLimit' = $RateLimit
+            'Timeout' = $Timeout
+            'MaxAttempts' = $MaxAttempts
         }
         
-        Write-Verbose "Configuration initialized successfully"
+        # Initialize ConfigurationManager with the configuration
+        $Script:ConfigManager.Initialize($configHash)
+        
+        # Get the configuration object
+        $Script:Config = $Script:ConfigManager.GetConfiguration()
+        
+        Write-Verbose "Configuration initialized successfully using ConfigurationManager"
         Write-Verbose "SSID File: $($Script:Config.SSIDFilePath)"
         Write-Verbose "Password File: $($Script:Config.PasswordFilePath)"
         Write-Verbose "Stealth Mode: $($Script:Config.StealthMode)"
@@ -275,7 +281,7 @@ function Initialize-Configuration {
 function Test-Prerequisites {
     <#
     .SYNOPSIS
-        Test system prerequisites and configuration files
+        Test system prerequisites and configuration files using ConfigurationManager
     #>
     
     Write-Verbose "Testing system prerequisites..."
@@ -290,28 +296,15 @@ function Test-Prerequisites {
         throw [ConfigurationException]::new("This tool is designed for Windows systems only")
     }
     
-    # Check configuration files
-    if (-not (Test-Path $Script:Config.SSIDFilePath)) {
-        throw [ConfigurationException]::new("SSID file not found: $($Script:Config.SSIDFilePath)", "SSIDFile", $Script:Config.SSIDFilePath)
-    }
+    # Use ConfigurationManager to validate configuration and files
+    $Script:ConfigManager.ValidateConfiguration(@{})
     
-    if (-not (Test-Path $Script:Config.PasswordFilePath)) {
-        throw [ConfigurationException]::new("Password file not found: $($Script:Config.PasswordFilePath)", "PasswordFile", $Script:Config.PasswordFilePath)
-    }
-    
-    # Validate file contents
-    $ssidContent = Get-Content $Script:Config.SSIDFilePath -ErrorAction SilentlyContinue
-    if (-not $ssidContent -or $ssidContent.Count -eq 0) {
-        throw [ConfigurationException]::new("SSID file is empty or unreadable: $($Script:Config.SSIDFilePath)")
-    }
-    
-    $passwordContent = Get-Content $Script:Config.PasswordFilePath -ErrorAction SilentlyContinue
-    if (-not $passwordContent -or $passwordContent.Count -eq 0) {
-        throw [ConfigurationException]::new("Password file is empty or unreadable: $($Script:Config.PasswordFilePath)")
-    }
+    # Load files to get counts for verbose output
+    $ssidList = $Script:ConfigManager.LoadSSIDList($Script:Config.SSIDFilePath)
+    $passwordList = $Script:ConfigManager.LoadPasswordList($Script:Config.PasswordFilePath)
     
     Write-Verbose "Prerequisites check completed successfully"
-    Write-Verbose "Found $($ssidContent.Count) SSIDs and $($passwordContent.Count) passwords"
+    Write-Verbose "Found $($ssidList.Count) SSIDs and $($passwordList.Count) passwords"
 }
 
 function Main {
