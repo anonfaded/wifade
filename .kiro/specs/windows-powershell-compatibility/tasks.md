@@ -16,7 +16,8 @@
 
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 3. Implement NetworkManager class foundation
+- [x] 3. Implement NetworkManager class foundation
+
 
   - Create NetworkManager class with Wi-Fi adapter detection using WMI
   - Implement adapter enumeration and primary adapter selection
