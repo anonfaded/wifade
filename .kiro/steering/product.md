@@ -5,7 +5,6 @@ Wifade is an automated bash script tool for Wi-Fi password brute-forcing, design
 ## Purpose
 - Educational and ethical security testing of Wi-Fi networks
 - Automated testing of multiple SSIDs with configurable password lists
-- Demonstration of network security vulnerabilities
 
 ## Key Features
 - Cross-platform support (Linux and macOS)
