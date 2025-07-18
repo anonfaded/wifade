@@ -1,5 +1,55 @@
 # Data Model Classes for WifadePS
 
+# Base interface for all manager classes
+class IManager {
+    [bool]$IsInitialized
+    [hashtable]$Configuration
+    
+    IManager() {
+        $this.IsInitialized = $false
+        $this.Configuration = @{}
+    }
+    
+    # Virtual methods to be implemented by derived classes
+    [void] Initialize([hashtable]$config) {
+        throw "Initialize method must be implemented by derived class"
+    }
+    
+    [bool] ValidateConfiguration([hashtable]$config) {
+        throw "ValidateConfiguration method must be implemented by derived class"
+    }
+    
+    [void] Dispose() {
+        throw "Dispose method must be implemented by derived class"
+    }
+}
+
+# Custom exception for configuration errors
+class ConfigurationException : System.Exception {
+    [string]$ConfigurationKey
+    [string]$ConfigurationValue
+    
+    ConfigurationException([string]$message) : base($message) {
+        $this.ConfigurationKey = ""
+        $this.ConfigurationValue = ""
+    }
+    
+    ConfigurationException([string]$message, [string]$key) : base($message) {
+        $this.ConfigurationKey = $key
+        $this.ConfigurationValue = ""
+    }
+    
+    ConfigurationException([string]$message, [string]$key, [string]$value) : base($message) {
+        $this.ConfigurationKey = $key
+        $this.ConfigurationValue = $value
+    }
+    
+    ConfigurationException([string]$message, [System.Exception]$innerException) : base($message, $innerException) {
+        $this.ConfigurationKey = ""
+        $this.ConfigurationValue = ""
+    }
+}
+
 # Network profile information
 class NetworkProfile {
     [string]$SSID
@@ -39,13 +89,13 @@ class ConnectionAttempt {
     [bool]$Success
     [string]$ErrorMessage
     [timespan]$Duration
-    [ConnectionStatus]$Status
+    [object]$Status
     [int]$AttemptNumber
     
     ConnectionAttempt() {
         $this.Timestamp = Get-Date
         $this.Success = $false
-        $this.Status = [ConnectionStatus]::Disconnected
+        $this.Status = 0  # Disconnected
         $this.Duration = [timespan]::Zero
         $this.AttemptNumber = 0
     }
@@ -56,18 +106,18 @@ class ConnectionAttempt {
         $this.AttemptNumber = $attemptNumber
         $this.Timestamp = Get-Date
         $this.Success = $false
-        $this.Status = [ConnectionStatus]::Disconnected
+        $this.Status = 0  # Disconnected
         $this.Duration = [timespan]::Zero
     }
     
     [void] MarkAsStarted() {
-        $this.Status = [ConnectionStatus]::Connecting
+        $this.Status = 1  # Connecting
         $this.Timestamp = Get-Date
     }
     
     [void] MarkAsCompleted([bool]$success, [string]$errorMessage = "") {
         $this.Success = $success
-        $this.Status = if ($success) { [ConnectionStatus]::Connected } else { [ConnectionStatus]::Failed }
+        $this.Status = if ($success) { 2 } else { 3 }  # Connected : Failed
         $this.ErrorMessage = $errorMessage
         $this.Duration = (Get-Date) - $this.Timestamp
     }
@@ -174,7 +224,7 @@ class WifadeConfiguration {
     [int]$RateLimitMs
     [int]$ConnectionTimeoutSeconds
     [int]$MaxAttemptsPerSSID
-    [LogLevel]$LogLevel
+    [object]$LogLevel
     [hashtable]$CustomSettings
     
     WifadeConfiguration() {
@@ -186,7 +236,7 @@ class WifadeConfiguration {
         $this.RateLimitMs = 1000
         $this.ConnectionTimeoutSeconds = 30
         $this.MaxAttemptsPerSSID = 0  # 0 = unlimited
-        $this.LogLevel = [LogLevel]::Info
+        $this.LogLevel = 1  # Info
         $this.CustomSettings = @{}
     }
     
