@@ -90,6 +90,8 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 . "$ScriptRoot\Classes\BaseClasses.ps1"
 . "$ScriptRoot\Classes\DataModels.ps1"
 . "$ScriptRoot\Classes\ConfigurationManager.ps1"
+. "$ScriptRoot\Classes\NetworkManager.ps1"
+. "$ScriptRoot\Classes\PasswordManager.ps1"
 
 # Application constants
 $Script:APP_NAME = "WifadePS"
@@ -307,6 +309,194 @@ function Test-Prerequisites {
     Write-Verbose "Found $($ssidList.Count) SSIDs and $($passwordList.Count) passwords"
 }
 
+function Start-WifiSecurityTest {
+    <#
+    .SYNOPSIS
+        Start the Wi-Fi security testing process using NetworkManager and PasswordManager
+    #>
+    
+    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                          STARTING WI-FI SECURITY TEST                       ║" -ForegroundColor Cyan
+    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    try {
+        # Initialize NetworkManager
+        Write-Host "[1/4] Initializing Network Manager..." -ForegroundColor Yellow
+        $networkConfig = @{
+            AdapterScanInterval = 30
+            MonitoringEnabled = $false
+        }
+        $networkManager = [NetworkManager]::new($networkConfig)
+        $networkManager.Initialize($networkConfig)
+        
+        Write-Host "✓ Network Manager initialized successfully" -ForegroundColor Green
+        Write-Host "  Primary Adapter: $($networkManager.PrimaryAdapter.Name)" -ForegroundColor White
+        Write-Host "  Adapter Status: $($networkManager.PrimaryAdapter.Status)" -ForegroundColor White
+        Write-Host ""
+        
+        # Initialize PasswordManager
+        Write-Host "[2/4] Initializing Password Manager..." -ForegroundColor Yellow
+        $passwordConfig = @{
+            PasswordFilePath = $Script:Config.PasswordFilePath
+            RateLimitEnabled = $Script:Config.StealthMode
+            MinDelayMs = $Script:Config.RateLimitMs
+            MaxDelayMs = $Script:Config.RateLimitMs * 2
+            AttackStrategy = [AttackStrategy]::Dictionary
+            StealthMode = $Script:Config.StealthMode
+        }
+        $passwordManager = [PasswordManager]::new($passwordConfig)
+        $passwordManager.Initialize($passwordConfig)
+        
+        Write-Host "✓ Password Manager initialized successfully" -ForegroundColor Green
+        Write-Host "  Loaded Passwords: $($passwordManager.PasswordList.Count)" -ForegroundColor White
+        Write-Host "  Attack Strategy: $($passwordManager.CurrentStrategy)" -ForegroundColor White
+        Write-Host "  Stealth Mode: $($passwordManager.StealthMode)" -ForegroundColor White
+        Write-Host ""
+        
+        # Scan for available networks
+        Write-Host "[3/4] Scanning for Wi-Fi networks..." -ForegroundColor Yellow
+        $availableNetworks = $networkManager.ScanNetworks()
+        
+        Write-Host "✓ Network scan completed" -ForegroundColor Green
+        Write-Host "  Found Networks: $($availableNetworks.Count)" -ForegroundColor White
+        
+        if ($availableNetworks.Count -gt 0) {
+            Write-Host ""
+            Write-Host "Available Networks:" -ForegroundColor Cyan
+            Write-Host "===================" -ForegroundColor Cyan
+            
+            foreach ($network in $availableNetworks | Select-Object -First 10) {
+                $signalBar = Get-SignalStrengthBar $network.SignalStrength
+                Write-Host "  SSID: $($network.SSID.PadRight(25)) | Signal: $signalBar $($network.SignalStrength)% | Encryption: $($network.EncryptionType)" -ForegroundColor White
+            }
+            
+            if ($availableNetworks.Count -gt 10) {
+                Write-Host "  ... and $($availableNetworks.Count - 10) more networks" -ForegroundColor Gray
+            }
+        }
+        Write-Host ""
+        
+        # Load target SSIDs
+        Write-Host "[4/4] Loading target SSIDs..." -ForegroundColor Yellow
+        $targetSSIDs = $Script:ConfigManager.LoadSSIDList($Script:Config.SSIDFilePath)
+        
+        Write-Host "✓ Target SSIDs loaded successfully" -ForegroundColor Green
+        Write-Host "  Target SSIDs: $($targetSSIDs.Count)" -ForegroundColor White
+        Write-Host ""
+        
+        # Show matching networks
+        $matchingNetworks = $availableNetworks | Where-Object { $_.SSID -in $targetSSIDs }
+        
+        if ($matchingNetworks.Count -gt 0) {
+            Write-Host "Target Networks Found:" -ForegroundColor Green
+            Write-Host "======================" -ForegroundColor Green
+            
+            foreach ($network in $matchingNetworks) {
+                $signalBar = Get-SignalStrengthBar $network.SignalStrength
+                Write-Host "  ✓ $($network.SSID.PadRight(25)) | Signal: $signalBar $($network.SignalStrength)% | Encryption: $($network.EncryptionType)" -ForegroundColor Green
+            }
+            Write-Host ""
+            
+            # Demonstrate password iteration
+            Write-Host "Password Attack Simulation:" -ForegroundColor Cyan
+            Write-Host "===========================" -ForegroundColor Cyan
+            
+            $targetNetwork = $matchingNetworks[0]
+            Write-Host "Target: $($targetNetwork.SSID)" -ForegroundColor White
+            Write-Host ""
+            
+            # Show first few passwords that would be tried
+            Write-Host "Passwords to attempt:" -ForegroundColor Yellow
+            $passwordManager.Reset()
+            $attemptCount = 0
+            $maxDisplay = 10
+            
+            while ($passwordManager.HasMorePasswords() -and $attemptCount -lt $maxDisplay) {
+                $password = $passwordManager.GetNextPassword($targetNetwork.SSID)
+                if ($password) {
+                    $attemptCount++
+                    Write-Host "  [$attemptCount] $password" -ForegroundColor White
+                    
+                    # Simulate rate limiting
+                    if ($passwordManager.StealthMode) {
+                        Start-Sleep -Milliseconds 100  # Reduced for demo
+                    }
+                }
+            }
+            
+            if ($passwordManager.HasMorePasswords()) {
+                $remaining = $passwordManager.PasswordList.Count - $attemptCount
+                Write-Host "  ... and $remaining more passwords" -ForegroundColor Gray
+            }
+            
+            Write-Host ""
+            Write-Host "NOTE: This is a demonstration only. No actual connection attempts were made." -ForegroundColor Yellow
+            Write-Host "      In a real test, each password would be attempted against the target network." -ForegroundColor Yellow
+            
+        } else {
+            Write-Host "No target networks found in range." -ForegroundColor Yellow
+            Write-Host "Available networks do not match any SSIDs in your target list." -ForegroundColor Yellow
+            
+            if ($targetSSIDs.Count -gt 0) {
+                Write-Host ""
+                Write-Host "Your target SSIDs:" -ForegroundColor Cyan
+                foreach ($ssid in $targetSSIDs | Select-Object -First 5) {
+                    Write-Host "  - $ssid" -ForegroundColor White
+                }
+                if ($targetSSIDs.Count -gt 5) {
+                    Write-Host "  ... and $($targetSSIDs.Count - 5) more" -ForegroundColor Gray
+                }
+            }
+        }
+        
+        # Show statistics
+        Write-Host ""
+        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "║                              TEST SUMMARY                                    ║" -ForegroundColor Cyan
+        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        
+        $stats = $passwordManager.GetStatistics()
+        Write-Host "Networks Scanned: $($availableNetworks.Count)" -ForegroundColor White
+        Write-Host "Target Networks: $($targetSSIDs.Count)" -ForegroundColor White
+        Write-Host "Matching Networks: $($matchingNetworks.Count)" -ForegroundColor White
+        Write-Host "Passwords Loaded: $($passwordManager.PasswordList.Count)" -ForegroundColor White
+        Write-Host "Attack Strategy: $($passwordManager.CurrentStrategy)" -ForegroundColor White
+        Write-Host "Stealth Mode: $($passwordManager.StealthMode)" -ForegroundColor White
+        
+        Write-Host ""
+        Write-Host "✓ Wi-Fi Security Test Framework Ready!" -ForegroundColor Green
+        Write-Host "  All components initialized and working correctly." -ForegroundColor White
+        Write-Host "  Ready for full implementation of connection attempts." -ForegroundColor White
+        
+    } catch {
+        Write-Host "✗ Error during Wi-Fi security test: $($_.Exception.Message)" -ForegroundColor Red
+        throw
+    } finally {
+        # Cleanup resources
+        if ($networkManager) {
+            $networkManager.Dispose()
+        }
+        if ($passwordManager) {
+            $passwordManager.Dispose()
+        }
+    }
+}
+
+function Get-SignalStrengthBar {
+    <#
+    .SYNOPSIS
+        Convert signal strength percentage to a visual bar
+    #>
+    param([int]$SignalStrength)
+    
+    if ($SignalStrength -ge 80) { return "████████" }
+    elseif ($SignalStrength -ge 60) { return "██████  " }
+    elseif ($SignalStrength -ge 40) { return "████    " }
+    elseif ($SignalStrength -ge 20) { return "██      " }
+    else { return "        " }
+}
+
 function Main {
     <#
     .SYNOPSIS
@@ -340,10 +530,8 @@ function Main {
         Write-Host "Stealth Mode: $($Script:Config.StealthMode)" -ForegroundColor White
         Write-Host ""
         
-        # TODO: Initialize and run the main application components
-        # This will be implemented in subsequent tasks
-        Write-Host "Application framework initialized successfully!" -ForegroundColor Green
-        Write-Host "Ready for implementation of core functionality..." -ForegroundColor Yellow
+        # Initialize and run the main application components
+        Start-WifiSecurityTest
         
     } catch [WifadeException] {
         Write-Host "Application Error: $($_.Exception.Message)" -ForegroundColor Red
