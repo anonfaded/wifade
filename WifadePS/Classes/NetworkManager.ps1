@@ -83,7 +83,7 @@ class NetworkManager : IManager {
             
             # Query WMI for network adapters
             $wmiAdapters = Get-WmiObject -Class Win32_NetworkAdapter | Where-Object {
-                $_.AdapterTypeId -eq 9 -and  # Ethernet 802.3 (includes Wi-Fi)
+                $_.AdapterTypeId -eq 9 -and # Ethernet 802.3 (includes Wi-Fi)
                 $_.NetConnectionStatus -ne $null -and
                 $_.Name -match "(Wi-Fi|Wireless|802\.11|WLAN)" -and
                 $_.NetEnabled -eq $true
@@ -142,20 +142,20 @@ class NetworkManager : IManager {
         
         try {
             $adapterInfo = @{
-                DeviceID = $wmiAdapter.DeviceID
-                Name = $wmiAdapter.Name
-                Description = $wmiAdapter.Description
-                MACAddress = $wmiAdapter.MACAddress
-                Status = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
-                StatusCode = $wmiAdapter.NetConnectionStatus
-                Enabled = $wmiAdapter.NetEnabled
-                Speed = $wmiAdapter.Speed
-                AdapterType = $wmiAdapter.AdapterType
+                DeviceID      = $wmiAdapter.DeviceID
+                Name          = $wmiAdapter.Name
+                Description   = $wmiAdapter.Description
+                MACAddress    = $wmiAdapter.MACAddress
+                Status        = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
+                StatusCode    = $wmiAdapter.NetConnectionStatus
+                Enabled       = $wmiAdapter.NetEnabled
+                Speed         = $wmiAdapter.Speed
+                AdapterType   = $wmiAdapter.AdapterType
                 AdapterTypeId = $wmiAdapter.AdapterTypeId
-                Manufacturer = $wmiAdapter.Manufacturer
-                LastUpdated = Get-Date
-                IsWiFi = $true
-                Capabilities = @{}
+                Manufacturer  = $wmiAdapter.Manufacturer
+                LastUpdated   = Get-Date
+                IsWiFi        = $true
+                Capabilities  = @{}
             }
             
             # Get additional capabilities if available
@@ -256,7 +256,8 @@ class NetworkManager : IManager {
         try {
             if ($deviceId) {
                 $targetAdapter = $this.AdapterCache[$deviceId]
-            } else {
+            }
+            else {
                 $targetAdapter = $this.PrimaryAdapter
             }
             
@@ -272,13 +273,13 @@ class NetworkManager : IManager {
             }
             
             $status = @{
-                DeviceID = $wmiAdapter.DeviceID
-                Name = $wmiAdapter.Name
-                Status = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
-                StatusCode = $wmiAdapter.NetConnectionStatus
-                Enabled = $wmiAdapter.NetEnabled
-                LastChecked = Get-Date
-                IsHealthy = $this.IsAdapterHealthy($wmiAdapter)
+                DeviceID     = $wmiAdapter.DeviceID
+                Name         = $wmiAdapter.Name
+                Status       = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
+                StatusCode   = $wmiAdapter.NetConnectionStatus
+                Enabled      = $wmiAdapter.NetEnabled
+                LastChecked  = Get-Date
+                IsHealthy    = $this.IsAdapterHealthy($wmiAdapter)
                 ErrorMessage = ""
             }
             
@@ -301,13 +302,13 @@ class NetworkManager : IManager {
             }
             
             $errorStatus = @{
-                DeviceID = $deviceId
-                Name = $name
-                Status = "Error"
-                StatusCode = -1
-                Enabled = $false
-                LastChecked = Get-Date
-                IsHealthy = $false
+                DeviceID     = $deviceId
+                Name         = $name
+                Status       = "Error"
+                StatusCode   = -1
+                Enabled      = $false
+                LastChecked  = Get-Date
+                IsHealthy    = $false
                 ErrorMessage = $_.Exception.Message
             }
             
@@ -372,13 +373,13 @@ class NetworkManager : IManager {
             Write-Verbose "Performing adapter health check..."
             
             $healthReport = @{
-                Timestamp = Get-Date
-                TotalAdapters = $this.AdapterCache.Count
-                HealthyAdapters = 0
+                Timestamp         = Get-Date
+                TotalAdapters     = $this.AdapterCache.Count
+                HealthyAdapters   = 0
                 UnhealthyAdapters = 0
-                AdapterDetails = @{}
-                OverallHealth = "Unknown"
-                Recommendations = @()
+                AdapterDetails    = @{}
+                OverallHealth     = "Unknown"
+                Recommendations   = @()
             }
             
             foreach ($deviceId in $this.AdapterCache.Keys) {
@@ -387,7 +388,8 @@ class NetworkManager : IManager {
                 
                 if ($adapterStatus.IsHealthy) {
                     $healthReport.HealthyAdapters++
-                } else {
+                }
+                else {
                     $healthReport.UnhealthyAdapters++
                     $healthReport.Recommendations += "Check adapter: $($adapterStatus.Name) - $($adapterStatus.ErrorMessage)"
                 }
@@ -464,7 +466,8 @@ class NetworkManager : IManager {
         if ($this.AdapterCache.ContainsKey($deviceId)) {
             $this.PrimaryAdapter = $this.AdapterCache[$deviceId]
             Write-Verbose "Primary adapter changed to: $($this.PrimaryAdapter.Name)"
-        } else {
+        }
+        else {
             throw [NetworkException]::new("Adapter not found: $deviceId")
         }
     }
@@ -524,7 +527,8 @@ class NetworkManager : IManager {
         try {
             if ($forceRefresh) {
                 Write-Verbose "Performing forced refresh scan for available Wi-Fi networks..."
-            } else {
+            }
+            else {
                 Write-Verbose "Scanning for available Wi-Fi networks..."
             }
             
@@ -538,7 +542,8 @@ class NetworkManager : IManager {
                 try {
                     & netsh wlan refresh 2>$null | Out-Null
                     Start-Sleep -Milliseconds 2000  # Wait for scan to complete
-                } catch {
+                }
+                catch {
                     Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan"
                 }
             }
@@ -646,7 +651,7 @@ class NetworkManager : IManager {
                     $currentNetwork.AuthenticationMethod = $matches[1].Trim()
                 }
                 elseif ($line -match "Encryption\s*:\s*(.+)" -and $currentNetwork) {
-                    $currentNetwork.EncryptionType = $matches[1].Trim()
+                    $currentNetwork.EncryptionType = $this.ConvertToFriendlyEncryptionName($matches[1].Trim())
                 }
                 elseif ($line -match "BSSID \d+\s*:\s*([a-fA-F0-9:]{17})" -and $currentNetwork) {
                     $currentBSSID = $matches[1].Trim()
@@ -705,7 +710,7 @@ class NetworkManager : IManager {
                     $profile.AuthenticationMethod = $matches[1].Trim()
                 }
                 elseif ($line -match "Cipher\s*:\s*(.+)") {
-                    $profile.EncryptionType = $matches[1].Trim()
+                    $profile.EncryptionType = $this.ConvertToFriendlyEncryptionName($matches[1].Trim())
                 }
                 elseif ($line -match "Network type\s*:\s*(.+)") {
                     $profile.NetworkType = $matches[1].Trim()
@@ -755,7 +760,8 @@ class NetworkManager : IManager {
                         if ([string]::IsNullOrWhiteSpace($mergedNetwork.NetworkType) -and -not [string]::IsNullOrWhiteSpace($savedProfile.NetworkType)) {
                             $mergedNetwork.NetworkType = $savedProfile.NetworkType
                         }
-                    } else {
+                    }
+                    else {
                         $mergedNetwork = $availableNetwork
                     }
                     
@@ -856,6 +862,9 @@ class NetworkManager : IManager {
             if (-not $profile) {
                 return $null
             }
+            
+            # Convert technical cipher names to user-friendly encryption names
+            $profile.EncryptionType = $this.ConvertToFriendlyEncryptionName($profile.EncryptionType)
             
             # Analyze encryption type
             switch ($profile.EncryptionType.ToLower()) {
@@ -1056,21 +1065,21 @@ class NetworkManager : IManager {
             Write-Verbose "Calculating network statistics..."
             
             $stats = @{
-                TotalNetworks = $this.AvailableNetworks.Count
-                ConnectableNetworks = 0
-                OpenNetworks = 0
-                SecuredNetworks = 0
-                EncryptionBreakdown = @{}
-                AuthenticationBreakdown = @{}
+                TotalNetworks              = $this.AvailableNetworks.Count
+                ConnectableNetworks        = 0
+                OpenNetworks               = 0
+                SecuredNetworks            = 0
+                EncryptionBreakdown        = @{}
+                AuthenticationBreakdown    = @{}
                 SignalStrengthDistribution = @{
                     Excellent = 0  # 80-100%
-                    Good = 0       # 60-79%
-                    Fair = 0       # 40-59%
-                    Poor = 0       # 20-39%
-                    VeryPoor = 0   # 0-19%
+                    Good      = 0       # 60-79%
+                    Fair      = 0       # 40-59%
+                    Poor      = 0       # 20-39%
+                    VeryPoor  = 0   # 0-19%
                 }
-                AverageSignalStrength = 0
-                LastScanTime = Get-Date
+                AverageSignalStrength      = 0
+                LastScanTime               = Get-Date
             }
             
             $totalSignalStrength = 0
@@ -1089,7 +1098,8 @@ class NetworkManager : IManager {
                 # Count open vs secured networks
                 if ($network.EncryptionType -eq "None" -or $network.AuthenticationMethod -eq "Open") {
                     $stats.OpenNetworks++
-                } else {
+                }
+                else {
                     $stats.SecuredNetworks++
                 }
                 
@@ -1097,7 +1107,8 @@ class NetworkManager : IManager {
                 $encType = if ([string]::IsNullOrWhiteSpace($network.EncryptionType)) { "Unknown" } else { $network.EncryptionType }
                 if ($stats.EncryptionBreakdown.ContainsKey($encType)) {
                     $stats.EncryptionBreakdown[$encType]++
-                } else {
+                }
+                else {
                     $stats.EncryptionBreakdown[$encType] = 1
                 }
                 
@@ -1105,7 +1116,8 @@ class NetworkManager : IManager {
                 $authMethod = if ([string]::IsNullOrWhiteSpace($network.AuthenticationMethod)) { "Unknown" } else { $network.AuthenticationMethod }
                 if ($stats.AuthenticationBreakdown.ContainsKey($authMethod)) {
                     $stats.AuthenticationBreakdown[$authMethod]++
-                } else {
+                }
+                else {
                     $stats.AuthenticationBreakdown[$authMethod] = 1
                 }
                 
@@ -1115,13 +1127,17 @@ class NetworkManager : IManager {
                 
                 if ($signal -ge 80) {
                     $stats.SignalStrengthDistribution.Excellent++
-                } elseif ($signal -ge 60) {
+                }
+                elseif ($signal -ge 60) {
                     $stats.SignalStrengthDistribution.Good++
-                } elseif ($signal -ge 40) {
+                }
+                elseif ($signal -ge 40) {
                     $stats.SignalStrengthDistribution.Fair++
-                } elseif ($signal -ge 20) {
+                }
+                elseif ($signal -ge 20) {
                     $stats.SignalStrengthDistribution.Poor++
-                } else {
+                }
+                else {
                     $stats.SignalStrengthDistribution.VeryPoor++
                 }
             }
@@ -1137,16 +1153,48 @@ class NetworkManager : IManager {
         catch {
             Write-Warning "Error calculating network statistics: $($_.Exception.Message)"
             return @{
-                TotalNetworks = 0
+                TotalNetworks       = 0
                 ConnectableNetworks = 0
-                OpenNetworks = 0
-                SecuredNetworks = 0
-                LastScanTime = Get-Date
-                Error = $_.Exception.Message
+                OpenNetworks        = 0
+                SecuredNetworks     = 0
+                LastScanTime        = Get-Date
+                Error               = $_.Exception.Message
             }
         }
     }
     
+    # Convert technical cipher names to user-friendly encryption names
+    [string] ConvertToFriendlyEncryptionName([string]$technicalName) {
+        if ([string]::IsNullOrWhiteSpace($technicalName)) {
+            return "Unknown"
+        }
+        
+        $name = $technicalName.Trim().ToLower()
+        
+        switch ($name) {
+            "none" { return "Open" }
+            "wep" { return "WEP" }
+            "tkip" { return "WPA" }
+            "ccmp" { return "WPA2" }
+            "gcmp" { return "WPA3" }
+            "gcmp-256" { return "WPA3" }
+            "ccmp-256" { return "WPA3" }
+            "wpa" { return "WPA" }
+            "wpa2" { return "WPA2" }
+            "wpa3" { return "WPA3" }
+            default { 
+                if ($name -match "wpa3") { return "WPA3" }
+                elseif ($name -match "wpa2") { return "WPA2" }
+                elseif ($name -match "wpa") { return "WPA" }
+                elseif ($name -match "wep") { return "WEP" }
+                else { return $technicalName }
+            }
+        }
+        
+        # Fallback return (should never be reached)
+        return $technicalName
+    }
+
     # Get adapter summary for display
     [string] GetAdapterSummary() {
         $primaryAdapterName = if ($this.PrimaryAdapter) { $this.PrimaryAdapter.Name } else { "None" }
@@ -1215,7 +1263,8 @@ NetworkManager Status:
                 $attempt.MarkAsCompleted($true)
                 $this.ConnectionStatus = [ConnectionStatus]::Connected
                 Write-Verbose "Successfully connected to $ssid"
-            } else {
+            }
+            else {
                 $attempt.MarkAsCompleted($false, $connectionValidation.ErrorMessage)
                 $this.ConnectionStatus = [ConnectionStatus]::Failed
                 Write-Verbose "Failed to connect to $ssid : $($connectionValidation.ErrorMessage)"
@@ -1351,7 +1400,8 @@ NetworkManager Status:
     </MSM>
 </WLANProfile>
 "@
-        } else {
+        }
+        else {
             # Secured network profile
             $profileXml = @"
 <?xml version="1.0"?>
@@ -1396,15 +1446,16 @@ NetworkManager Status:
             $connectSuccess = $LASTEXITCODE -eq 0
             
             $result = @{
-                Success = $connectSuccess
-                Output = $connectOutput -join "`n"
+                Success      = $connectSuccess
+                Output       = $connectOutput -join "`n"
                 ErrorMessage = ""
             }
             
             if (-not $connectSuccess) {
                 $result.ErrorMessage = "netsh connect command failed: $($result.Output)"
                 Write-Verbose $result.ErrorMessage
-            } else {
+            }
+            else {
                 Write-Verbose "Connection command executed successfully"
             }
             
@@ -1412,8 +1463,8 @@ NetworkManager Status:
         }
         catch {
             return @{
-                Success = $false
-                Output = ""
+                Success      = $false
+                Output       = ""
                 ErrorMessage = "Exception during connection execution: $($_.Exception.Message)"
             }
         }
@@ -1455,7 +1506,8 @@ NetworkManager Status:
             
             if ($dialogHandled) {
                 Write-Verbose "Authentication dialog handling completed"
-            } else {
+            }
+            else {
                 Write-Verbose "No authentication dialogs detected during connection attempt"
             }
         }
@@ -1486,7 +1538,8 @@ NetworkManager Status:
                     Start-Sleep -Milliseconds 500
                     $sendKeysType::SendWait("{ENTER}")
                     Write-Verbose "Credentials sent to dialog using SendKeys"
-                } else {
+                }
+                else {
                     Write-Verbose "SendKeys not available, dialog handling skipped"
                 }
             }
@@ -1501,7 +1554,8 @@ NetworkManager Status:
                         Start-Sleep -Milliseconds 500
                         $shell.SendKeys("{ENTER}")
                         Write-Verbose "Credentials sent to dialog using WScript.Shell"
-                    } else {
+                    }
+                    else {
                         Write-Verbose "No automation method available for dialog handling"
                     }
                 }
@@ -1530,9 +1584,9 @@ NetworkManager Status:
                 if ($currentConnection -and $currentConnection.SSID -eq $ssid) {
                     # Connection successful
                     return @{
-                        Success = $true
+                        Success        = $true
                         ConnectionInfo = $currentConnection
-                        ErrorMessage = ""
+                        ErrorMessage   = ""
                         ValidationTime = ((Get-Date) - $startTime).TotalSeconds
                     }
                 }
@@ -1541,9 +1595,9 @@ NetworkManager Status:
                 $adapterStatus = $this.GetAdapterStatus()
                 if (-not $adapterStatus.IsHealthy) {
                     return @{
-                        Success = $false
+                        Success        = $false
                         ConnectionInfo = $null
-                        ErrorMessage = "Wi-Fi adapter is not healthy: $($adapterStatus.ErrorMessage)"
+                        ErrorMessage   = "Wi-Fi adapter is not healthy: $($adapterStatus.ErrorMessage)"
                         ValidationTime = ((Get-Date) - $startTime).TotalSeconds
                     }
                 }
@@ -1553,17 +1607,17 @@ NetworkManager Status:
             
             # Connection timeout
             return @{
-                Success = $false
+                Success        = $false
                 ConnectionInfo = $null
-                ErrorMessage = "Connection timeout after $maxWaitTime seconds"
+                ErrorMessage   = "Connection timeout after $maxWaitTime seconds"
                 ValidationTime = $maxWaitTime
             }
         }
         catch {
             return @{
-                Success = $false
+                Success        = $false
                 ConnectionInfo = $null
-                ErrorMessage = "Connection validation failed: $($_.Exception.Message)"
+                ErrorMessage   = "Connection validation failed: $($_.Exception.Message)"
                 ValidationTime = 0
             }
         }
@@ -1593,7 +1647,8 @@ NetworkManager Status:
                 Start-Sleep -Milliseconds 2000
                 
                 return $true
-            } else {
+            }
+            else {
                 Write-Warning "Failed to disconnect from network: $disconnectOutput"
                 return $false
             }
@@ -1638,9 +1693,9 @@ NetworkManager Status:
             # This would track connection attempts, success rates, etc.
             # For now, return basic information
             return @{
-                CurrentStatus = $this.ConnectionStatus
-                PrimaryAdapter = if ($this.PrimaryAdapter) { $this.PrimaryAdapter.Name } else { "None" }
-                LastScanTime = $this.LastAdapterScan
+                CurrentStatus     = $this.ConnectionStatus
+                PrimaryAdapter    = if ($this.PrimaryAdapter) { $this.PrimaryAdapter.Name } else { "None" }
+                LastScanTime      = $this.LastAdapterScan
                 AvailableNetworks = $this.AvailableNetworks.Count
                 MonitoringEnabled = $this.MonitoringEnabled
             }
@@ -1649,7 +1704,7 @@ NetworkManager Status:
             Write-Warning "Error getting connection statistics: $($_.Exception.Message)"
             return @{
                 CurrentStatus = "Error"
-                Error = $_.Exception.Message
+                Error         = $_.Exception.Message
             }
         }
     }
@@ -1660,10 +1715,10 @@ NetworkManager Status:
             Write-Verbose "Testing connection to $ssid (timeout: $timeoutSeconds seconds)"
             
             $testResult = @{
-                SSID = $ssid
-                Success = $false
-                ErrorMessage = ""
-                TestDuration = 0
+                SSID           = $ssid
+                Success        = $false
+                ErrorMessage   = ""
+                TestDuration   = 0
                 SignalStrength = 0
                 ConnectionInfo = $null
             }
@@ -1697,10 +1752,10 @@ NetworkManager Status:
         }
         catch {
             return @{
-                SSID = $ssid
-                Success = $false
-                ErrorMessage = "Test connection failed: $($_.Exception.Message)"
-                TestDuration = 0
+                SSID           = $ssid
+                Success        = $false
+                ErrorMessage   = "Test connection failed: $($_.Exception.Message)"
+                TestDuration   = 0
                 SignalStrength = 0
                 ConnectionInfo = $null
             }
