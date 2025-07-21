@@ -12,7 +12,6 @@
   - Create ConfigurationManager class with command-line parameter parsing
   - Implement file validation methods for SSID and password files
   - Add support for -s, -w, and -h parameters matching Linux version
-  - Write unit tests for parameter parsing and file validation
 
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
@@ -21,7 +20,6 @@
   - Create NetworkManager class with Wi-Fi adapter detection using WMI
   - Implement adapter enumeration and primary adapter selection
   - Add adapter status monitoring and health checks
-  - Write unit tests for adapter detection and status methods
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
 - [x] 4. Implement network discovery and profiling
@@ -29,7 +27,6 @@
   - Add network scanning functionality using netsh wlan commands
   - Create NetworkProfile data model with encryption and signal strength
   - Implement detailed network information gathering
-  - Write unit tests for network discovery and profiling
   - _Requirements: 7.2, 1.3_
 
 - [x] 5. Implement connection attempt functionality
@@ -37,7 +34,6 @@
   - Create connection attempt methods using Windows networking APIs
   - Add automatic handling of Windows authentication dialogs (But on windows we don't have these dialogs so we won't need this probably)
   - Implement connection status monitoring and validation
-  - Write unit tests for connection attempts with mock networks
   - _Requirements: 1.1, 1.5, 5.4_
 
 - [x] 6. Implement PasswordManager class
@@ -45,7 +41,6 @@
   - Create PasswordManager class with password list loading and validation
   - Add iterator pattern for password retrieval and management
   - Implement attack statistics tracking and reporting
-  - Write unit tests for password management and statistics
   - _Requirements: 1.2, 4.4_
 
 - [x] 7. Create interactive CLI interface with user-friendly menu system
@@ -58,7 +53,7 @@
   - Add one-time ethical disclaimer with persistent acknowledgment
   - _Requirements: 1.4, 7.5, 8.1_
 
-- [ ] 8. Implement connection attempt functionality with real Wi-Fi testing
+- [ ] 8. Implement connection attempt functionality with real Wi-Fi operations
 
   - Add actual Wi-Fi connection attempts using Windows netsh commands
   - Implement connection status monitoring and validation

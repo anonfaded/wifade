@@ -2,13 +2,13 @@
 
 ## Introduction
 
-This feature involves creating a Windows PowerShell version of the Wifade Wi-Fi password brute-forcing tool that maintains full feature parity with the existing Linux bash implementation. The Windows version will utilize PowerShell's native networking capabilities and Windows-specific APIs to provide the same automated Wi-Fi testing functionality while adhering to object-oriented programming principles and industry-standard code quality practices.
+This feature involves creating a Windows PowerShell version of the Wifade Wi-Fi tool that maintains full feature parity with the existing Linux bash implementation. The Windows version will utilize PowerShell's native networking capabilities and Windows-specific APIs to provide the same automated Wi-Fi functionality while adhering to object-oriented programming principles and industry-standard code quality practices.
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As a security tester using Windows, I want a PowerShell version of Wifade that works identically to the Linux version, so that I can perform Wi-Fi security testing on Windows systems without needing Linux.
+**User Story:** As a user using Windows, I want a PowerShell version of Wifade that works identically to the Linux version, so that I can perform Wi-Fi operations on Windows systems without needing Linux.
 
 #### Acceptance Criteria
 
@@ -80,7 +80,7 @@ This feature involves creating a Windows PowerShell version of the Wifade Wi-Fi 
 
 ### Requirement 7
 
-**User Story:** As a security tester, I want enhanced features in both versions that make the tool more comprehensive and unique, so that I have advanced capabilities for Wi-Fi security assessment.
+**User Story:** As a user, I want enhanced features in both versions that make the tool more comprehensive and unique, so that I have advanced capabilities for Wi-Fi operations.
 
 #### Acceptance Criteria
 
