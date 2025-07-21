@@ -1,0 +1,1 @@
+The password list "probable-v2-wpa-top4800.txt" is taken from: https://github.com/danielmiessler/SecLists
