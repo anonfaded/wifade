@@ -288,9 +288,7 @@ class ApplicationController {
             
             switch ($choice.ToLower()) {
                 "1" { $this.HandleDictionaryAttack() }
-                "2" { $this.HandleSSIDAttack() }
-                "3" { $this.HandleHybridAttack() }
-                "4" { $this.HandleCustomAttack() }
+                "2" { $this.HandleCustomAttack() }
                 "b" { return }
                 default {
                     $this.UIManager.ShowWarning("Invalid option. Please try again.")
@@ -324,10 +322,37 @@ class ApplicationController {
                 return
             }
             
-            # Display networks and let user select
-            $this.UIManager.ShowNetworkList($networks)
+            # Network selection loop with rescan option
+            do {
+                # Display networks and let user select
+                $this.UIManager.ShowNetworkList($networks)
+                
+                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, or 'b' to go back", "^(\d+|[rRbB])$", "Please enter a valid network number, 'r' to rescan, or 'b' to go back")
+                
+                # Check if user wants to go back
+                if ($networkChoice.ToLower() -eq "b") {
+                    return
+                }
+                
+                # Check if user wants to rescan
+                if ($networkChoice.ToLower() -eq "r") {
+                    $this.UIManager.ShowInfo("Rescanning for networks...")
+                    $networks = $this.NetworkManager.ScanNetworks($true)  # Force fresh scan
+                    
+                    if ($networks.Count -eq 0) {
+                        $this.UIManager.ShowWarning("No networks found after rescan.")
+                        continue
+                    }
+                    
+                    $this.UIManager.ShowSuccess("Found $($networks.Count) networks after rescan")
+                    continue
+                }
+                
+                # Valid network number selected, break the loop
+                break
+                
+            } while ($true)
             
-            $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count))", "^\d+$", "Please enter a valid network number")
             $networkIndex = [int]$networkChoice - 1
             
             if ($networkIndex -lt 0 -or $networkIndex -ge $networks.Count) {
@@ -361,13 +386,17 @@ class ApplicationController {
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
-    # Handle SSID-based attack
-    [void] HandleSSIDAttack() {
+
+    
+
+    
+    # Handle custom attack
+    [void] HandleCustomAttack() {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
         Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                            SSID-BASED ATTACK                                 ║" -ForegroundColor Cyan
+        Write-Host "║                            CUSTOM ATTACK                                     ║" -ForegroundColor Cyan
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
         
@@ -385,10 +414,37 @@ class ApplicationController {
                 return
             }
             
-            # Display networks and let user select
-            $this.UIManager.ShowNetworkList($networks)
+            # Network selection loop with rescan option
+            do {
+                # Display networks and let user select
+                $this.UIManager.ShowNetworkList($networks)
+                
+                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, or 'b' to go back", "^(\d+|[rRbB])$", "Please enter a valid network number, 'r' to rescan, or 'b' to go back")
+                
+                # Check if user wants to go back
+                if ($networkChoice.ToLower() -eq "b") {
+                    return
+                }
+                
+                # Check if user wants to rescan
+                if ($networkChoice.ToLower() -eq "r") {
+                    $this.UIManager.ShowInfo("Rescanning for networks...")
+                    $networks = $this.NetworkManager.ScanNetworks($true)  # Force fresh scan
+                    
+                    if ($networks.Count -eq 0) {
+                        $this.UIManager.ShowWarning("No networks found after rescan.")
+                        continue
+                    }
+                    
+                    $this.UIManager.ShowSuccess("Found $($networks.Count) networks after rescan")
+                    continue
+                }
+                
+                # Valid network number selected, break the loop
+                break
+                
+            } while ($true)
             
-            $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count))", "^\d+$", "Please enter a valid network number")
             $networkIndex = [int]$networkChoice - 1
             
             if ($networkIndex -lt 0 -or $networkIndex -ge $networks.Count) {
@@ -400,55 +456,22 @@ class ApplicationController {
             $targetNetwork = $networks[$networkIndex]
             $this.UIManager.ShowInfo("Target network: $($targetNetwork.SSID)")
             
-            # Confirm attack
-            $confirmed = $this.UIManager.GetConfirmation("Start SSID-based attack on '$($targetNetwork.SSID)'?", $false)
-            if (-not $confirmed) {
-                $this.UIManager.ShowInfo("Attack cancelled.")
-                $this.UIManager.WaitForKeyPress("Press any key to continue...")
-                return
-            }
-            
-            # Start SSID-based attack
-            $this.ExecuteSSIDBasedAttack($targetNetwork)
+            # Show custom attack options
+            $this.UIManager.ShowWarning("Custom attack functionality is not yet implemented.")
+            $this.UIManager.ShowInfo("This feature will allow you to:")
+            $this.UIManager.ShowInfo("• Configure custom password patterns")
+            $this.UIManager.ShowInfo("• Set specific attack parameters")
+            $this.UIManager.ShowInfo("• Use advanced attack strategies")
+            $this.UIManager.ShowInfo("This feature will be available in the next update.")
             
         }
         catch {
-            $this.UIManager.ShowError("SSID-based attack failed: $($_.Exception.Message)")
+            $this.UIManager.ShowError("Custom attack failed: $($_.Exception.Message)")
             if ($this.SettingsManager.IsDebugMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
         
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
-    
-    # Handle hybrid attack
-    [void] HandleHybridAttack() {
-        $this.UIManager.ClearScreen()
-        $this.UIManager.ShowBanner()
-        
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                            HYBRID ATTACK                                     ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
-        
-        $this.UIManager.ShowWarning("Hybrid attack functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
-    
-    # Handle custom attack
-    [void] HandleCustomAttack() {
-        $this.UIManager.ClearScreen()
-        $this.UIManager.ShowBanner()
-        
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                            CUSTOM ATTACK                                     ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
-        
-        $this.UIManager.ShowWarning("Custom attack functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
@@ -733,97 +756,7 @@ For more information, visit: https://github.com/wifade/wifade
         }
     }
     
-    # Execute SSID-based attack on target network
-    [void] ExecuteSSIDBasedAttack([NetworkProfile]$targetNetwork) {
-        try {
-            $this.UIManager.ShowInfo("Starting SSID-based attack on '$($targetNetwork.SSID)'...")
-            
-            # Reset password manager for new attack
-            $this.PasswordManager.Reset()
-            $this.PasswordManager.SetAttackStrategy([AttackStrategy]::SSIDBased)
-            
-            $attemptCount = 0
-            $maxAttempts = if ($this.AppConfig.MaxAttempts -gt 0) { $this.AppConfig.MaxAttempts } else { 100 }  # Reasonable limit for SSID-based
-            $successfulConnection = $false
-            
-            $this.UIManager.ShowInfo("Using SSID-based password generation for: $($targetNetwork.SSID)")
-            $this.UIManager.ShowInfo("Maximum attempts: $maxAttempts")
-            Write-Host ""
-            
-            # Attack loop
-            while ($this.PasswordManager.HasMorePasswords() -and $attemptCount -lt $maxAttempts -and -not $successfulConnection) {
-                try {
-                    # Get next password
-                    $password = $this.PasswordManager.GetNextPassword($targetNetwork.SSID)
-                    if (-not $password) {
-                        break
-                    }
-                    
-                    $attemptCount++
-                    
-                    # Create connection attempt record
-                    $attempt = [ConnectionAttempt]::new($targetNetwork.SSID, $password, $attemptCount)
-                    $attempt.MarkAsStarted()
-                    
-                    # Show progress
-                    $this.UIManager.ShowProgress($attemptCount, $maxAttempts, "Trying: $password")
-                    
-                    # Apply rate limiting if enabled
-                    if ($this.AppConfig.StealthMode) {
-                        $this.PasswordManager.ImplementRateLimiting()
-                    }
-                    
-                    # Attempt connection
-                    $connectionResult = $this.AttemptWiFiConnection($targetNetwork.SSID, $password)
-                    
-                    # Mark attempt as completed
-                    $attempt.MarkAsCompleted($connectionResult.Success, $connectionResult.ErrorMessage)
-                    
-                    # Record attempt in statistics
-                    $this.PasswordManager.RecordAttempt($attempt)
-                    
-                    if ($connectionResult.Success) {
-                        $successfulConnection = $true
-                        Write-Host ""
-                        $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
-                        break
-                    } else {
-                        if ($this.SettingsManager.IsDebugMode()) {
-                            $this.UIManager.ShowDebug("Failed: $password - $($connectionResult.ErrorMessage)")
-                        }
-                    }
-                }
-                catch {
-                    Write-Host ""
-                    $this.UIManager.ShowError("Error during attempt $attemptCount : $($_.Exception.Message)")
-                    if ($this.SettingsManager.IsDebugMode()) {
-                        $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
-                    }
-                }
-            }
-            
-            Write-Host ""
-            
-            # Show final results
-            if ($successfulConnection) {
-                $this.UIManager.ShowSuccess("SSID-based attack completed successfully!")
-            } else {
-                $this.UIManager.ShowWarning("SSID-based attack completed without success.")
-                $this.UIManager.ShowInfo("Tried $attemptCount passwords.")
-            }
-            
-            # Show statistics
-            $stats = $this.PasswordManager.GetStatistics()
-            Write-Host ""
-            $this.UIManager.ShowInfo("Attack Statistics:")
-            Write-Host $stats.GetSummary() -ForegroundColor White
-            
-        }
-        catch {
-            $this.UIManager.ShowError("SSID-based attack failed: $($_.Exception.Message)")
-            throw
-        }
-    }
+
     
     # Attempt Wi-Fi connection (placeholder - will be enhanced with actual Windows networking)
     [hashtable] AttemptWiFiConnection([string]$ssid, [string]$password) {

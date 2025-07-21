@@ -71,9 +71,7 @@ class UIManager : IManager {
             )
             AttackMode = @(
                 @{ Key = "1"; Text = "Dictionary Attack"; Action = "DictionaryAttack" }
-                @{ Key = "2"; Text = "SSID-Based Attack"; Action = "SSIDAttack" }
-                @{ Key = "3"; Text = "Hybrid Attack"; Action = "HybridAttack" }
-                @{ Key = "4"; Text = "Custom Attack"; Action = "CustomAttack" }
+                @{ Key = "2"; Text = "Custom Attack"; Action = "CustomAttack" }
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )
             Settings   = @(
@@ -370,7 +368,7 @@ class UIManager : IManager {
         
         Write-Host ""
         Write-Host "Available Networks:" -ForegroundColor $this.ColorScheme.Primary
-        Write-Host "=" * 80 -ForegroundColor $this.ColorScheme.Border
+        Write-Host ("=" * 80) -ForegroundColor $this.ColorScheme.Border
         
         $header = "  {0,-3} {1,-25} {2,-10} {3,-15} {4,-10}" -f "No.", "SSID", "Signal", "Encryption", "Status"
         Write-Host $header -ForegroundColor $this.ColorScheme.Info

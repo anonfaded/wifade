@@ -514,13 +514,33 @@ class NetworkManager : IManager {
         }
     }
     
-    # Scan for available Wi-Fi networks using netsh wlan commands
+    # Scan for available Wi-Fi networks using netsh wlan commands (overload without parameters)
     [System.Collections.ArrayList] ScanNetworks() {
+        return $this.ScanNetworks($false)
+    }
+    
+    # Scan for available Wi-Fi networks using netsh wlan commands (overload with forceRefresh parameter)
+    [System.Collections.ArrayList] ScanNetworks([bool]$forceRefresh) {
         try {
-            Write-Verbose "Scanning for available Wi-Fi networks..."
+            if ($forceRefresh) {
+                Write-Verbose "Performing forced refresh scan for available Wi-Fi networks..."
+            } else {
+                Write-Verbose "Scanning for available Wi-Fi networks..."
+            }
             
             if (-not $this.PrimaryAdapter) {
                 throw [NetworkException]::new("No primary Wi-Fi adapter available for network scanning")
+            }
+            
+            # Force a fresh scan by triggering netsh wlan refresh if requested
+            if ($forceRefresh) {
+                Write-Verbose "Triggering fresh network scan..."
+                try {
+                    & netsh wlan refresh 2>$null | Out-Null
+                    Start-Sleep -Milliseconds 2000  # Wait for scan to complete
+                } catch {
+                    Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan"
+                }
             }
             
             # Clear existing networks
