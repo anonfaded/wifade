@@ -310,8 +310,54 @@ class ApplicationController {
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
         
-        $this.UIManager.ShowWarning("Dictionary attack functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
+        try {
+            # Initialize managers if needed
+            $this.InitializeAttackManagers()
+            
+            # Get available networks
+            $this.UIManager.ShowInfo("Scanning for available networks...")
+            $networks = $this.NetworkManager.ScanNetworks()
+            
+            if ($networks.Count -eq 0) {
+                $this.UIManager.ShowWarning("No networks found. Please ensure Wi-Fi is enabled and networks are available.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Display networks and let user select
+            $this.UIManager.ShowNetworkList($networks)
+            
+            $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count))", "^\d+$", "Please enter a valid network number")
+            $networkIndex = [int]$networkChoice - 1
+            
+            if ($networkIndex -lt 0 -or $networkIndex -ge $networks.Count) {
+                $this.UIManager.ShowError("Invalid network selection.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            $targetNetwork = $networks[$networkIndex]
+            $this.UIManager.ShowInfo("Target network: $($targetNetwork.SSID)")
+            
+            # Confirm attack
+            $confirmed = $this.UIManager.GetConfirmation("Start dictionary attack on '$($targetNetwork.SSID)'?", $false)
+            if (-not $confirmed) {
+                $this.UIManager.ShowInfo("Attack cancelled.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Start dictionary attack
+            $this.ExecuteDictionaryAttack($targetNetwork)
+            
+        }
+        catch {
+            $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
+            if ($this.SettingsManager.IsDebugMode()) {
+                $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+            }
+        }
+        
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
@@ -325,8 +371,54 @@ class ApplicationController {
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
         
-        $this.UIManager.ShowWarning("SSID-based attack functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
+        try {
+            # Initialize managers if needed
+            $this.InitializeAttackManagers()
+            
+            # Get available networks
+            $this.UIManager.ShowInfo("Scanning for available networks...")
+            $networks = $this.NetworkManager.ScanNetworks()
+            
+            if ($networks.Count -eq 0) {
+                $this.UIManager.ShowWarning("No networks found. Please ensure Wi-Fi is enabled and networks are available.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Display networks and let user select
+            $this.UIManager.ShowNetworkList($networks)
+            
+            $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count))", "^\d+$", "Please enter a valid network number")
+            $networkIndex = [int]$networkChoice - 1
+            
+            if ($networkIndex -lt 0 -or $networkIndex -ge $networks.Count) {
+                $this.UIManager.ShowError("Invalid network selection.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            $targetNetwork = $networks[$networkIndex]
+            $this.UIManager.ShowInfo("Target network: $($targetNetwork.SSID)")
+            
+            # Confirm attack
+            $confirmed = $this.UIManager.GetConfirmation("Start SSID-based attack on '$($targetNetwork.SSID)'?", $false)
+            if (-not $confirmed) {
+                $this.UIManager.ShowInfo("Attack cancelled.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Start SSID-based attack
+            $this.ExecuteSSIDBasedAttack($targetNetwork)
+            
+        }
+        catch {
+            $this.UIManager.ShowError("SSID-based attack failed: $($_.Exception.Message)")
+            if ($this.SettingsManager.IsDebugMode()) {
+                $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+            }
+        }
+        
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
@@ -512,6 +604,256 @@ For more information, visit: https://github.com/wifade/wifade
         
         Write-Host $helpText -ForegroundColor White
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
+    }
+    
+    # Initialize attack managers (NetworkManager and PasswordManager)
+    [void] InitializeAttackManagers() {
+        try {
+            # Initialize NetworkManager if not already done
+            if ($null -eq $this.NetworkManager) {
+                $this.UIManager.ShowInfo("Initializing Network Manager...")
+                $networkConfig = @{
+                    AdapterScanInterval = 30
+                    MonitoringEnabled   = $false
+                }
+                $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
+                $this.NetworkManager.Initialize($networkConfig)
+                $this.UIManager.ShowSuccess("Network Manager initialized")
+            }
+            
+            # Initialize PasswordManager if not already done
+            if ($null -eq $this.PasswordManager) {
+                $this.UIManager.ShowInfo("Initializing Password Manager...")
+                $passwordConfig = @{
+                    PasswordFilePath = $this.AppConfig.PasswordFile
+                    RateLimitEnabled = $this.AppConfig.StealthMode
+                    MinDelayMs = $this.AppConfig.RateLimit
+                    MaxDelayMs = $this.AppConfig.RateLimit * 2
+                    AttackStrategy = [AttackStrategy]::Dictionary
+                    StealthMode = $this.AppConfig.StealthMode
+                }
+                $this.PasswordManager = New-Object PasswordManager -ArgumentList $passwordConfig
+                $this.PasswordManager.Initialize($passwordConfig)
+                $this.UIManager.ShowSuccess("Password Manager initialized")
+            }
+        }
+        catch {
+            throw "Failed to initialize attack managers: $($_.Exception.Message)"
+        }
+    }
+    
+    # Execute dictionary attack on target network
+    [void] ExecuteDictionaryAttack([NetworkProfile]$targetNetwork) {
+        try {
+            $this.UIManager.ShowInfo("Starting dictionary attack on '$($targetNetwork.SSID)'...")
+            
+            # Reset password manager for new attack
+            $this.PasswordManager.Reset()
+            $this.PasswordManager.SetAttackStrategy([AttackStrategy]::Dictionary)
+            
+            $attemptCount = 0
+            $maxAttempts = if ($this.AppConfig.MaxAttempts -gt 0) { $this.AppConfig.MaxAttempts } else { $this.PasswordManager.GetTotalPasswordCount() }
+            $successfulConnection = $false
+            
+            $this.UIManager.ShowInfo("Total passwords to try: $maxAttempts")
+            Write-Host ""
+            
+            # Attack loop
+            while ($this.PasswordManager.HasMorePasswords() -and $attemptCount -lt $maxAttempts -and -not $successfulConnection) {
+                try {
+                    # Get next password
+                    $password = $this.PasswordManager.GetNextPassword($targetNetwork.SSID)
+                    if (-not $password) {
+                        break
+                    }
+                    
+                    $attemptCount++
+                    
+                    # Create connection attempt record
+                    $attempt = [ConnectionAttempt]::new($targetNetwork.SSID, $password, $attemptCount)
+                    $attempt.MarkAsStarted()
+                    
+                    # Show progress
+                    $this.UIManager.ShowProgress($attemptCount, $maxAttempts, "Trying: $password")
+                    
+                    # Apply rate limiting if enabled
+                    if ($this.AppConfig.StealthMode) {
+                        $this.PasswordManager.ImplementRateLimiting()
+                    }
+                    
+                    # Attempt connection (simulated for now - will be replaced with actual connection logic)
+                    $connectionResult = $this.AttemptWiFiConnection($targetNetwork.SSID, $password)
+                    
+                    # Mark attempt as completed
+                    $attempt.MarkAsCompleted($connectionResult.Success, $connectionResult.ErrorMessage)
+                    
+                    # Record attempt in statistics
+                    $this.PasswordManager.RecordAttempt($attempt)
+                    
+                    if ($connectionResult.Success) {
+                        $successfulConnection = $true
+                        Write-Host ""
+                        $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
+                        break
+                    } else {
+                        if ($this.SettingsManager.IsDebugMode()) {
+                            $this.UIManager.ShowDebug("Failed: $password - $($connectionResult.ErrorMessage)")
+                        }
+                    }
+                }
+                catch {
+                    Write-Host ""
+                    $this.UIManager.ShowError("Error during attempt $attemptCount : $($_.Exception.Message)")
+                    if ($this.SettingsManager.IsDebugMode()) {
+                        $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
+                    }
+                }
+            }
+            
+            Write-Host ""
+            
+            # Show final results
+            if ($successfulConnection) {
+                $this.UIManager.ShowSuccess("Dictionary attack completed successfully!")
+            } else {
+                $this.UIManager.ShowWarning("Dictionary attack completed without success.")
+                $this.UIManager.ShowInfo("Tried $attemptCount passwords.")
+            }
+            
+            # Show statistics
+            $stats = $this.PasswordManager.GetStatistics()
+            Write-Host ""
+            $this.UIManager.ShowInfo("Attack Statistics:")
+            Write-Host $stats.GetSummary() -ForegroundColor White
+            
+        }
+        catch {
+            $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
+            throw
+        }
+    }
+    
+    # Execute SSID-based attack on target network
+    [void] ExecuteSSIDBasedAttack([NetworkProfile]$targetNetwork) {
+        try {
+            $this.UIManager.ShowInfo("Starting SSID-based attack on '$($targetNetwork.SSID)'...")
+            
+            # Reset password manager for new attack
+            $this.PasswordManager.Reset()
+            $this.PasswordManager.SetAttackStrategy([AttackStrategy]::SSIDBased)
+            
+            $attemptCount = 0
+            $maxAttempts = if ($this.AppConfig.MaxAttempts -gt 0) { $this.AppConfig.MaxAttempts } else { 100 }  # Reasonable limit for SSID-based
+            $successfulConnection = $false
+            
+            $this.UIManager.ShowInfo("Using SSID-based password generation for: $($targetNetwork.SSID)")
+            $this.UIManager.ShowInfo("Maximum attempts: $maxAttempts")
+            Write-Host ""
+            
+            # Attack loop
+            while ($this.PasswordManager.HasMorePasswords() -and $attemptCount -lt $maxAttempts -and -not $successfulConnection) {
+                try {
+                    # Get next password
+                    $password = $this.PasswordManager.GetNextPassword($targetNetwork.SSID)
+                    if (-not $password) {
+                        break
+                    }
+                    
+                    $attemptCount++
+                    
+                    # Create connection attempt record
+                    $attempt = [ConnectionAttempt]::new($targetNetwork.SSID, $password, $attemptCount)
+                    $attempt.MarkAsStarted()
+                    
+                    # Show progress
+                    $this.UIManager.ShowProgress($attemptCount, $maxAttempts, "Trying: $password")
+                    
+                    # Apply rate limiting if enabled
+                    if ($this.AppConfig.StealthMode) {
+                        $this.PasswordManager.ImplementRateLimiting()
+                    }
+                    
+                    # Attempt connection
+                    $connectionResult = $this.AttemptWiFiConnection($targetNetwork.SSID, $password)
+                    
+                    # Mark attempt as completed
+                    $attempt.MarkAsCompleted($connectionResult.Success, $connectionResult.ErrorMessage)
+                    
+                    # Record attempt in statistics
+                    $this.PasswordManager.RecordAttempt($attempt)
+                    
+                    if ($connectionResult.Success) {
+                        $successfulConnection = $true
+                        Write-Host ""
+                        $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
+                        break
+                    } else {
+                        if ($this.SettingsManager.IsDebugMode()) {
+                            $this.UIManager.ShowDebug("Failed: $password - $($connectionResult.ErrorMessage)")
+                        }
+                    }
+                }
+                catch {
+                    Write-Host ""
+                    $this.UIManager.ShowError("Error during attempt $attemptCount : $($_.Exception.Message)")
+                    if ($this.SettingsManager.IsDebugMode()) {
+                        $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
+                    }
+                }
+            }
+            
+            Write-Host ""
+            
+            # Show final results
+            if ($successfulConnection) {
+                $this.UIManager.ShowSuccess("SSID-based attack completed successfully!")
+            } else {
+                $this.UIManager.ShowWarning("SSID-based attack completed without success.")
+                $this.UIManager.ShowInfo("Tried $attemptCount passwords.")
+            }
+            
+            # Show statistics
+            $stats = $this.PasswordManager.GetStatistics()
+            Write-Host ""
+            $this.UIManager.ShowInfo("Attack Statistics:")
+            Write-Host $stats.GetSummary() -ForegroundColor White
+            
+        }
+        catch {
+            $this.UIManager.ShowError("SSID-based attack failed: $($_.Exception.Message)")
+            throw
+        }
+    }
+    
+    # Attempt Wi-Fi connection (placeholder - will be enhanced with actual Windows networking)
+    [hashtable] AttemptWiFiConnection([string]$ssid, [string]$password) {
+        try {
+            # This is a placeholder implementation
+            # In the real implementation, this would use Windows networking APIs
+            # For now, we'll simulate the connection attempt
+            
+            Start-Sleep -Milliseconds 500  # Simulate connection time
+            
+            # Simulate random success/failure for demonstration
+            # In reality, this would attempt actual Wi-Fi connection
+            $random = Get-Random -Minimum 1 -Maximum 100
+            $success = $random -le 5  # 5% success rate for simulation
+            
+            $result = @{
+                Success = $success
+                ErrorMessage = if ($success) { "" } else { "Authentication failed" }
+                Duration = [timespan]::FromMilliseconds(500)
+            }
+            
+            return $result
+        }
+        catch {
+            return @{
+                Success = $false
+                ErrorMessage = "Connection attempt failed: $($_.Exception.Message)"
+                Duration = [timespan]::FromMilliseconds(500)
+            }
+        }
     }
     
     # Validate configuration

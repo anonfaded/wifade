@@ -97,6 +97,7 @@ $ErrorActionPreference = "Stop"
 
 # Import required classes and modules
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+. "$ScriptRoot\Classes\BaseClasses.ps1"
 . "$ScriptRoot\Classes\DataModels.ps1"
 . "$ScriptRoot\Classes\ConfigurationManager.ps1"
 . "$ScriptRoot\Classes\NetworkManager.ps1"
