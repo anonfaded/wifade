@@ -626,6 +626,58 @@ class ApplicationController {
                 Write-Host "  Network Type: $($currentConnection.NetworkType)" -ForegroundColor White
                 Write-Host "  Last Seen: $($currentConnection.LastSeen.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor White
                 
+                # Get IP configuration information
+                Write-Host ""
+                Write-Host "IP Configuration:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                try {
+                    # Get Wi-Fi adapter IP configuration
+                    $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.NetProfile.Name -eq $currentConnection.SSID } | Select-Object -First 1
+                    
+                    if ($ipConfig) {
+                        # Private IP Address
+                        if ($ipConfig.IPv4Address) {
+                            Write-Host "  Private IP: $($ipConfig.IPv4Address.IPAddress)" -ForegroundColor White
+                            Write-Host "  Subnet Mask: $($ipConfig.IPv4Address.PrefixLength) bits" -ForegroundColor White
+                        }
+                        
+                        # Default Gateway
+                        if ($ipConfig.IPv4DefaultGateway) {
+                            Write-Host "  Default Gateway: $($ipConfig.IPv4DefaultGateway.NextHop)" -ForegroundColor White
+                        }
+                        
+                        # DNS Servers
+                        if ($ipConfig.DNSServer) {
+                            $dnsServers = $ipConfig.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | Select-Object -ExpandProperty ServerAddresses
+                            if ($dnsServers) {
+                                Write-Host "  DNS Servers: $($dnsServers -join ', ')" -ForegroundColor White
+                            }
+                        }
+                        
+                        # Get Public IP Address
+                        Write-Host "  Public IP: " -NoNewline -ForegroundColor White
+                        try {
+                            $publicIP = (Invoke-RestMethod -Uri "https://api.ipify.org" -TimeoutSec 5 -ErrorAction Stop).Trim()
+                            Write-Host "$publicIP" -ForegroundColor Green
+                        }
+                        catch {
+                            Write-Host "[Unable to retrieve]" -ForegroundColor Gray
+                        }
+                        
+                        # Network adapter status
+                        $adapter = Get-NetAdapter -InterfaceAlias "Wi-Fi*" | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+                        if ($adapter) {
+                            Write-Host "  Link Speed: $($adapter.LinkSpeed)" -ForegroundColor White
+                            Write-Host "  MAC Address: $($adapter.MacAddress)" -ForegroundColor White
+                        }
+                    }
+                    else {
+                        Write-Host "  [IP configuration not available]" -ForegroundColor Gray
+                    }
+                }
+                catch {
+                    Write-Host "  [Error retrieving IP information: $($_.Exception.Message)]" -ForegroundColor Red
+                }
+                
                 # Try to get saved password using both SSID and DisplayName
                 $savedPassword = $this.NetworkManager.GetSavedPassword($currentConnection.SSID)
                 if ([string]::IsNullOrWhiteSpace($savedPassword) -and $currentConnection.DisplayName) {
