@@ -231,56 +231,319 @@ class ApplicationController {
         }
     }
     
-    # Handle network scanning
+    # Handle network scanning with Wi-Fi manager capabilities
     [void] HandleScanNetworks() {
-        $this.UIManager.ClearScreen()
-        $this.UIManager.ShowBanner()
-        
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                            NETWORK SCANNER                                   ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
-        
-        try {
-            # Initialize NetworkManager if not already done
-            if ($null -eq $this.NetworkManager) {
-                $this.UIManager.ShowInfo("Initializing Network Manager...")
-                $networkConfig = @{
-                    AdapterScanInterval = 30
-                    MonitoringEnabled   = $false
-                }
-                try {
-                    $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
-                    $this.NetworkManager.Initialize($networkConfig)
-                    $this.UIManager.ShowSuccess("Network Manager initialized")
-                }
-                catch {
-                    $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
-                }
-            }
+        do {
+            $this.UIManager.ClearScreen()
+            $this.UIManager.ShowBanner()
             
-            # Scan for networks
-            $this.UIManager.ShowInfo("Scanning for Wi-Fi networks...")
-            $networks = $this.NetworkManager.ScanNetworks()
+            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+            Write-Host "║                            WI-FI MANAGER                                     ║" -ForegroundColor Cyan
+            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host ""
             
-            if ($networks.Count -gt 0) {
+            try {
+                # Initialize NetworkManager if not already done
+                if ($null -eq $this.NetworkManager) {
+                    $this.UIManager.ShowInfo("Initializing Network Manager...")
+                    $networkConfig = @{
+                        AdapterScanInterval = 30
+                        MonitoringEnabled   = $false
+                    }
+                    try {
+                        $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
+                        $this.NetworkManager.Initialize($networkConfig)
+                        $this.UIManager.ShowSuccess("Network Manager initialized")
+                    }
+                    catch {
+                        $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
+                        $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                        return
+                    }
+                }
+                
+                # Show current connection status
+                $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                if ($currentConnection) {
+                    $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+                    $this.UIManager.ShowSuccess("Currently connected to: $displayName (Signal: $($currentConnection.SignalStrength)%)")
+                } else {
+                    $this.UIManager.ShowInfo("Not currently connected to any Wi-Fi network")
+                }
+                Write-Host ""
+                
+                # Scan for networks
+                $this.UIManager.ShowInfo("Scanning for Wi-Fi networks...")
+                $networks = $this.NetworkManager.ScanNetworks()
+                
+                if ($networks.Count -eq 0) {
+                    $this.UIManager.ShowWarning("No networks found")
+                    $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                    return
+                }
+                
                 $this.UIManager.ShowSuccess("Found $($networks.Count) networks")
-                $this.UIManager.ShowNetworkList($networks)
+                
+                # Network management loop
+                do {
+                    $this.UIManager.ClearScreen()
+                    $this.UIManager.ShowBanner()
+                    
+                    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+                    Write-Host "║                            WI-FI MANAGER                                     ║" -ForegroundColor Cyan
+                    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+                    Write-Host ""
+                    
+                    # Show current connection status
+                    $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                    if ($currentConnection) {
+                        $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+                        $this.UIManager.ShowSuccess("Currently connected to: $displayName (Signal: $($currentConnection.SignalStrength)%)")
+                    } else {
+                        $this.UIManager.ShowInfo("Not currently connected to any Wi-Fi network")
+                    }
+                    Write-Host ""
+                    
+                    $this.UIManager.ShowSuccess("Found $($networks.Count) networks")
+                    
+                    # Display networks
+                    $this.UIManager.ShowNetworkList($networks)
+                    
+                    Write-Host ""
+                    Write-Host "Wi-Fi Manager Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                    Write-Host "  [1-$($networks.Count)] Connect to network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "  [r] Rescan networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "  [d] Disconnect from current network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "  [s] Show current connection status" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "  [b] Back to main menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host ""
+                    
+                    $choice = $this.UIManager.GetUserInput("Select an option", "^(\d+|[rRdDsSbB])$", "Please enter a valid option")
+                    
+                    switch ($choice.ToLower()) {
+                        "r" {
+                            $this.UIManager.ShowInfo("Rescanning networks...")
+                            $networks = $this.NetworkManager.ScanNetworks($true)
+                            $this.UIManager.ShowSuccess("Found $($networks.Count) networks after rescan")
+                            continue
+                        }
+                        "d" {
+                            $this.HandleDisconnectNetwork()
+                            continue
+                        }
+                        "s" {
+                            $this.HandleShowConnectionStatus()
+                            continue
+                        }
+                        "b" {
+                            return
+                        }
+                        default {
+                            # Check if it's a network number
+                            if ($choice -match "^\d+$") {
+                                $networkIndex = [int]$choice - 1
+                                if ($networkIndex -ge 0 -and $networkIndex -lt $networks.Count) {
+                                    $selectedNetwork = $networks[$networkIndex]
+                                    $this.HandleConnectToNetwork($selectedNetwork)
+                                    continue
+                                } else {
+                                    $this.UIManager.ShowError("Invalid network number. Please select 1-$($networks.Count)")
+                                    $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                                    continue
+                                }
+                            }
+                        }
+                    }
+                } while ($true)
+                
             }
-            else {
-                $this.UIManager.ShowWarning("No networks found")
+            catch {
+                $this.UIManager.ShowError("Failed to scan networks: $($_.Exception.Message)")
+                if ($this.SettingsManager.IsDebugMode()) {
+                    $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+                }
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
             }
+        } while ($true)
+    }
+    
+    # Handle connecting to a specific network
+    [void] HandleConnectToNetwork([NetworkProfile]$network) {
+        try {
+            $this.UIManager.ClearScreen()
+            $this.UIManager.ShowBanner()
+            
+            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+            Write-Host "║                           CONNECT TO NETWORK                                 ║" -ForegroundColor Cyan
+            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host ""
+            
+            # Show network details
+            $this.UIManager.ShowInfo("Network Details:")
+            Write-Host "  SSID: $($network.SSID)" -ForegroundColor White
+            Write-Host "  Encryption: $($network.EncryptionType)" -ForegroundColor White
+            Write-Host "  Signal Strength: $($network.SignalStrength)%" -ForegroundColor White
+            Write-Host "  Authentication: $($network.AuthenticationMethod)" -ForegroundColor White
+            Write-Host ""
+            
+            # Check if network is open (no password required)
+            if ($network.EncryptionType -eq "Open" -or $network.AuthenticationMethod -eq "Open") {
+                $confirmed = $this.UIManager.GetConfirmation("This is an open network. Connect without password?", $true)
+                if ($confirmed) {
+                    $this.AttemptNetworkConnection($network.SSID, "")
+                }
+                return
+            }
+            
+            # Get password for secured networks
+            $this.UIManager.ShowInfo("This network requires a password.")
+            $password = $this.UIManager.GetUserInput("Enter password for '$($network.SSID)'", "", "")
+            
+            if ([string]::IsNullOrWhiteSpace($password)) {
+                $this.UIManager.ShowWarning("No password entered. Connection cancelled.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Attempt connection
+            $this.AttemptNetworkConnection($network.SSID, $password)
+            
         }
         catch {
-            $this.UIManager.ShowError("Failed to scan networks: $($_.Exception.Message)")
-            if ($this.SettingsManager.IsDebugMode()) {
-                $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+            $this.UIManager.ShowError("Failed to connect to network: $($_.Exception.Message)")
+            $this.UIManager.WaitForKeyPress("Press any key to continue...")
+        }
+    }
+    
+    # Attempt to connect to a network
+    [void] AttemptNetworkConnection([string]$ssid, [string]$password) {
+        try {
+            $this.UIManager.ShowInfo("Attempting to connect to '$ssid'...")
+            $this.UIManager.ShowInfo("This may take up to 15 seconds...")
+            
+            # Use NetworkManager's connection method with shorter timeout
+            $connectionAttempt = $this.NetworkManager.AttemptConnection($ssid, $password, 15)
+            
+            if ($connectionAttempt.Success) {
+                $this.UIManager.ShowSuccess("Successfully connected to '$ssid'!")
+                
+                # Show connection details
+                $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                if ($currentConnection) {
+                    Write-Host ""
+                    $this.UIManager.ShowInfo("Connection Details:")
+                    Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
+                    Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
+                    Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                    Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                }
+            } else {
+                $this.UIManager.ShowError("Failed to connect to '$ssid'")
+                if ($connectionAttempt.ErrorMessage) {
+                    $this.UIManager.ShowError("Error: $($connectionAttempt.ErrorMessage)")
+                }
             }
+            
+        }
+        catch {
+            $this.UIManager.ShowError("Connection attempt failed: $($_.Exception.Message)")
         }
         
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
+    # Handle disconnecting from current network
+    [void] HandleDisconnectNetwork() {
+        try {
+            $currentConnection = $this.NetworkManager.GetCurrentConnection()
+            
+            if (-not $currentConnection) {
+                $this.UIManager.ShowInfo("Not currently connected to any network.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+            $confirmed = $this.UIManager.GetConfirmation("Disconnect from '$displayName'?", $false)
+            if ($confirmed) {
+                $this.UIManager.ShowInfo("Disconnecting from '$($currentConnection.SSID)'...")
+                
+                $success = $this.NetworkManager.DisconnectFromNetwork()
+                if ($success) {
+                    $this.UIManager.ShowSuccess("Successfully disconnected from network")
+                } else {
+                    $this.UIManager.ShowError("Failed to disconnect from network")
+                }
+            }
+        }
+        catch {
+            $this.UIManager.ShowError("Failed to disconnect: $($_.Exception.Message)")
+        }
+        
+        $this.UIManager.WaitForKeyPress("Press any key to continue...")
+    }
+    
+    # Handle showing current connection status
+    [void] HandleShowConnectionStatus() {
+        try {
+            $this.UIManager.ClearScreen()
+            $this.UIManager.ShowBanner()
+            
+            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+            Write-Host "║                         CONNECTION STATUS                                    ║" -ForegroundColor Cyan
+            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host ""
+            
+            $currentConnection = $this.NetworkManager.GetCurrentConnection()
+            
+            if ($currentConnection) {
+                $this.UIManager.ShowSuccess("Connected to Wi-Fi Network")
+                Write-Host ""
+                Write-Host "Network Information:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                if ($currentConnection.DisplayName -and $currentConnection.DisplayName -ne $currentConnection.SSID) {
+                    Write-Host "  Network Name: $($currentConnection.DisplayName)" -ForegroundColor White
+                }
+                Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
+                Write-Host "  Signal Strength: $($currentConnection.SignalStrength)%" -ForegroundColor White
+                Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                Write-Host "  Authentication: $($currentConnection.AuthenticationMethod)" -ForegroundColor White
+                Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                Write-Host "  BSSID: $($currentConnection.BSSID)" -ForegroundColor White
+                Write-Host "  Network Type: $($currentConnection.NetworkType)" -ForegroundColor White
+                Write-Host "  Last Seen: $($currentConnection.LastSeen.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor White
+                
+                # Try to get saved password using both SSID and DisplayName
+                $savedPassword = $this.NetworkManager.GetSavedPassword($currentConnection.SSID)
+                if ([string]::IsNullOrWhiteSpace($savedPassword) -and $currentConnection.DisplayName) {
+                    $savedPassword = $this.NetworkManager.GetSavedPassword($currentConnection.DisplayName)
+                }
+                
+                if (-not [string]::IsNullOrWhiteSpace($savedPassword)) {
+                    Write-Host "  Saved Password: $savedPassword" -ForegroundColor White
+                } else {
+                    Write-Host "  Saved Password: [Not available or open network]" -ForegroundColor Gray
+                }
+            } else {
+                $this.UIManager.ShowWarning("Not connected to any Wi-Fi network")
+                Write-Host ""
+                $this.UIManager.ShowInfo("Use the Wi-Fi Manager to scan and connect to available networks.")
+            }
+            
+            # Show adapter information
+            Write-Host ""
+            Write-Host "Adapter Information:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+            $adapterSummary = $this.NetworkManager.GetAdapterSummary()
+            Write-Host $adapterSummary -ForegroundColor White
+            
+        }
+        catch {
+            $this.UIManager.ShowError("Failed to get connection status: $($_.Exception.Message)")
+        }
+        
+        $this.UIManager.WaitForKeyPress("Press any key to continue...")
+    }
+
     # Handle attack mode menu
     [void] HandleAttackMode() {
         do {
