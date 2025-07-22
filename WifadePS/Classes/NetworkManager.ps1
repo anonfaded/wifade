@@ -55,9 +55,9 @@ class NetworkManager : IManager {
             # Detect Wi-Fi adapters
             $this.DetectWiFiAdapters()
             
-            # Validate that we have at least one adapter
+            # Validate that we have at least one adapter (warn but don't fail)
             if (-not $this.PrimaryAdapter) {
-                throw [NetworkException]::new("No Wi-Fi adapters detected on this system")
+                Write-Warning "No Wi-Fi adapters detected or enabled. Network scanning will use netsh commands directly."
             }
             
             # Start monitoring if enabled
@@ -81,20 +81,18 @@ class NetworkManager : IManager {
             $adapters = [System.Collections.ArrayList]::new()
             $this.AdapterCache.Clear()
             
-            # Query WMI for network adapters
+            # Query WMI for network adapters (including disabled ones)
             $wmiAdapters = Get-WmiObject -Class Win32_NetworkAdapter | Where-Object {
-                $_.AdapterTypeId -eq 9 -and # Ethernet 802.3 (includes Wi-Fi)
-                $_.NetConnectionStatus -ne $null -and
-                $_.Name -match "(Wi-Fi|Wireless|802\.11|WLAN)" -and
-                $_.NetEnabled -eq $true
+                $_.Name -match "(Wi-Fi|Wireless|802\.11|WLAN)" -or
+                $_.Description -match "(Wi-Fi|Wireless|802\.11|WLAN)" -or
+                ($_.AdapterTypeId -eq 9 -and $_.Name -match "(Network|Adapter)")
             }
             
             if (-not $wmiAdapters) {
                 Write-Warning "No Wi-Fi adapters found via WMI Win32_NetworkAdapter"
                 
-                # Fallback: Try Win32_NetworkAdapterConfiguration
+                # Fallback: Try Win32_NetworkAdapterConfiguration (including disabled ones)
                 $wmiConfigs = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object {
-                    $_.IPEnabled -eq $true -and
                     $_.Description -match "(Wi-Fi|Wireless|802\.11|WLAN)"
                 }
                 
@@ -533,19 +531,22 @@ class NetworkManager : IManager {
             }
             
             if (-not $this.PrimaryAdapter) {
-                throw [NetworkException]::new("No primary Wi-Fi adapter available for network scanning")
+                Write-Verbose "No primary Wi-Fi adapter detected, using netsh commands directly"
             }
             
-            # Force a fresh scan by triggering netsh wlan refresh if requested
-            if ($forceRefresh) {
-                Write-Verbose "Triggering fresh network scan..."
-                try {
-                    & netsh wlan refresh 2>$null | Out-Null
-                    Start-Sleep -Milliseconds 2000  # Wait for scan to complete
-                }
-                catch {
-                    Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan"
-                }
+            # Always force a fresh scan for better results, especially when connected
+            Write-Verbose "Triggering fresh network scan..."
+            try {
+                # Force a comprehensive scan
+                & netsh wlan refresh 2>$null | Out-Null
+                Start-Sleep -Milliseconds 3000  # Wait longer for scan to complete
+                
+                # Additional scan trigger for better results when connected
+                & netsh wlan show profiles 2>$null | Out-Null
+                Start-Sleep -Milliseconds 1000
+            }
+            catch {
+                Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan"
             }
             
             # Clear existing networks
@@ -565,7 +566,16 @@ class NetworkManager : IManager {
                 [void]$this.AvailableNetworks.Add($network)
             }
             
-            Write-Verbose "Network scan completed. Found $($this.AvailableNetworks.Count) networks"
+            # Provide helpful feedback about scan results
+            if ($availableNetworkProfiles.Count -eq 0 -and $savedNetworkProfiles.Count -gt 0) {
+                Write-Warning "No live networks detected. Showing $($savedNetworkProfiles.Count) saved profiles only."
+                Write-Warning "To see live networks: 1) Enable Wi-Fi adapter, 2) Ensure wireless service is running, 3) Try 'r' to rescan"
+            }
+            elseif ($availableNetworkProfiles.Count -gt 0) {
+                Write-Verbose "Found $($availableNetworkProfiles.Count) live networks and $($savedNetworkProfiles.Count) saved profiles"
+            }
+            
+            Write-Verbose "Network scan completed. Found $($this.AvailableNetworks.Count) total networks"
             return $this.AvailableNetworks
         }
         catch {
@@ -617,12 +627,23 @@ class NetworkManager : IManager {
             
             $networkList = [System.Collections.ArrayList]::new()
             
-            # Execute netsh command to show available networks
+            # Try multiple approaches to get comprehensive network list
+            $networkOutput = $null
+            
+            # First attempt: Standard scan with BSSID mode
             $networkOutput = & netsh wlan show networks mode=bssid 2>$null
             
             if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Failed to retrieve available networks (Exit code: $LASTEXITCODE)"
-                return $networkList
+                Write-Verbose "Standard network scan failed, trying alternative approach..."
+                
+                # Second attempt: Basic scan without BSSID mode
+                $networkOutput = & netsh wlan show networks 2>$null
+                
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Warning "Failed to retrieve available networks (Exit code: $LASTEXITCODE). This usually means Wi-Fi is disabled or no Wi-Fi adapter is active."
+                    Write-Verbose "Try enabling Wi-Fi adapter or check if wireless service is running"
+                    return $networkList
+                }
             }
             
             # Parse network output
