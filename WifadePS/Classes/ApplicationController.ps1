@@ -1161,9 +1161,6 @@ For more information, visit: https://github.com/wifade/wifade
             $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
             throw
         }
-        finally {
-            $this.UIManager.WaitForKeyPress("Press any key to continue...")
-        }
     }
     
 
