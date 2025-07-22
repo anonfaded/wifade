@@ -967,8 +967,15 @@ class NetworkManager : IManager {
                 return $null
             }
             
+            # Debug: Log the raw output for troubleshooting
+            Write-Verbose "Raw netsh wlan show interfaces output:"
+            foreach ($debugLine in $connectionOutput) {
+                Write-Verbose "  $debugLine"
+            }
+            
             $currentProfile = $null
             $ssid = ""
+            $profileName = ""
             $bssid = ""
             $signalStrength = 0
             $channel = 0
@@ -980,6 +987,9 @@ class NetworkManager : IManager {
                 
                 if ($line -match "SSID\s*:\s*(.+)") {
                     $ssid = $matches[1].Trim()
+                }
+                elseif ($line -match "Profile\s*:\s*(.+)") {
+                    $profileName = $matches[1].Trim()
                 }
                 elseif ($line -match "BSSID\s*:\s*([a-fA-F0-9:]{17})") {
                     $bssid = $matches[1].Trim()
@@ -999,8 +1009,31 @@ class NetworkManager : IManager {
             }
             
             if (-not [string]::IsNullOrWhiteSpace($ssid)) {
-                $currentProfile = [NetworkProfile]::new($ssid, $encryption)
-                $currentProfile.BSSID = $bssid
+                # Handle the case where SSID and BSSID might be swapped
+                $actualSSID = $ssid
+                $actualBSSID = $bssid
+                $displayName = $ssid
+                
+                # If SSID looks like a BSSID (MAC address) but we have a profile name, fix the assignment
+                if ($ssid -match "^[a-fA-F0-9:]{17}$") {
+                    # SSID is actually a BSSID, so swap them
+                    $actualBSSID = $ssid
+                    if (-not [string]::IsNullOrWhiteSpace($profileName) -and $profileName -notmatch "^[a-fA-F0-9:]{17}$") {
+                        $actualSSID = $profileName
+                        $displayName = $profileName
+                    } else {
+                        $actualSSID = "[Hidden Network]"
+                        $displayName = "[Hidden Network]"
+                    }
+                } else {
+                    # Normal case - use profile name for display if it's different and more descriptive
+                    if (-not [string]::IsNullOrWhiteSpace($profileName) -and $profileName -ne $ssid -and $profileName.Length -gt $ssid.Length) {
+                        $displayName = $profileName
+                    }
+                }
+                
+                $currentProfile = [NetworkProfile]::new($actualSSID, $this.ConvertToFriendlyEncryptionName($encryption))
+                $currentProfile.BSSID = $actualBSSID
                 $currentProfile.SignalStrength = $signalStrength
                 $currentProfile.Channel = $channel
                 $currentProfile.AuthenticationMethod = $authMethod
@@ -1008,7 +1041,13 @@ class NetworkManager : IManager {
                 $currentProfile.LastSeen = Get-Date
                 $currentProfile.NetworkType = "Infrastructure"
                 
-                Write-Verbose "Current connection: $($currentProfile.SSID) (Signal: $($currentProfile.SignalStrength)%)"
+                # Add display name as a custom property
+                $currentProfile | Add-Member -NotePropertyName "DisplayName" -NotePropertyValue $displayName -Force
+                
+                # Update connection status to Connected when we have a current connection
+                $this.ConnectionStatus = [ConnectionStatus]::Connected
+                
+                Write-Verbose "Current connection: $displayName (SSID: $actualSSID, BSSID: $actualBSSID, Signal: $($currentProfile.SignalStrength)%)"
             }
             
             return $currentProfile
@@ -1184,6 +1223,64 @@ class NetworkManager : IManager {
         }
     }
     
+    # Find SSID by BSSID from available networks (for hidden networks)
+    [string] FindSSIDByBSSID([string]$bssid) {
+        try {
+            foreach ($network in $this.AvailableNetworks) {
+                if ($network.BSSID -eq $bssid) {
+                    return $network.SSID
+                }
+            }
+            
+            # If not found in current scan, try to get from saved profiles
+            $savedProfiles = $this.GetSavedNetworkProfiles()
+            foreach ($profile in $savedProfiles) {
+                if ($profile.BSSID -eq $bssid) {
+                    return $profile.SSID
+                }
+            }
+            
+            return $null
+        }
+        catch {
+            Write-Verbose "Error finding SSID by BSSID: $($_.Exception.Message)"
+            return $null
+        }
+    }
+
+    # Get saved password for a network profile
+    [string] GetSavedPassword([string]$ssid) {
+        try {
+            if ([string]::IsNullOrWhiteSpace($ssid)) {
+                return ""
+            }
+            
+            Write-Verbose "Getting saved password for SSID: $ssid"
+            
+            # Execute netsh command to get profile with key
+            $profileOutput = & netsh wlan show profile name="$ssid" key=clear 2>$null
+            
+            if ($LASTEXITCODE -ne 0) {
+                Write-Verbose "Failed to get profile with password for $ssid"
+                return ""
+            }
+            
+            # Parse for key content
+            foreach ($line in $profileOutput) {
+                $line = $line.Trim()
+                if ($line -match "Key Content\s*:\s*(.+)") {
+                    return $matches[1].Trim()
+                }
+            }
+            
+            return ""
+        }
+        catch {
+            Write-Verbose "Error getting saved password for $ssid : $($_.Exception.Message)"
+            return ""
+        }
+    }
+
     # Convert technical cipher names to user-friendly encryption names
     [string] ConvertToFriendlyEncryptionName([string]$technicalName) {
         if ([string]::IsNullOrWhiteSpace($technicalName)) {
@@ -1225,7 +1322,6 @@ NetworkManager Status:
 - Primary Adapter: $primaryAdapterName
 - Total Adapters: $($this.AdapterCache.Count)
 - Connection Status: $($this.ConnectionStatus)
-- Monitoring Enabled: $($this.MonitoringEnabled)
 - Last Scan: $($this.LastAdapterScan.ToString('yyyy-MM-dd HH:mm:ss'))
 - Available Networks: $($this.AvailableNetworks.Count)
 "@
@@ -1281,7 +1377,7 @@ NetworkManager Status:
             $connectionValidation = $this.ValidateConnection($ssid, $timeoutSeconds)
             
             if ($connectionValidation.Success) {
-                $attempt.MarkAsCompleted($true)
+                $attempt.MarkAsCompleted($true, "")
                 $this.ConnectionStatus = [ConnectionStatus]::Connected
                 Write-Verbose "Successfully connected to $ssid"
             }
