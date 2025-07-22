@@ -321,18 +321,26 @@ class ApplicationController {
                     Write-Host "Wi-Fi Manager Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
                     Write-Host "  [1-$($networks.Count)] Connect to network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     Write-Host "  [r] Rescan networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "  [w] Restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     Write-Host "  [d] Disconnect from current network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     Write-Host "  [s] Show current connection status" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     Write-Host "  [b] Back to main menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     Write-Host ""
                     
-                    $choice = $this.UIManager.GetUserInput("Select an option", "^(\d+|[rRdDsSbB])$", "Please enter a valid option")
+                    $choice = $this.UIManager.GetUserInput("Select an option", "^(\d+|[rRwWdDsSbB])$", "Please enter a valid option")
                     
                     switch ($choice.ToLower()) {
                         "r" {
                             $this.UIManager.ShowInfo("Rescanning networks...")
                             $networks = $this.NetworkManager.ScanNetworks($true)
                             $this.UIManager.ShowSuccess("Found $($networks.Count) networks after rescan")
+                            continue
+                        }
+                        "w" {
+                            $this.HandleRestartWiFiAdapter()
+                            $this.UIManager.ShowInfo("Rescanning networks after Wi-Fi restart...")
+                            $networks = $this.NetworkManager.ScanNetworks($true)
+                            $this.UIManager.ShowSuccess("Found $($networks.Count) networks after Wi-Fi restart")
                             continue
                         }
                         "d" {
@@ -498,6 +506,97 @@ class ApplicationController {
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
+    # Handle Wi-Fi adapter restart
+    [void] HandleRestartWiFiAdapter() {
+        try {
+            $this.UIManager.ShowInfo("Restarting Wi-Fi adapter...")
+            $this.UIManager.ShowWarning("This will temporarily disconnect you from all networks.")
+            
+            # Check if running as administrator
+            $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+            if (-not $isAdmin) {
+                $this.UIManager.ShowWarning("Note: Running without administrator privileges. Using alternative restart method.")
+            }
+            
+            $confirmed = $this.UIManager.GetConfirmation("Continue with Wi-Fi adapter restart?", $false)
+            if (-not $confirmed) {
+                $this.UIManager.ShowInfo("Wi-Fi restart cancelled.")
+                return
+            }
+            
+            # Get Wi-Fi adapter name
+            $wifiAdapter = Get-NetAdapter | Where-Object { $_.InterfaceDescription -match "Wi-Fi|Wireless|802.11" -and $_.Status -eq "Up" } | Select-Object -First 1
+            
+            if (-not $wifiAdapter) {
+                $this.UIManager.ShowError("No active Wi-Fi adapter found.")
+                return
+            }
+            
+            $adapterName = $wifiAdapter.Name
+            $this.UIManager.ShowInfo("Found Wi-Fi adapter: $adapterName")
+            
+            # Try to disable/enable the adapter (requires admin privileges)
+            try {
+                $this.UIManager.ShowInfo("Disabling Wi-Fi adapter...")
+                Disable-NetAdapter -Name $adapterName -Confirm:$false -ErrorAction Stop
+                Start-Sleep -Seconds 3
+                
+                $this.UIManager.ShowInfo("Enabling Wi-Fi adapter...")
+                Enable-NetAdapter -Name $adapterName -Confirm:$false -ErrorAction Stop
+                Start-Sleep -Seconds 5
+            }
+            catch {
+                # If admin privileges not available, try alternative method
+                $this.UIManager.ShowWarning("Admin privileges required for adapter restart. Trying alternative method...")
+                
+                # Alternative: Use netsh to reset the adapter
+                try {
+                    $this.UIManager.ShowInfo("Resetting Wi-Fi adapter using netsh...")
+                    & netsh interface set interface name="$adapterName" admin=disabled 2>&1 | Out-Null
+                    Start-Sleep -Seconds 3
+                    & netsh interface set interface name="$adapterName" admin=enabled 2>&1 | Out-Null
+                    Start-Sleep -Seconds 5
+                }
+                catch {
+                    # Final fallback: Just flush DNS and reset network stack
+                    $this.UIManager.ShowInfo("Using network stack reset as fallback...")
+                    & ipconfig /flushdns 2>&1 | Out-Null
+                    & netsh winsock reset 2>&1 | Out-Null
+                    & netsh int ip reset 2>&1 | Out-Null
+                    Start-Sleep -Seconds 3
+                }
+            }
+            
+            # Wait for adapter to be ready
+            $this.UIManager.ShowInfo("Waiting for Wi-Fi adapter to initialize...")
+            $timeout = 15
+            $elapsed = 0
+            
+            do {
+                Start-Sleep -Seconds 1
+                $elapsed++
+                $adapterStatus = Get-NetAdapter -Name $adapterName -ErrorAction SilentlyContinue
+                if ($adapterStatus -and $adapterStatus.Status -eq "Up") {
+                    break
+                }
+            } while ($elapsed -lt $timeout)
+            
+            if ($elapsed -ge $timeout) {
+                $this.UIManager.ShowWarning("Wi-Fi adapter restart completed but may still be initializing.")
+            }
+            else {
+                $this.UIManager.ShowSuccess("Wi-Fi adapter restarted successfully!")
+            }
+            
+        }
+        catch {
+            $this.UIManager.ShowError("Failed to restart Wi-Fi adapter: $($_.Exception.Message)")
+            if ($this.SettingsManager.IsDebugMode()) {
+                $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+            }
+        }
+    }
+
     # Handle showing current connection status
     [void] HandleShowConnectionStatus() {
         try {
@@ -601,16 +700,31 @@ class ApplicationController {
                 return
             }
             
-            # Network selection loop with rescan option
+            # Network selection loop with rescan and Wi-Fi restart options
             do {
                 # Display networks and let user select
                 $this.UIManager.ShowNetworkList($networks)
                 
-                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, or 'b' to go back", "^(\d+|[rRbB])$", "Please enter a valid network number, 'r' to rescan, or 'b' to go back")
+                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, 'w' to restart Wi-Fi adapter, or 'b' to go back", "^(\d+|[rRwWbB])$", "Please enter a valid network number, 'r' to rescan, 'w' to restart Wi-Fi adapter, or 'b' to go back")
                 
                 # Check if user wants to go back
                 if ($networkChoice.ToLower() -eq "b") {
                     return
+                }
+                
+                # Check if user wants to restart Wi-Fi adapter
+                if ($networkChoice.ToLower() -eq "w") {
+                    $this.HandleRestartWiFiAdapter()
+                    $this.UIManager.ShowInfo("Rescanning networks after Wi-Fi restart...")
+                    $networks = $this.NetworkManager.ScanNetworks($true)  # Force fresh scan after restart
+                    
+                    if ($networks.Count -eq 0) {
+                        $this.UIManager.ShowWarning("No networks found after Wi-Fi restart.")
+                        continue
+                    }
+                    
+                    $this.UIManager.ShowSuccess("Found $($networks.Count) networks after Wi-Fi restart")
+                    continue
                 }
                 
                 # Check if user wants to rescan
