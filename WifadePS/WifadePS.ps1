@@ -92,7 +92,31 @@ param(
     [int]$MaxAttempts = 0,
     
     [Parameter(Mandatory = $false, HelpMessage = "Display current Wi-Fi private IP address and exit")]
-    [switch]$IP
+    [switch]$IP,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display current Wi-Fi connection status and exit")]
+    [switch]$Status,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Scan and list available Wi-Fi networks and exit")]
+    [switch]$Scan,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display current public IP address and exit")]
+    [switch]$PublicIP,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display default gateway IP address and exit")]
+    [switch]$Gateway,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display DNS servers and exit")]
+    [switch]$DNS,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display Wi-Fi adapter MAC address and exit")]
+    [switch]$MAC,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display Wi-Fi connection speed and exit")]
+    [switch]$Speed,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Restart Wi-Fi adapter and exit")]
+    [switch]$Restart
 )
 
 # Set error action preference for consistent error handling
@@ -136,6 +160,218 @@ function Get-WiFiPrivateIP {
     }
 }
 
+function Get-WiFiPublicIP {
+    <#
+    .SYNOPSIS
+        Get the current public IP address
+    #>
+    
+    try {
+        $publicIP = (Invoke-RestMethod -Uri "https://api.ipify.org" -TimeoutSec 5 -ErrorAction Stop).Trim()
+        return $publicIP
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiGateway {
+    <#
+    .SYNOPSIS
+        Get the default gateway IP address
+    #>
+    
+    try {
+        $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
+        
+        if ($ipConfig -and $ipConfig.IPv4DefaultGateway) {
+            return $ipConfig.IPv4DefaultGateway.NextHop
+        }
+        else {
+            return $null
+        }
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiDNS {
+    <#
+    .SYNOPSIS
+        Get the DNS servers
+    #>
+    
+    try {
+        $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
+        
+        if ($ipConfig -and $ipConfig.DNSServer) {
+            $dnsServers = $ipConfig.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | Select-Object -ExpandProperty ServerAddresses
+            if ($dnsServers) {
+                return $dnsServers -join ', '
+            }
+        }
+        return $null
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiMAC {
+    <#
+    .SYNOPSIS
+        Get the Wi-Fi adapter MAC address
+    #>
+    
+    try {
+        $adapter = Get-NetAdapter -InterfaceAlias "Wi-Fi*" | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+        if ($adapter) {
+            return $adapter.MacAddress
+        }
+        return $null
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiSpeed {
+    <#
+    .SYNOPSIS
+        Get the Wi-Fi connection speed
+    #>
+    
+    try {
+        $adapter = Get-NetAdapter -InterfaceAlias "Wi-Fi*" | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+        if ($adapter) {
+            return $adapter.LinkSpeed
+        }
+        return $null
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiStatus {
+    <#
+    .SYNOPSIS
+        Get comprehensive Wi-Fi status information
+    #>
+    
+    try {
+        # Get current connection info
+        $wlanProfiles = netsh wlan show interfaces 2>&1
+        $ssid = ""
+        $signal = ""
+        
+        if ($wlanProfiles -match "SSID\s*:\s*(.+)") {
+            $ssid = $matches[1].Trim()
+        }
+        
+        if ($wlanProfiles -match "Signal\s*:\s*(.+)") {
+            $signal = $matches[1].Trim()
+        }
+        
+        # Get IP information
+        $privateIP = Get-WiFiPrivateIP
+        $publicIP = Get-WiFiPublicIP
+        $gateway = Get-WiFiGateway
+        
+        # Format output
+        $status = @()
+        if ($ssid) { $status += "SSID: $ssid" }
+        if ($signal) { $status += "Signal: $signal" }
+        if ($privateIP) { $status += "Private IP: $privateIP" }
+        if ($publicIP) { $status += "Public IP: $publicIP" } else { $status += "Public IP: [Unable to retrieve]" }
+        if ($gateway) { $status += "Gateway: $gateway" }
+        
+        return $status -join "`n"
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-WiFiNetworks {
+    <#
+    .SYNOPSIS
+        Scan and list available Wi-Fi networks
+    #>
+    
+    try {
+        $networks = netsh wlan show profiles 2>&1
+        $availableNetworks = @()
+        $counter = 1
+        
+        # Get available networks from netsh
+        $wlanScan = netsh wlan show profiles 2>&1
+        foreach ($line in $wlanScan) {
+            if ($line -match "All User Profile\s*:\s*(.+)") {
+                $networkName = $matches[1].Trim()
+                $availableNetworks += "$counter. $networkName"
+                $counter++
+            }
+        }
+        
+        # If no saved profiles, do a fresh scan
+        if ($availableNetworks.Count -eq 0) {
+            $freshScan = netsh wlan show profiles 2>&1
+            $availableNetworks += "No saved networks found. Use the interactive mode for fresh network scanning."
+        }
+        
+        return $availableNetworks -join "`n"
+    }
+    catch {
+        return "Unable to scan networks"
+    }
+}
+
+function Restart-WiFiAdapter {
+    <#
+    .SYNOPSIS
+        Restart the Wi-Fi adapter
+    #>
+    
+    try {
+        Write-Host "Restarting Wi-Fi adapter..." -ForegroundColor Yellow
+        
+        # Get Wi-Fi adapter
+        $adapter = Get-NetAdapter -InterfaceAlias "Wi-Fi*" | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+        if (-not $adapter) {
+            Write-Host "No active Wi-Fi adapter found" -ForegroundColor Red
+            return $false
+        }
+        
+        $adapterName = $adapter.Name
+        Write-Host "Found adapter: $adapterName" -ForegroundColor Green
+        
+        # Try to restart using different methods
+        try {
+            Disable-NetAdapter -Name $adapterName -Confirm:$false -ErrorAction Stop
+            Start-Sleep -Seconds 3
+            Enable-NetAdapter -Name $adapterName -Confirm:$false -ErrorAction Stop
+            Start-Sleep -Seconds 5
+            Write-Host "Wi-Fi adapter restarted successfully" -ForegroundColor Green
+            return $true
+        }
+        catch {
+            Write-Host "Admin privileges required. Trying alternative method..." -ForegroundColor Yellow
+            & netsh interface set interface name="$adapterName" admin=disabled 2>&1 | Out-Null
+            Start-Sleep -Seconds 3
+            & netsh interface set interface name="$adapterName" admin=enabled 2>&1 | Out-Null
+            Start-Sleep -Seconds 5
+            Write-Host "Wi-Fi adapter restart attempted" -ForegroundColor Green
+            return $true
+        }
+    }
+    catch {
+        Write-Host "Failed to restart Wi-Fi adapter: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
 function Show-Help {
     <#
     .SYNOPSIS
@@ -151,6 +387,14 @@ OPTIONS:
     -PasswordFile, -w <path>    Path to password file (default: passwords.txt)
     -Help, -h                   Display this help information
     -IP                         Display current Wi-Fi private IP address and exit
+    -Status                     Display current Wi-Fi connection status and exit
+    -Scan                       Scan and list available Wi-Fi networks and exit
+    -PublicIP                   Display current public IP address and exit
+    -Gateway                    Display default gateway IP address and exit
+    -DNS                        Display DNS servers and exit
+    -MAC                        Display Wi-Fi adapter MAC address and exit
+    -Speed                      Display Wi-Fi connection speed and exit
+    -Restart                    Restart Wi-Fi adapter and exit
     -VerboseOutput, -v          Enable verbose output mode
     -DebugMode, -d              Enable debug mode with detailed information
     -Stealth                    Enable stealth mode with rate limiting
@@ -164,6 +408,30 @@ EXAMPLES:
     
     .\WifadePS.ps1 -IP
         Display current Wi-Fi private IP address and exit
+    
+    .\WifadePS.ps1 -Status
+        Display comprehensive Wi-Fi connection status and exit
+    
+    .\WifadePS.ps1 -Scan
+        Scan and list available Wi-Fi networks and exit
+    
+    .\WifadePS.ps1 -PublicIP
+        Display current public IP address and exit
+    
+    .\WifadePS.ps1 -Gateway
+        Display default gateway IP address and exit
+    
+    .\WifadePS.ps1 -DNS
+        Display DNS servers and exit
+    
+    .\WifadePS.ps1 -MAC
+        Display Wi-Fi adapter MAC address and exit
+    
+    .\WifadePS.ps1 -Speed
+        Display Wi-Fi connection speed and exit
+    
+    .\WifadePS.ps1 -Restart
+        Restart Wi-Fi adapter and exit
     
     .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
@@ -241,6 +509,106 @@ function Main {
             }
             else {
                 Write-Host "No Wi-Fi connection found or unable to retrieve IP address" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show status if requested
+        if ($Status.IsPresent) {
+            $status = Get-WiFiStatus
+            if ($status) {
+                Write-Host $status
+            }
+            else {
+                Write-Host "Unable to retrieve Wi-Fi status" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Scan networks if requested
+        if ($Scan.IsPresent) {
+            $networks = Get-WiFiNetworks
+            if ($networks) {
+                Write-Host $networks
+            }
+            else {
+                Write-Host "Unable to scan networks" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show public IP if requested
+        if ($PublicIP.IsPresent) {
+            $publicIP = Get-WiFiPublicIP
+            if ($publicIP) {
+                Write-Host $publicIP
+            }
+            else {
+                Write-Host "Unable to retrieve public IP address" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show gateway if requested
+        if ($Gateway.IsPresent) {
+            $gateway = Get-WiFiGateway
+            if ($gateway) {
+                Write-Host $gateway
+            }
+            else {
+                Write-Host "Unable to retrieve gateway address" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show DNS if requested
+        if ($DNS.IsPresent) {
+            $dns = Get-WiFiDNS
+            if ($dns) {
+                Write-Host $dns
+            }
+            else {
+                Write-Host "Unable to retrieve DNS servers" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show MAC address if requested
+        if ($MAC.IsPresent) {
+            $mac = Get-WiFiMAC
+            if ($mac) {
+                Write-Host $mac
+            }
+            else {
+                Write-Host "Unable to retrieve MAC address" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Show speed if requested
+        if ($Speed.IsPresent) {
+            $speed = Get-WiFiSpeed
+            if ($speed) {
+                Write-Host $speed
+            }
+            else {
+                Write-Host "Unable to retrieve connection speed" -ForegroundColor Red
+                exit 1
+            }
+            return
+        }
+        
+        # Restart Wi-Fi adapter if requested
+        if ($Restart.IsPresent) {
+            $success = Restart-WiFiAdapter
+            if (-not $success) {
                 exit 1
             }
             return
