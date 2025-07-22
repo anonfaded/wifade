@@ -30,8 +30,14 @@ class NetworkManager : IManager {
         $this.ConnectionStatus = [ConnectionStatus]::Disconnected
         $this.AdapterCache = @{}
         $this.LastAdapterScan = [datetime]::MinValue
-        $this.AdapterScanIntervalSeconds = if ($config.ContainsKey('AdapterScanInterval')) { $config['AdapterScanInterval'] } else { 30 }
-        $this.MonitoringEnabled = if ($config.ContainsKey('MonitoringEnabled')) { $config['MonitoringEnabled'] } else { $false }
+        $this.AdapterScanIntervalSeconds = 30
+        if ($config.ContainsKey('AdapterScanInterval')) {
+            $this.AdapterScanIntervalSeconds = $config['AdapterScanInterval']
+        }
+        $this.MonitoringEnabled = $false
+        if ($config.ContainsKey('MonitoringEnabled')) {
+            $this.MonitoringEnabled = $config['MonitoringEnabled']
+        }
         $this.AdapterStatusHistory = [System.Collections.ArrayList]::new()
         $this.Configuration = $config
     }
@@ -1021,11 +1027,13 @@ class NetworkManager : IManager {
                     if (-not [string]::IsNullOrWhiteSpace($profileName) -and $profileName -notmatch "^[a-fA-F0-9:]{17}$") {
                         $actualSSID = $profileName
                         $displayName = $profileName
-                    } else {
+                    }
+                    else {
                         $actualSSID = "[Hidden Network]"
                         $displayName = "[Hidden Network]"
                     }
-                } else {
+                }
+                else {
                     # Normal case - use profile name for display if it's different and more descriptive
                     if (-not [string]::IsNullOrWhiteSpace($profileName) -and $profileName -ne $ssid -and $profileName.Length -gt $ssid.Length) {
                         $displayName = $profileName
@@ -1164,7 +1172,10 @@ class NetworkManager : IManager {
                 }
                 
                 # Encryption type breakdown
-                $encType = if ([string]::IsNullOrWhiteSpace($network.EncryptionType)) { "Unknown" } else { $network.EncryptionType }
+                $encType = $network.EncryptionType
+                if ([string]::IsNullOrWhiteSpace($network.EncryptionType)) {
+                    $encType = "Unknown"
+                }
                 if ($stats.EncryptionBreakdown.ContainsKey($encType)) {
                     $stats.EncryptionBreakdown[$encType]++
                 }
@@ -1173,7 +1184,10 @@ class NetworkManager : IManager {
                 }
                 
                 # Authentication method breakdown
-                $authMethod = if ([string]::IsNullOrWhiteSpace($network.AuthenticationMethod)) { "Unknown" } else { $network.AuthenticationMethod }
+                $authMethod = $network.AuthenticationMethod
+                if ([string]::IsNullOrWhiteSpace($network.AuthenticationMethod)) {
+                    $authMethod = "Unknown"
+                }
                 if ($stats.AuthenticationBreakdown.ContainsKey($authMethod)) {
                     $stats.AuthenticationBreakdown[$authMethod]++
                 }
@@ -1315,7 +1329,10 @@ class NetworkManager : IManager {
 
     # Get adapter summary for display
     [string] GetAdapterSummary() {
-        $primaryAdapterName = if ($this.PrimaryAdapter) { $this.PrimaryAdapter.Name } else { "None" }
+        $primaryAdapterName = "None"
+        if ($this.PrimaryAdapter) {
+            $primaryAdapterName = $this.PrimaryAdapter.Name
+        }
         
         $summary = @"
 NetworkManager Status:
@@ -1698,13 +1715,25 @@ NetworkManager Status:
             while (((Get-Date) - $startTime).TotalSeconds -lt $maxWaitTime) {
                 $currentConnection = $this.GetCurrentConnection()
                 
+                $currentConnectionSSID = 'null'
+                if ($currentConnection) {
+                    $currentConnectionSSID = $currentConnection.SSID
+                }
+                Write-Verbose "Validation check: Current connection SSID='$currentConnectionSSID', Target SSID='$ssid'"
+                
                 if ($currentConnection -and $currentConnection.SSID -eq $ssid) {
-                    # Connection successful
-                    return @{
-                        Success        = $true
-                        ConnectionInfo = $currentConnection
-                        ErrorMessage   = ""
-                        ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                    # Additional validation: Check if we actually have a good signal and proper connection
+                    if ($currentConnection.SignalStrength -gt 0) {
+                        Write-Verbose "Connection validation successful: SSID match and good signal"
+                        return @{
+                            Success        = $true
+                            ConnectionInfo = $currentConnection
+                            ErrorMessage   = ""
+                            ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                        }
+                    }
+                    else {
+                        Write-Verbose "SSID matches but signal strength is 0, continuing to wait..."
                     }
                 }
                 
