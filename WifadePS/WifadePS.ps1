@@ -89,7 +89,10 @@ param(
     [int]$Timeout = 30,
     
     [Parameter(Mandatory = $false, HelpMessage = "Maximum attempts per SSID (0 = unlimited)")]
-    [int]$MaxAttempts = 0
+    [int]$MaxAttempts = 0,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Display current Wi-Fi private IP address and exit")]
+    [switch]$IP
 )
 
 # Set error action preference for consistent error handling
@@ -111,6 +114,28 @@ $Script:APP_NAME = "WifadePS"
 $Script:APP_VERSION = "1.0.0"
 $Script:APP_DESCRIPTION = "Windows PowerShell Wi-Fi Security Testing Tool"
 
+function Get-WiFiPrivateIP {
+    <#
+    .SYNOPSIS
+        Get the current Wi-Fi private IP address
+    #>
+    
+    try {
+        # Get Wi-Fi adapter IP configuration
+        $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
+        
+        if ($ipConfig -and $ipConfig.IPv4Address) {
+            return $ipConfig.IPv4Address.IPAddress
+        }
+        else {
+            return $null
+        }
+    }
+    catch {
+        return $null
+    }
+}
+
 function Show-Help {
     <#
     .SYNOPSIS
@@ -125,6 +150,7 @@ OPTIONS:
     -SSIDFile, -s <path>        Path to SSID file (default: ssid.txt)
     -PasswordFile, -w <path>    Path to password file (default: passwords.txt)
     -Help, -h                   Display this help information
+    -IP                         Display current Wi-Fi private IP address and exit
     -VerboseOutput, -v          Enable verbose output mode
     -DebugMode, -d              Enable debug mode with detailed information
     -Stealth                    Enable stealth mode with rate limiting
@@ -135,6 +161,9 @@ OPTIONS:
 EXAMPLES:
     .\WifadePS.ps1
         Run with default configuration files (ssid.txt and passwords.txt)
+    
+    .\WifadePS.ps1 -IP
+        Display current Wi-Fi private IP address and exit
     
     .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
@@ -201,6 +230,19 @@ function Main {
         # Show help if requested
         if ($Help.IsPresent) {
             Show-Help
+            return
+        }
+        
+        # Show IP address if requested
+        if ($IP.IsPresent) {
+            $privateIP = Get-WiFiPrivateIP
+            if ($privateIP) {
+                Write-Host $privateIP
+            }
+            else {
+                Write-Host "No Wi-Fi connection found or unable to retrieve IP address" -ForegroundColor Red
+                exit 1
+            }
             return
         }
         
