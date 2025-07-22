@@ -257,21 +257,23 @@ function Get-WiFiSpeed {
 function Get-WiFiStatus {
     <#
     .SYNOPSIS
-        Get comprehensive Wi-Fi status information
+        Get comprehensive Wi-Fi status information using NetworkManager
     #>
     
     try {
-        # Get current connection info
-        $wlanProfiles = netsh wlan show interfaces 2>&1
-        $ssid = ""
-        $signal = ""
-        
-        if ($wlanProfiles -match "SSID\s*:\s*(.+)") {
-            $ssid = $matches[1].Trim()
+        # Initialize NetworkManager
+        $networkConfig = @{
+            AdapterScanInterval = 30
+            MonitoringEnabled   = $false
         }
+        $networkManager = New-Object NetworkManager -ArgumentList $networkConfig
+        $networkManager.Initialize($networkConfig)
         
-        if ($wlanProfiles -match "Signal\s*:\s*(.+)") {
-            $signal = $matches[1].Trim()
+        # Get current connection
+        $currentConnection = $networkManager.GetCurrentConnection()
+        
+        if (-not $currentConnection) {
+            return "Not connected to any Wi-Fi network"
         }
         
         # Get IP information
@@ -281,8 +283,9 @@ function Get-WiFiStatus {
         
         # Format output
         $status = @()
-        if ($ssid) { $status += "SSID: $ssid" }
-        if ($signal) { $status += "Signal: $signal" }
+        $status += "SSID: $($currentConnection.SSID)"
+        $status += "Signal: $($currentConnection.SignalStrength)%"
+        $status += "Encryption: $($currentConnection.EncryptionType)"
         if ($privateIP) { $status += "Private IP: $privateIP" }
         if ($publicIP) { $status += "Public IP: $publicIP" } else { $status += "Public IP: [Unable to retrieve]" }
         if ($gateway) { $status += "Gateway: $gateway" }
@@ -297,34 +300,63 @@ function Get-WiFiStatus {
 function Get-WiFiNetworks {
     <#
     .SYNOPSIS
-        Scan and list available Wi-Fi networks
+        Scan and list available Wi-Fi networks using NetworkManager
     #>
     
     try {
-        $networks = netsh wlan show profiles 2>&1
-        $availableNetworks = @()
-        $counter = 1
+        # Initialize NetworkManager
+        $networkConfig = @{
+            AdapterScanInterval = 30
+            MonitoringEnabled   = $false
+        }
+        $networkManager = New-Object NetworkManager -ArgumentList $networkConfig
+        $networkManager.Initialize($networkConfig)
         
-        # Get available networks from netsh
-        $wlanScan = netsh wlan show profiles 2>&1
-        foreach ($line in $wlanScan) {
-            if ($line -match "All User Profile\s*:\s*(.+)") {
-                $networkName = $matches[1].Trim()
-                $availableNetworks += "$counter. $networkName"
-                $counter++
+        # Scan for networks
+        $networks = $networkManager.ScanNetworks()
+        
+        if ($networks.Count -eq 0) {
+            return "No networks found"
+        }
+        
+        # Format output as a nice table
+        $output = @()
+        
+        # Add header
+        $output += "Available Networks:"
+        $output += "=" * 80
+        $output += "{0,-4} {1,-25} {2,-8} {3,-12} {4,-10}" -f "No.", "SSID", "Signal", "Encryption", "Status"
+        $output += "-" * 80
+        
+        # Add network entries
+        for ($i = 0; $i -lt $networks.Count; $i++) {
+            $network = $networks[$i]
+            $signalBars = ""
+            $signalStrength = $network.SignalStrength
+            
+            # Create signal strength bars
+            if ($signalStrength -ge 75) { $signalBars = "████" }
+            elseif ($signalStrength -ge 50) { $signalBars = "███░" }
+            elseif ($signalStrength -ge 25) { $signalBars = "██░░" }
+            else { $signalBars = "█░░░" }
+            
+            $status = if ($signalStrength -gt 0) { "Available" } else { "Unavailable" }
+            $signalDisplay = "$signalBars $($signalStrength)%"
+            
+            # Truncate SSID if too long
+            $displaySSID = if ($network.SSID.Length -gt 23) { 
+                $network.SSID.Substring(0, 20) + "..." 
+            } else { 
+                $network.SSID 
             }
+            
+            $output += "{0,-4} {1,-25} {2,-8} {3,-12} {4,-10}" -f "$($i + 1).", $displaySSID, $signalDisplay, $network.EncryptionType, $status
         }
         
-        # If no saved profiles, do a fresh scan
-        if ($availableNetworks.Count -eq 0) {
-            $freshScan = netsh wlan show profiles 2>&1
-            $availableNetworks += "No saved networks found. Use the interactive mode for fresh network scanning."
-        }
-        
-        return $availableNetworks -join "`n"
+        return $output -join "`n"
     }
     catch {
-        return "Unable to scan networks"
+        return "Unable to scan networks: $($_.Exception.Message)"
     }
 }
 
