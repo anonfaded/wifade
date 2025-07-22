@@ -71,6 +71,9 @@ param(
     [Alias("h")]
     [switch]$Help,
     
+    [Parameter(Mandatory = $false, HelpMessage = "List all available command-line parameters")]
+    [switch]$List,
+    
     [Parameter(Mandatory = $false, HelpMessage = "Enable verbose output")]
     [Alias("v")]
     [switch]$VerboseOutput,
@@ -116,7 +119,18 @@ param(
     [switch]$Speed,
     
     [Parameter(Mandatory = $false, HelpMessage = "Restart Wi-Fi adapter and exit")]
-    [switch]$Restart
+    [switch]$Restart,
+    
+    [Parameter(Mandatory = $false, HelpMessage = "Connect to Wi-Fi network - specify SSID and password as positional arguments")]
+    [switch]$Connect,
+    
+    [Parameter(Position = 0, Mandatory = $false, HelpMessage = "SSID of the network to connect to (use quotes for SSIDs with spaces)")]
+    [string]$ConnectSSID,
+    
+    [Parameter(Position = 1, Mandatory = $false, HelpMessage = "Password for the network")]
+    [string]$ConnectPassword
+    
+    # Second $List parameter removed to fix duplicate parameter error
 )
 
 # Set error action preference for consistent error handling
@@ -346,7 +360,8 @@ function Get-WiFiNetworks {
             # Truncate SSID if too long
             $displaySSID = if ($network.SSID.Length -gt 23) { 
                 $network.SSID.Substring(0, 20) + "..." 
-            } else { 
+            }
+            else { 
                 $network.SSID 
             }
             
@@ -404,6 +419,127 @@ function Restart-WiFiAdapter {
     }
 }
 
+function Connect-WiFiNetwork {
+    <#
+    .SYNOPSIS
+        Connect to a Wi-Fi network using NetworkManager
+    #>
+    param(
+        [string]$SSID,
+        [string]$Password
+    )
+    
+    try {
+        if ([string]::IsNullOrWhiteSpace($SSID)) {
+            Write-Host "Error: SSID cannot be empty" -ForegroundColor Red
+            return $false
+        }
+        
+        Write-Host "Connecting to Wi-Fi network: '$SSID'..." -ForegroundColor Yellow
+        
+        # Initialize NetworkManager
+        $networkConfig = @{
+            AdapterScanInterval = 30
+            MonitoringEnabled   = $false
+        }
+        $networkManager = New-Object NetworkManager -ArgumentList $networkConfig
+        $networkManager.Initialize($networkConfig)
+        
+        # Attempt connection
+        Write-Host "Attempting connection (this may take up to 15 seconds)..." -ForegroundColor Yellow
+        $connectionResult = $networkManager.AttemptConnection($SSID, $Password, 15)
+        
+        if ($connectionResult.Success) {
+            Write-Host "Successfully connected to '$SSID'!" -ForegroundColor Green
+            
+            # Show connection details
+            $currentConnection = $networkManager.GetCurrentConnection()
+            if ($currentConnection) {
+                Write-Host ""
+                Write-Host "Connection Details:" -ForegroundColor Cyan
+                Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
+                Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
+                Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                
+                # Get IP information
+                $privateIP = Get-WiFiPrivateIP
+                if ($privateIP) {
+                    Write-Host "  Private IP: $privateIP" -ForegroundColor White
+                }
+            }
+            return $true
+        }
+        else {
+            Write-Host "Failed to connect to '$SSID'" -ForegroundColor Red
+            if ($connectionResult.ErrorMessage) {
+                Write-Host "Error: $($connectionResult.ErrorMessage)" -ForegroundColor Red
+            }
+            return $false
+        }
+    }
+    catch {
+        Write-Host "Connection failed: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Show-ParameterList {
+    <#
+    .SYNOPSIS
+        Display concise list of all available parameters
+    #>
+    
+    $paramList = @"
+WifadePS - Quick Parameter Reference
+====================================
+
+QUICK ACTIONS:
+  -IP                         Show current private IP address
+  -Status                     Show Wi-Fi connection status
+  -Scan                       List available Wi-Fi networks
+  -PublicIP                   Show current public IP address
+  -Gateway                    Show default gateway IP
+  -DNS                        Show DNS servers
+  -MAC                        Show Wi-Fi adapter MAC address
+  -Speed                      Show connection speed
+  -Restart                    Restart Wi-Fi adapter
+
+CONNECTION:
+  -Connect SSID password      Connect to Wi-Fi network
+  SSID password               Connect to Wi-Fi network (direct)
+
+INTERACTIVE MODE:
+  (no parameters)             Launch full interactive interface
+
+CONFIGURATION:
+  -SSIDFile, -s <file>        Custom SSID file (default: ssid.txt)
+  -PasswordFile, -w <file>    Custom password file (default: passwords.txt)
+  -DebugMode, -d              Enable debug output
+  -VerboseOutput, -v          Enable verbose output
+  -Stealth                    Enable stealth mode with delays
+  -RateLimit <ms>             Set delay between attempts
+  -Timeout <seconds>          Set connection timeout
+  -MaxAttempts <number>       Limit attempts per SSID
+
+HELP:
+  -Help, -h                   Show detailed help information
+  -List                       Show this parameter list
+
+EXAMPLES:
+  .\WifadePS.ps1 -IP                    # Show IP address
+  .\WifadePS.ps1 -Scan                  # List networks
+  .\WifadePS.ps1 MyWiFi password123     # Connect to network
+  .\WifadePS.ps1 "WiFi Name" password   # Connect (SSID with spaces)
+  .\WifadePS.ps1                        # Launch interactive mode
+
+For detailed help: .\WifadePS.ps1 -Help
+"@
+    
+    Write-Host $paramList -ForegroundColor White
+}
+
+# Second Show-ParameterList function removed to fix duplicate function error
+
 function Show-Help {
     <#
     .SYNOPSIS
@@ -427,12 +563,17 @@ OPTIONS:
     -MAC                        Display Wi-Fi adapter MAC address and exit
     -Speed                      Display Wi-Fi connection speed and exit
     -Restart                    Restart Wi-Fi adapter and exit
+    -Connect                    Connect to Wi-Fi network (requires SSID and password)
     -VerboseOutput, -v          Enable verbose output mode
     -DebugMode, -d              Enable debug mode with detailed information
     -Stealth                    Enable stealth mode with rate limiting
     -RateLimit <ms>             Rate limit in milliseconds (default: 1000)
     -Timeout <seconds>          Connection timeout in seconds (default: 30)
     -MaxAttempts <number>       Maximum attempts per SSID (default: unlimited)
+
+POSITIONAL PARAMETERS:
+    SSID                        Network name to connect to (use quotes for names with spaces)
+    Password                    Network password
 
 EXAMPLES:
     .\WifadePS.ps1
@@ -464,6 +605,15 @@ EXAMPLES:
     
     .\WifadePS.ps1 -Restart
         Restart Wi-Fi adapter and exit
+    
+    .\WifadePS.ps1 -Connect MyNetwork mypassword123
+        Connect to Wi-Fi network using -Connect flag (no quotes needed for simple names)
+    
+    .\WifadePS.ps1 MyNetwork mypassword123
+        Connect to Wi-Fi network using positional parameters (no quotes needed)
+    
+    .\WifadePS.ps1 "2nd Floor" mypassword123
+        Connect to network with spaces in SSID (quotes required for SSID with spaces)
     
     .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
@@ -530,6 +680,12 @@ function Main {
         # Show help if requested
         if ($Help.IsPresent) {
             Show-Help
+            return
+        }
+        
+        # Show parameter list if requested
+        if ($List.IsPresent) {
+            Show-ParameterList
             return
         }
         
@@ -640,6 +796,22 @@ function Main {
         # Restart Wi-Fi adapter if requested
         if ($Restart.IsPresent) {
             $success = Restart-WiFiAdapter
+            if (-not $success) {
+                exit 1
+            }
+            return
+        }
+        
+        # Connect to Wi-Fi network if requested
+        if ($Connect.IsPresent -or $ConnectSSID) {
+            if ([string]::IsNullOrWhiteSpace($ConnectSSID)) {
+                Write-Host "Error: SSID is required for connection" -ForegroundColor Red
+                Write-Host "Usage: .\WifadePS.ps1 -Connect 'SSID Name' 'password'" -ForegroundColor Yellow
+                Write-Host "   or: .\WifadePS.ps1 'SSID Name' 'password'" -ForegroundColor Yellow
+                exit 1
+            }
+            
+            $success = Connect-WiFiNetwork -SSID $ConnectSSID -Password $ConnectPassword
             if (-not $success) {
                 exit 1
             }
