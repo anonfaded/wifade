@@ -316,48 +316,59 @@ function Get-WiFiNetworks {
         $networks = $networkManager.ScanNetworks()
         
         if ($networks.Count -eq 0) {
-            return "No networks found"
+            Write-Host "No networks found" -ForegroundColor Red
+            return
         }
         
-        # Format output as a nice table
-        $output = @()
+        # Format output with the exact same design and colors as UIManager's ShowNetworkList
+        # Using the exact ColorScheme: Border=Red, Info=Blue, Secondary=White, Highlight=Red
+        Write-Host ""
+        Write-Host "╭─ 📶 Available Networks" -ForegroundColor Red
+        Write-Host "│" -ForegroundColor Red
         
-        # Add header
-        $output += "Available Networks:"
-        $output += "=" * 80
-        $output += "{0,-4} {1,-25} {2,-8} {3,-12} {4,-10}" -f "No.", "SSID", "Signal", "Encryption", "Status"
-        $output += "-" * 80
+        # Table header
+        Write-Host "│ " -NoNewline -ForegroundColor Red
+        Write-Host "#  " -NoNewline -ForegroundColor Blue
+        Write-Host "SSID                     " -NoNewline -ForegroundColor Blue
+        Write-Host "Signal     " -NoNewline -ForegroundColor Blue
+        Write-Host "Encryption      " -NoNewline -ForegroundColor Blue
+        Write-Host "Status" -ForegroundColor Blue
         
-        # Add network entries
+        # Table separator
+        Write-Host "│ " -NoNewline -ForegroundColor Red
+        Write-Host "─" -NoNewline -ForegroundColor White
+        Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor White
+        
+        # Table content
         for ($i = 0; $i -lt $networks.Count; $i++) {
             $network = $networks[$i]
-            $signalBars = ""
             $signalStrength = $network.SignalStrength
             
             # Create signal strength bars
+            $signalBars = ""
             if ($signalStrength -ge 75) { $signalBars = "████" }
             elseif ($signalStrength -ge 50) { $signalBars = "███░" }
             elseif ($signalStrength -ge 25) { $signalBars = "██░░" }
-            else { $signalBars = "█░░░" }
+            elseif ($signalStrength -gt 0) { $signalBars = "█░░░" }
+            else { $signalBars = "░░░░" }
             
-            $status = if ($signalStrength -gt 0) { "Available" } else { "Unavailable" }
-            $signalDisplay = "$signalBars $($signalStrength)%"
+            $signalText = "$signalBars $($signalStrength)%"
+            $status = if ($network.IsConnectable) { "Available" } else { "Unavailable" }
             
-            # Truncate SSID if too long
-            $displaySSID = if ($network.SSID.Length -gt 23) { 
-                $network.SSID.Substring(0, 20) + "..." 
-            }
-            else { 
-                $network.SSID 
-            }
-            
-            $output += "{0,-4} {1,-25} {2,-8} {3,-12} {4,-10}" -f "$($i + 1).", $displaySSID, $signalDisplay, $network.EncryptionType, $status
+            Write-Host "│ " -NoNewline -ForegroundColor Red
+            Write-Host ("{0,-3}" -f ($i + 1)) -NoNewline -ForegroundColor Red
+            Write-Host ("{0,-25}" -f $network.SSID) -NoNewline -ForegroundColor White
+            Write-Host ("{0,-10}" -f $signalText) -NoNewline -ForegroundColor White
+            Write-Host ("{0,-15}" -f $network.EncryptionType) -NoNewline -ForegroundColor White
+            Write-Host ("{0,-10}" -f $status) -ForegroundColor White
         }
         
-        return $output -join "`n"
+        # Table bottom border
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor Red
+        Write-Host ""
     }
     catch {
-        return "Unable to scan networks: $($_.Exception.Message)"
+        Write-Host "Unable to scan networks: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -737,12 +748,11 @@ function Main {
         
         # Scan networks if requested
         if ($Scan.IsPresent) {
-            $networks = Get-WiFiNetworks
-            if ($networks) {
-                Write-Host $networks
+            try {
+                Get-WiFiNetworks
             }
-            else {
-                Write-Host "Unable to scan networks" -ForegroundColor Red
+            catch {
+                Write-Host "Unable to scan networks: $($_.Exception.Message)" -ForegroundColor Red
                 exit 1
             }
             return
