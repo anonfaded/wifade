@@ -28,15 +28,15 @@ class UIManager : IManager {
         
         # Initialize UIManager properties
         $this.ColorScheme = @{
-            Primary   = "Cyan"
+            Primary   = "Red"
             Secondary = "White"
             Success   = "Green"
             Warning   = "Yellow"
             Error     = "Red"
             Info      = "Blue"
             Verbose   = "Gray"
-            Highlight = "Magenta"
-            Border    = "DarkCyan"
+            Highlight = "Red"
+            Border    = "Red"
         }
         
         $this.VerboseMode = $false
@@ -154,6 +154,8 @@ class UIManager : IManager {
             ░   ░   ▒ ░ ░ ░     ░   ▒    ░ ░  ░    ░   
                 ░     ░               ░  ░   ░       ░  ░
                                             ░        
+                                            
+                █▓▒­░⡷⠂ 𝒫𝓇𝑜𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
 "@
         
         Write-Host $banner -ForegroundColor Red
@@ -164,9 +166,9 @@ class UIManager : IManager {
     [string] ShowMainMenu() {
         $this.ShowBanner()
         
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "║                                MAIN MENU                                    ║" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──📡 WIFADE ──────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                                MAIN MENU                                     │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
         foreach ($option in $this.MenuOptions.Main) {
@@ -187,9 +189,9 @@ class UIManager : IManager {
         $this.ClearScreen()
         $this.ShowBanner()
         
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "║                         WI-FI BRUTE FORCE OPTIONS                            ║" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──💀 ATTACK MODE ────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                         WI-FI BRUTE FORCE OPTIONS                            │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
         # Add descriptive text
@@ -216,9 +218,9 @@ class UIManager : IManager {
         $this.ClearScreen()
         $this.ShowBanner()
         
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "║                                SETTINGS                                      ║" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──⚙️  SETTINGS ─────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                                SETTINGS                                      │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
         # Show current settings

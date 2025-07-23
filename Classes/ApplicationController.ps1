@@ -64,25 +64,23 @@ class ApplicationController {
             # Initialize UIManager with settings
             Write-Verbose "Preparing UIManager configuration..."
             $verboseMode = $false
-            $colorScheme = @{}
             
             if ($null -ne $this.SettingsManager) {
-                Write-Verbose "Getting settings from SettingsManager..."
+                Write-Verbose "Getting verbose mode setting from SettingsManager..."
                 try {
                     $verboseMode = $this.SettingsManager.IsVerboseMode()
-                    $colorScheme = $this.SettingsManager.GetColorScheme()
-                    Write-Verbose "Settings retrieved successfully"
+                    Write-Verbose "Verbose mode setting retrieved successfully"
                 }
                 catch {
-                    Write-Verbose "Failed to get settings: $($_.Exception.Message)"
-                    Write-Warning "Could not get settings: $($_.Exception.Message)"
+                    Write-Verbose "Failed to get verbose mode setting: $($_.Exception.Message)"
+                    Write-Warning "Could not get verbose mode setting: $($_.Exception.Message)"
                 }
             }
             
             Write-Verbose "Creating UIManager..."
             $uiConfig = @{
                 VerboseMode = $verboseMode
-                ColorScheme = $colorScheme
+                # Let UIManager use its own color scheme
             }
             try {
                 $this.UIManager = New-Object UIManager -ArgumentList $uiConfig
@@ -145,8 +143,8 @@ class ApplicationController {
                 catch [System.Management.Automation.PipelineStoppedException] {
                     # User pressed Ctrl+C
                     $this.UIManager.ShowWarning("Operation cancelled by user")
-                        break
-                    }
+                    break
+                }
                 catch {
                     $this.UIManager.ShowError("An error occurred: $($_.Exception.Message)")
                     if ($this.SettingsManager.IsVerboseMode()) {
@@ -169,10 +167,10 @@ class ApplicationController {
         $this.UIManager.ShowBanner()
         
         $warningText = @"
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                            ETHICAL USAGE WARNING                             ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
+╭──⚠️  WARNING ──────────────────────────────────────────────────────────────────╮
+│                            ETHICAL USAGE WARNING                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
 ║  This tool is designed for EDUCATIONAL and ETHICAL SECURITY TESTING only.   ║
 ║                                                                              ║
 ║  LEGAL REQUIREMENTS:                                                         ║
@@ -188,11 +186,29 @@ class ApplicationController {
 ║  • Users are solely responsible for compliance with applicable laws          ║
 ║  • The developers assume no liability for misuse of this tool               ║
 ║  • Unauthorized network access may result in criminal prosecution           ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 "@
         
-        Write-Host $warningText -ForegroundColor Yellow
+        # Display the warning text with the border in red
+        $lines = $warningText -split "`n"
+        
+        # First line (top border)
+        Write-Host $lines[0] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Second line (header)
+        Write-Host $lines[1] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Third line (separator)
+        Write-Host $lines[2] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Content lines
+        for ($i = 3; $i -lt $lines.Length - 1; $i++) {
+            Write-Host $lines[$i] -ForegroundColor $this.UIManager.ColorScheme.Warning
+        }
+        
+        # Last line (bottom border)
+        Write-Host $lines[$lines.Length - 1] -ForegroundColor $this.UIManager.ColorScheme.Border
         Write-Host ""
         
         $accepted = $this.UIManager.GetConfirmation("Do you acknowledge that you will use this tool ethically and legally?", $false)
@@ -233,9 +249,9 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-            Write-Host "║                            WI-FI MANAGER                                     ║" -ForegroundColor Cyan
-            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                            WI-FI MANAGER                                     │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             try {
@@ -289,9 +305,9 @@ class ApplicationController {
                     $this.UIManager.ClearScreen()
                     $this.UIManager.ShowBanner()
                     
-                    Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-                    Write-Host "║                            WI-FI MANAGER                                     ║" -ForegroundColor Cyan
-                    Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+                    Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "│                            WI-FI MANAGER                                     │" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
                     Write-Host ""
                     
                     # Show current connection status
@@ -387,9 +403,9 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-            Write-Host "║                           CONNECT TO NETWORK                                 ║" -ForegroundColor Cyan
-            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host "╭──🔌 CONNECTION ────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                           CONNECT TO NETWORK                                 │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             # Show network details
@@ -652,9 +668,9 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-            Write-Host "║                         CONNECTION STATUS                                    ║" -ForegroundColor Cyan
-            Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host "╭──📊 STATUS ───────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                         CONNECTION STATUS                                    │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             $currentConnection = $this.NetworkManager.GetCurrentConnection()
@@ -782,9 +798,9 @@ class ApplicationController {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                         WI-FI BRUTE FORCE ATTACK                             ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host "╭──💀 ATTACK ───────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "│                         WI-FI BRUTE FORCE ATTACK                             │" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
         Write-Host ""
         
         try {
@@ -810,19 +826,19 @@ class ApplicationController {
                 $this.UIManager.ShowNetworkList($networks)
                 
                 # Display options in a consistent style
-                Write-Host "Options:" -ForegroundColor Cyan
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[1-$($networks.Count)]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to select a network to attack" -ForegroundColor White
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[r]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to rescan for networks" -ForegroundColor White
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[w]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to restart Wi-Fi adapter" -ForegroundColor White
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[b]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to go back to previous menu" -ForegroundColor White
+                Write-Host "Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[1-$($networks.Count)]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[r]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[w]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[b]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to go back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 Write-Host ""
                 
                 $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRwWbB])$", "Please enter a valid option")
@@ -908,9 +924,9 @@ class ApplicationController {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                         CUSTOM PASSWORD FILE                                 ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host "╭──📁 CUSTOM FILE ───────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "│                         CUSTOM PASSWORD FILE                                 │" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
         Write-Host ""
         
         try {
@@ -1004,16 +1020,16 @@ class ApplicationController {
                 $this.UIManager.ShowNetworkList($networks)
                 
                 # Display options in a consistent style
-                Write-Host "Options:" -ForegroundColor Cyan
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[1-$($networks.Count)]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to select a network to attack" -ForegroundColor White
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[r]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to rescan for networks" -ForegroundColor White
-                Write-Host "  • Enter " -ForegroundColor White -NoNewline
-                Write-Host "[b]" -ForegroundColor Yellow -NoNewline
-                Write-Host " to go back to previous menu" -ForegroundColor White
+                Write-Host "Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[1-$($networks.Count)]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[r]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
+                Write-Host "[b]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " to go back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 Write-Host ""
                 
                 $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRbB])$", "Please enter a valid option")
@@ -1116,9 +1132,9 @@ class ApplicationController {
         $this.UIManager.ShowBanner()
         
         $helpText = @"
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                  HELP                                        ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+╭──❓ HELP ─────────────────────────────────────────────────────────────────────╮
+│                                  HELP                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 MAIN MENU OPTIONS:
   1. Scan Wi-Fi Networks    - Discover available Wi-Fi networks in range
@@ -1142,16 +1158,31 @@ SETTINGS:
 
 KEYBOARD SHORTCUTS:
   • Ctrl+C               - Cancel current operation
-  • Any key              - Continue when prompted
+
 
 ETHICAL USAGE:
 This tool is intended for educational purposes and ethical security testing only.
 Always ensure you have explicit permission to test network security.
 
-For more information, visit: https://github.com/wifade/wifade
+For more information, visit: https://github.com/anonfaded/wifade
 "@
         
-        Write-Host $helpText -ForegroundColor White
+        # Display the help text with the border in red
+        $lines = $helpText -split "`n"
+        
+        # First line (top border)
+        Write-Host $lines[0] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Second line (header)
+        Write-Host $lines[1] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Third line (bottom border)
+        Write-Host $lines[2] -ForegroundColor $this.UIManager.ColorScheme.Border
+        
+        # Rest of the text
+        for ($i = 3; $i -lt $lines.Length; $i++) {
+            Write-Host $lines[$i] -ForegroundColor White
+        }
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
@@ -1277,7 +1308,7 @@ For more information, visit: https://github.com/wifade/wifade
             # Clear screen and show hacker-style animation
             $this.UIManager.ClearScreen()
             
-            # Display ASCII art and animation - now in red
+            # Display ASCII art and animation
             Write-Host @"
                         ⠀⠀⠀⠀⣀⣤⣤⣶⣾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀ ⣷⣶⣦⣤⣀⠀⠀⠀⠀⠀
                         ⢀⣴⣶⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⣧⣼⠀⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣿⣷⣦⣄⡀
@@ -1285,36 +1316,36 @@ For more information, visit: https://github.com/wifade/wifade
                         ⠀⠀⠀⠀⠀⠀⠸⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠋⠀⠀⠀⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠉⠻⣿⣿⣿⣿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠙⠋⠀
-"@ -ForegroundColor Red
+"@ -ForegroundColor $this.UIManager.ColorScheme.Primary
             
-            # Simulate terminal activation with typing effect - now in red and faster
-            Write-Host "Terminal X activated..." -ForegroundColor Red -NoNewline
+            # Simulate terminal activation with typing effect
+            Write-Host "Terminal X activated..." -ForegroundColor $this.UIManager.ColorScheme.Primary -NoNewline
             Start-Sleep -Milliseconds 200
-            Write-Host "." -ForegroundColor Red -NoNewline
+            Write-Host "." -ForegroundColor $this.UIManager.ColorScheme.Primary -NoNewline
             Start-Sleep -Milliseconds 200
-            Write-Host "." -ForegroundColor Red -NoNewline
+            Write-Host "." -ForegroundColor $this.UIManager.ColorScheme.Primary -NoNewline
             Start-Sleep -Milliseconds 200
-            Write-Host "." -ForegroundColor Red
+            Write-Host "." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 200
             
-            # Show initialization sequence - faster and in red
-            Write-Host "Initializing attack modules..." -ForegroundColor Red
+            # Show initialization sequence
+            Write-Host "Initializing attack modules..." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 300
-            Write-Host "Loading password database..." -ForegroundColor Red
+            Write-Host "Loading password database..." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 300
-            Write-Host "Establishing connection to target network..." -ForegroundColor Red
+            Write-Host "Establishing connection to target network..." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 300
-            Write-Host "Bypassing security protocols..." -ForegroundColor Red
+            Write-Host "Bypassing security protocols..." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 300
-            Write-Host "Attack sequence ready." -ForegroundColor Red
+            Write-Host "Attack sequence ready." -ForegroundColor $this.UIManager.ColorScheme.Primary
             Start-Sleep -Milliseconds 1000
             
-            # Show target information - faster
+            # Show target information
             Write-Host ""
-            Write-Host "TARGET ACQUIRED: " -ForegroundColor Red -NoNewline
-            Write-Host "$($targetNetwork.SSID)" -ForegroundColor Yellow
-            Write-Host "SECURITY: " -ForegroundColor Red -NoNewline
-            Write-Host "$($targetNetwork.EncryptionType)" -ForegroundColor Yellow
+            Write-Host "TARGET ACQUIRED: " -ForegroundColor $this.UIManager.ColorScheme.Primary -NoNewline
+            Write-Host "$($targetNetwork.SSID)" -ForegroundColor $this.UIManager.ColorScheme.Highlight
+            Write-Host "SECURITY: " -ForegroundColor $this.UIManager.ColorScheme.Primary -NoNewline
+            Write-Host "$($targetNetwork.EncryptionType)" -ForegroundColor $this.UIManager.ColorScheme.Highlight
             Write-Host ""
             Start-Sleep -Milliseconds 400
             
@@ -1460,7 +1491,7 @@ For more information, visit: https://github.com/wifade/wifade
                         $key = [Console]::ReadKey($true)
                         if ($key.Key -eq [ConsoleKey]::C -and $key.Modifiers -eq [ConsoleModifiers]::Control) {
                             $this.UIManager.ShowWarning("Attack cancelled by user (Ctrl+C)")
-                                break
+                            break
                         }
                     }
                 }
@@ -1504,7 +1535,7 @@ For more information, visit: https://github.com/wifade/wifade
             $stats = $this.PasswordManager.GetStatistics()
             Write-Host ""
             $this.UIManager.ShowInfo("Attack Statistics:")
-            Write-Host $stats.GetSummary() -ForegroundColor White
+            Write-Host $stats.GetSummary() -ForegroundColor $this.UIManager.ColorScheme.Secondary
             
             # Restore original connection if user wants
             if ($originalConnection -and -not $successfulConnection) {

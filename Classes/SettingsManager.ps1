@@ -35,20 +35,17 @@ class SettingsManager : IManager {
             EthicalDisclaimerAccepted     = $false
             EthicalDisclaimerAcceptedDate = $null
             VerboseMode                   = $false
-            ConnectionTimeoutSeconds      = 30
-            MaxAttemptsPerSSID            = 0
-            DefaultSSIDFile               = "ssid.txt"
-            DefaultPasswordFile           = "passwords.txt"
+            # Use the same color scheme as UIManager for consistency
             ColorScheme                   = @{
-                Primary   = "Cyan"
+                Primary   = "Red"
                 Secondary = "White"
                 Success   = "Green"
                 Warning   = "Yellow"
                 Error     = "Red"
-                Info      = "Blue"
+                Info      = "White"
                 Verbose   = "Gray"
-                Highlight = "Magenta"
-                Border    = "DarkCyan"
+                Highlight = "Red"
+                Border    = "Red"
             }
             LastUsed                      = $null
             Version                       = "1.0.0"
@@ -185,79 +182,11 @@ class SettingsManager : IManager {
         $this.SaveSettings()
     }
     
-    # Get connection timeout setting
-    [int] GetConnectionTimeout() {
-        $timeout = $this.GetSetting('ConnectionTimeoutSeconds')
-        if ($timeout) { 
-            return $timeout 
-        }
-        else { 
-            return 30 
-        }
-    }
-    
-    # Set connection timeout
-    [void] SetConnectionTimeout([int]$seconds) {
-        if ($seconds -lt 5 -or $seconds -gt 300) {
-            throw [ConfigurationException]::new("Connection timeout must be between 5 and 300 seconds", "ConnectionTimeoutSeconds")
-        }
-        $this.SetSetting('ConnectionTimeoutSeconds', $seconds)
-        $this.SaveSettings()
-    }
-    
-    # Get max attempts per SSID setting
-    [int] GetMaxAttemptsPerSSID() {
-        $maxAttempts = $this.GetSetting('MaxAttemptsPerSSID')
-        if ($maxAttempts) { 
-            return $maxAttempts 
-        }
-        else { 
-            return 0 
-        }
-    }
-    
-    # Set max attempts per SSID
-    [void] SetMaxAttemptsPerSSID([int]$attempts) {
-        if ($attempts -lt 0) {
-            throw [ConfigurationException]::new("Max attempts per SSID cannot be negative", "MaxAttemptsPerSSID")
-        }
-        $this.SetSetting('MaxAttemptsPerSSID', $attempts)
-        $this.SaveSettings()
-    }
-    
-    # Get default SSID file path
-    [string] GetDefaultSSIDFile() {
-        $ssidFile = $this.GetSetting('DefaultSSIDFile')
-        if ($ssidFile) { 
-            return $ssidFile 
-        }
-        else { 
-            return "ssid.txt" 
-        }
-    }
-    
-    # Set default SSID file path
-    [void] SetDefaultSSIDFile([string]$filePath) {
-        $this.SetSetting('DefaultSSIDFile', $filePath)
-        $this.SaveSettings()
-    }
-    
-    # Get default password file path
-    [string] GetDefaultPasswordFile() {
-        $passwordFile = $this.GetSetting('DefaultPasswordFile')
-        if ($passwordFile) { 
-            return $passwordFile 
-        }
-        else { 
-            return "passwords.txt" 
-        }
-    }
-    
-    # Set default password file path
-    [void] SetDefaultPasswordFile([string]$filePath) {
-        $this.SetSetting('DefaultPasswordFile', $filePath)
-        $this.SaveSettings()
-    }
+    # These methods have been removed as they are no longer used in the application:
+    # - GetConnectionTimeout() / SetConnectionTimeout()
+    # - GetMaxAttemptsPerSSID() / SetMaxAttemptsPerSSID()
+    # - GetDefaultSSIDFile() / SetDefaultSSIDFile()
+    # - GetDefaultPasswordFile() / SetDefaultPasswordFile()
     
     # Get color scheme
     [hashtable] GetColorScheme() {

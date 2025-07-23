@@ -476,7 +476,7 @@ ETHICAL USAGE:
     This tool is intended for educational purposes and ethical security testing only.
     Always ensure you have explicit permission to test network security.
 
-For more information, visit: https://github.com/wifade/wifade
+For more information, visit: https://github.com/anonfaded/wifade
 "@
         
         Write-Host $helpText -ForegroundColor White

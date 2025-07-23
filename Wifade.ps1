@@ -43,7 +43,7 @@
     Version: 1.0.0
     
 .LINK
-    https://github.com/wifade/wifade
+    https://github.com/anonfaded/wifade
 #>
 
 [CmdletBinding()]
@@ -684,7 +684,7 @@ SYSTEM REQUIREMENTS:
     - Wi-Fi adapter with appropriate drivers
     - Administrator privileges (recommended)
 
-For more information, visit: https://github.com/wifade/wifade
+For more information, visit: https://github.com/anonfaded/wifade
 "@
     
     Write-Host $helpText -ForegroundColor White
