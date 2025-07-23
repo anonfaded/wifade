@@ -12,7 +12,7 @@ class ApplicationController {
     [bool]$IsRunning
     [string]$CurrentMenu
     [hashtable]$AppConfig
-    
+
     # Constructor
     ApplicationController() {
         $this.InitializeProperties()
@@ -145,8 +145,8 @@ class ApplicationController {
                 catch [System.Management.Automation.PipelineStoppedException] {
                     # User pressed Ctrl+C
                     $this.UIManager.ShowWarning("Operation cancelled by user")
-                    break
-                }
+                        break
+                    }
                 catch {
                     $this.UIManager.ShowError("An error occurred: $($_.Exception.Message)")
                     if ($this.SettingsManager.IsVerboseMode()) {
@@ -1072,20 +1072,6 @@ class ApplicationController {
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
-    # Handle view results
-    [void] HandleViewResults() {
-        $this.UIManager.ClearScreen()
-        $this.UIManager.ShowBanner()
-        
-        Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                              VIEW RESULTS                                    ║" -ForegroundColor Cyan
-        Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
-        
-        $this.UIManager.ShowWarning("Results viewing functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
     
     # Handle settings menu
     [void] HandleSettings() {
@@ -1474,7 +1460,7 @@ For more information, visit: https://github.com/wifade/wifade
                         $key = [Console]::ReadKey($true)
                         if ($key.Key -eq [ConsoleKey]::C -and $key.Modifiers -eq [ConsoleModifiers]::Control) {
                             $this.UIManager.ShowWarning("Attack cancelled by user (Ctrl+C)")
-                            break
+                                break
                         }
                     }
                 }
