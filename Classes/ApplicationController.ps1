@@ -162,9 +162,9 @@ class ApplicationController {
 ├────────────────────────────────────────────────────┤
 │                                                    │
 │  • For EDUCATIONAL and ETHICAL use only            │
-│  • You must OWN or have PERMISSION                 │
-│  • Unauthorized access may be ILLEGAL              │
-│  • Users are responsible for compliance            │
+│  • Use only on networks you own or are allowed to  │
+│  • Unauthorized access is likely illegal           │
+│  • You are fully responsible for your actions      │
 │                                                    │
 ╰────────────────────────────────────────────────────╯
 "@
@@ -193,10 +193,67 @@ class ApplicationController {
         $accepted = $this.UIManager.GetConfirmation("Do you acknowledge that you will use this tool ethically and legally?", $false)
         
         if ($accepted) {
-            $this.SettingsManager.AcceptEthicalDisclaimer()
-            $this.UIManager.ShowSuccess("Thank you for your commitment to ethical security testing.")
+            # Funny second verification to make sure they actually read the warning
+            Write-Host ""
+            $this.UIManager.ShowWarning("Wait a minute... 🤔")
+            Start-Sleep -Milliseconds 1500
+            
+            Write-Host ""
+            Write-Host "╭─ " -ForegroundColor Red -NoNewline
+            Write-Host "🤖 HUMAN VERIFICATION REQUIRED" -ForegroundColor Blue -NoNewline
+            Write-Host ""
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host ""
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host "I suspect you didn't actually read that warning! 😏" -ForegroundColor White
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host "Are you a human who actually reads important stuff?" -ForegroundColor White
+            Write-Host "│" -ForegroundColor Red
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host "If YES, type exactly: " -ForegroundColor White -NoNewline
+            Write-Host "ILoveFadSecLab" -ForegroundColor Red
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host "If NO, just type anything else and face the consequences! 😈" -ForegroundColor White
+            Write-Host "╰────────────────────────────────────────────────────────────" -ForegroundColor Red
+            Write-Host ""
+            
+            Write-Host "❯ " -ForegroundColor Red -NoNewline
+            $humanVerification = Read-Host
+            
+            if ($humanVerification -ceq "ILoveFadSecLab") {
+                Write-Host ""
+                $this.UIManager.ShowSuccess("Excellent! You're clearly a responsible human! 🎉")
+                $this.UIManager.ShowSuccess("Thank you for your commitment to ethical security testing.")
+                $this.SettingsManager.AcceptEthicalDisclaimer()
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return $true
+            }
+            else {
+                Write-Host ""
+                $this.UIManager.ShowError("BEEP BOOP! 🤖 Robot detected or human who doesn't follow instructions!")
+                Write-Host ""
+                Write-Host "╭─ " -ForegroundColor Red -NoNewline
+                Write-Host "🚫 ACCESS DENIED" -ForegroundColor Red -NoNewline
+                Write-Host ""
+                Write-Host "│ " -ForegroundColor Red -NoNewline
+                Write-Host "Either you're a robot 🤖 or you don't read instructions! 📚" -ForegroundColor White
+                Write-Host "│ " -ForegroundColor Red -NoNewline
+                Write-Host "Both are equally dangerous for security tools! 😱" -ForegroundColor White
+                Write-Host "│" -ForegroundColor Red
+                Write-Host "│ " -ForegroundColor Red -NoNewline
+                Write-Host "Please restart and actually READ the warning this time! 👀" -ForegroundColor White
+                Write-Host "│ " -ForegroundColor Red -NoNewline
+                Write-Host "Hint: The magic phrase was case-sensitive! 🔤" -ForegroundColor Yellow
+                Write-Host "╰──────────────────────────────────────────────────────────────" -ForegroundColor Red
+                Write-Host ""
+                $this.UIManager.WaitForKeyPress("Press any key to exit...")
+                return $false
+            }
+        }
+        else {
+            # User declined the first prompt
+            $this.UIManager.ShowError("Ethical acknowledgment required to use attack features.")
             $this.UIManager.WaitForKeyPress("Press any key to continue...")
-            return $true
         }
         
         return $false
@@ -912,8 +969,8 @@ class ApplicationController {
         if ($disclaimerAccepted -eq $false) {
             $userAccepted = $this.ShowEthicalDisclaimer()
             if ($userAccepted -eq $false) {
-                $this.UIManager.ShowError("Ethical acknowledgment required to use attack features.")
-                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                # User either declined first prompt or failed second verification
+                # ShowEthicalDisclaimer handles its own error messages and prompts
                 return
             }
         }
