@@ -48,13 +48,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false, HelpMessage = "Path to SSID file")]
-    [Alias("s")]
-    [string]$SSIDFile = "ssid.txt",
+
     
     [Parameter(Mandatory = $false, HelpMessage = "Path to password file")]
     [Alias("w")]
-    [string]$PasswordFile = "passwords.txt",
+    [string]$PasswordFile = "passwords\probable-v2-wpa-top4800.txt",
     
     [Parameter(Mandatory = $false, HelpMessage = "Display help information")]
     [Alias("h")]
@@ -112,6 +110,17 @@ param(
 
 # Set error action preference for consistent error handling
 $ErrorActionPreference = "Stop"
+
+# Load Windows Forms assembly for file dialog functionality
+# This must be done BEFORE loading any classes that might use it
+try {
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+    Write-Verbose "Windows Forms assembly loaded successfully"
+}
+catch {
+    Write-Warning "Could not load Windows Forms assembly: $($_.Exception.Message)"
+    Write-Warning "File picker dialog functionality will not be available"
+}
 
 # Import required classes and modules
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -536,9 +545,11 @@ INTERACTIVE MODE:
   (no parameters)             Launch full interactive interface
 
 CONFIGURATION:
-  -SSIDFile, -s <file>        Custom SSID file (default: ssid.txt)
-  -PasswordFile, -w <file>    Custom password file (default: passwords.txt)
   -VerboseOutput, -v          Enable verbose output
+
+BUILT-IN WORDLIST:
+  Default wordlist: passwords\probable-v2-wpa-top4800.txt (4800+ common passwords)
+  Custom wordlists can be selected through the interactive Attack Mode menu
 
 HELP:
   -Help, -h                   Show detailed help information
@@ -570,8 +581,6 @@ USAGE:
     .\WifadePS.ps1 [OPTIONS]
 
 OPTIONS:
-    -SSIDFile, -s <path>        Path to SSID file (default: ssid.txt)
-    -PasswordFile, -w <path>    Path to password file (default: passwords.txt)
     -Help, -h                   Display this help information
     -IP                         Display current Wi-Fi private IP address and exit
     -Status                     Display current Wi-Fi connection status and exit
@@ -629,32 +638,32 @@ EXAMPLES:
     .\WifadePS.ps1 "2nd Floor" mypassword123
         Connect to network with spaces in SSID (quotes required for SSID with spaces)
     
-    .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
-        Run with custom SSID and password files
-    
     .\WifadePS.ps1 -VerboseOutput
-        Run with verbose output enabled
-
-CONFIGURATION FILES:
-    SSID File Format:
-        One SSID per line, plain text
-        Example:
-            MyNetwork
-            OfficeWiFi
-            HomeRouter
+        Run with verbose output for detailed information
     
-    Password File Format:
-        One password per line, plain text
-        Example:
-            password123
-            admin
-            12345678
+
+
+BUILT-IN WORDLIST:
+    Default wordlist: passwords\probable-v2-wpa-top4800.txt
+    Contains 4800+ most common Wi-Fi passwords for effective dictionary attacks
+    
+CUSTOM PASSWORD FILES:
+    Format: One password per line, plain text (.txt file)
+    Example content:
+        password123
+        12345678
+        qwerty123
+        welcome123
+    
+    Custom wordlists can be selected through Attack Mode → Custom Password File
 
 INTERACTIVE INTERFACE:
     The tool provides an interactive menu-driven interface with the following options:
     
     1. Scan Wi-Fi Networks    - Discover available Wi-Fi networks in range
-    2. Attack Mode           - Choose from various password attack strategies
+    2. Attack Mode           - Choose from password attack strategies:
+                              • Dictionary Attack (uses built-in 4800+ password wordlist)
+                              • Custom Password File (select your own wordlist)
     3. View Results          - Review previous attack results and statistics
     4. Settings              - Configure application settings and preferences
     5. Help                  - Display help information
@@ -831,9 +840,8 @@ function Main {
         
         # Build application configuration
         $appConfig = @{
-            SSIDFile     = $SSIDFile
+            VerboseMode = $VerboseOutput.IsPresent
             PasswordFile = $PasswordFile
-            VerboseMode  = $VerboseOutput.IsPresent
         }
         
         Write-Host "Starting WifadePS..." -ForegroundColor Green

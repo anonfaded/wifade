@@ -62,14 +62,13 @@ class UIManager : IManager {
             Main       = @(
                 @{ Key = "1"; Text = "Scan Wi-Fi Networks"; Action = "ScanNetworks" }
                 @{ Key = "2"; Text = "Attack Mode"; Action = "AttackMode" }
-                @{ Key = "3"; Text = "View Results"; Action = "ViewResults" }
-                @{ Key = "4"; Text = "Settings"; Action = "Settings" }
-                @{ Key = "5"; Text = "Help"; Action = "Help" }
+                @{ Key = "3"; Text = "Settings"; Action = "Settings" }
+                @{ Key = "4"; Text = "Help"; Action = "Help" }
                 @{ Key = "q"; Text = "Quit"; Action = "Quit" }
             )
             AttackMode = @(
-                @{ Key = "1"; Text = "Dictionary Attack"; Action = "DictionaryAttack" }
-                @{ Key = "2"; Text = "Custom Attack"; Action = "CustomAttack" }
+                @{ Key = "1"; Text = "Use Built-in Wordlist (4800+ common passwords)"; Action = "DictionaryAttack" }
+                @{ Key = "2"; Text = "Use Custom Password File (select your own wordlist)"; Action = "CustomPasswordFile" }
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )
             Settings   = @(
@@ -191,8 +190,14 @@ class UIManager : IManager {
         $this.ShowBanner()
         
         Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "║                              ATTACK MODE                                     ║" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "║                         WI-FI BRUTE FORCE OPTIONS                            ║" -ForegroundColor $this.ColorScheme.Border
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $this.ColorScheme.Border
+        Write-Host ""
+        
+        # Add descriptive text
+        Write-Host "Select a password source for Wi-Fi brute force attack:" -ForegroundColor $this.ColorScheme.Info
+        Write-Host "Both options will attempt to brute force the selected Wi-Fi network using passwords" -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "from either the built-in wordlist or your custom password file." -ForegroundColor $this.ColorScheme.Secondary
         Write-Host ""
         
         foreach ($option in $this.MenuOptions.AttackMode) {
@@ -203,7 +208,7 @@ class UIManager : IManager {
         }
         
         Write-Host ""
-        Write-Host "Select attack type: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "Select option: " -ForegroundColor $this.ColorScheme.Info -NoNewline
         
         return Read-Host
     }
@@ -286,6 +291,11 @@ class UIManager : IManager {
         if ($this.VerboseMode) {
             Write-Host "[VERBOSE] $message" -ForegroundColor $this.ColorScheme.Verbose
         }
+    }
+    
+    # Display debug message (alias for ShowVerbose for backward compatibility)
+    [void] ShowDebug([string]$message) {
+        $this.ShowVerbose($message)
     }
     
     # Clear the screen

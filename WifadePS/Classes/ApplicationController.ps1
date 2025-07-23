@@ -214,9 +214,8 @@ class ApplicationController {
         switch ($choice.ToLower()) {
             "1" { $this.HandleScanNetworks() }
             "2" { $this.HandleAttackMode() }
-            "3" { $this.HandleViewResults() }
-            "4" { $this.HandleSettings() }
-            "5" { $this.HandleHelp() }
+            "3" { $this.HandleSettings() }
+            "4" { $this.HandleHelp() }
             "q" { 
                 $this.IsRunning = $false
                 return
@@ -373,8 +372,8 @@ class ApplicationController {
             }
             catch {
                 $this.UIManager.ShowError("Failed to scan networks: $($_.Exception.Message)")
-                if ($this.SettingsManager.IsDebugMode()) {
-                    $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+                if ($this.SettingsManager.IsVerboseMode()) {
+                    $this.UIManager.ShowVerbose("Error details: $($_.Exception)")
                 }
                 $this.UIManager.WaitForKeyPress("Press any key to continue...")
                 return
@@ -513,7 +512,7 @@ class ApplicationController {
         }
         catch {
             $this.UIManager.ShowError("Connection attempt failed: $($_.Exception.Message)")
-            if ($this.SettingsManager.IsDebugMode()) {
+            if ($this.SettingsManager.IsVerboseMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
@@ -641,7 +640,7 @@ class ApplicationController {
         }
         catch {
             $this.UIManager.ShowError("Failed to restart Wi-Fi adapter: $($_.Exception.Message)")
-            if ($this.SettingsManager.IsDebugMode()) {
+            if ($this.SettingsManager.IsVerboseMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
@@ -768,7 +767,7 @@ class ApplicationController {
             
             switch ($choice.ToLower()) {
                 "1" { $this.HandleDictionaryAttack() }
-                "2" { $this.HandleCustomAttack() }
+                "2" { $this.HandleCustomPasswordFile() }
                 "b" { return }
                 default {
                     $this.UIManager.ShowWarning("Invalid option. Please try again.")
@@ -873,7 +872,7 @@ class ApplicationController {
         }
         catch {
             $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
-            if ($this.SettingsManager.IsDebugMode()) {
+            if ($this.SettingsManager.IsVerboseMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
@@ -885,17 +884,85 @@ class ApplicationController {
     
 
     
-    # Handle custom attack
-    [void] HandleCustomAttack() {
+    # Handle custom password file attack
+    [void] HandleCustomPasswordFile() {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
         Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                            CUSTOM ATTACK                                     ║" -ForegroundColor Cyan
+        Write-Host "║                         CUSTOM PASSWORD FILE                                 ║" -ForegroundColor Cyan
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
         
         try {
+            # Show instructions for custom password file
+            $this.UIManager.ShowInfo("Custom Password File Attack")
+            Write-Host ""
+            Write-Host "Instructions:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+            Write-Host "• Provide a text file containing passwords (one password per line)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• File should be in plain text format (.txt)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Each password should be on a separate line" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Example file content:" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "    password123" -ForegroundColor $this.UIManager.ColorScheme.Info
+            Write-Host "    admin" -ForegroundColor $this.UIManager.ColorScheme.Info
+            Write-Host "    12345678" -ForegroundColor $this.UIManager.ColorScheme.Info
+            Write-Host ""
+            
+            # Get custom password file path with detailed instructions
+            Write-Host "Password File Path Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+            Write-Host "• Type 'browse' to open file picker dialog" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Enter full path: C:\Users\YourName\Documents\passwords.txt" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Enter relative path: passwords\my-wordlist.txt" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Press Enter to cancel" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host ""
+            
+            $userInput = $this.UIManager.GetUserInput("Enter password file path or 'browse' for file picker", "", "")
+            
+            if ([string]::IsNullOrWhiteSpace($userInput)) {
+                $this.UIManager.ShowInfo("Custom password file attack cancelled.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            $customPasswordFile = ""
+            
+            # Check if user wants to browse for file
+            if ($userInput.ToLower() -eq "browse") {
+                $this.UIManager.ShowInfo("Opening file picker dialog...")
+                try {
+                    $customPasswordFile = $this.ShowFilePickerDialog()
+                    
+                    if ([string]::IsNullOrWhiteSpace($customPasswordFile)) {
+                        $this.UIManager.ShowInfo("No file selected. Custom password file attack cancelled.")
+                        $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                        return
+                    }
+                }
+                catch {
+                    $this.UIManager.ShowError("Error opening file picker: $($_.Exception.Message)")
+                    $this.UIManager.ShowInfo("Please enter the file path manually.")
+                    $customPasswordFile = $this.UIManager.GetUserInput("Enter password file path", "", "")
+                    
+                    if ([string]::IsNullOrWhiteSpace($customPasswordFile)) {
+                        $this.UIManager.ShowInfo("Custom password file attack cancelled.")
+                        $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                        return
+                    }
+                }
+                
+                $this.UIManager.ShowSuccess("Selected file: $customPasswordFile")
+            }
+            else {
+                $customPasswordFile = $userInput.Trim()
+            }
+            
+            # Validate password file exists
+            if (-not (Test-Path $customPasswordFile)) {
+                $this.UIManager.ShowError("Password file not found: $customPasswordFile")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
             # Initialize managers if needed
             $this.InitializeAttackManagers()
             
@@ -962,7 +1029,7 @@ class ApplicationController {
         }
         catch {
             $this.UIManager.ShowError("Custom attack failed: $($_.Exception.Message)")
-            if ($this.SettingsManager.IsDebugMode()) {
+            if ($this.SettingsManager.IsVerboseMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
@@ -1005,7 +1072,12 @@ class ApplicationController {
     [void] HandleToggleVerbose() {
         $currentState = $this.SettingsManager.IsVerboseMode()
         $newVerboseState = $currentState -eq $false
+        
+        # Update the setting in SettingsManager
         $this.SettingsManager.SetVerboseMode($newVerboseState)
+        
+        # Also update the UIManager's VerboseMode property to keep them in sync
+        $this.UIManager.VerboseMode = $newVerboseState
         
         $newState = "disabled"
         if ($newVerboseState -eq $true) {
@@ -1015,7 +1087,7 @@ class ApplicationController {
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
-
+    # Handle help
     
     # Handle help
     [void] HandleHelp() {
@@ -1062,6 +1134,42 @@ For more information, visit: https://github.com/wifade/wifade
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
+    # Show file picker dialog for selecting password files
+    [string] ShowFilePickerDialog() {
+        try {
+            # Try to use Windows Forms file dialog
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            
+            $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
+            $fileDialog.Title = "Select Password File"
+            $fileDialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
+            $fileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($PWD.Path)
+            $fileDialog.Multiselect = $false
+            
+            $result = $fileDialog.ShowDialog()
+            
+            if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+                return $fileDialog.FileName
+            }
+            else {
+                return ""
+            }
+        }
+        catch {
+            # Fallback if Windows Forms is not available
+            $this.UIManager.ShowWarning("File picker not available. Please enter the file path manually.")
+            Write-Host ""
+            Write-Host "File Path Examples:" -ForegroundColor $this.UIManager.ColorScheme.Info
+            Write-Host "• Full path: C:\Users\$env:USERNAME\Documents\passwords.txt" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Relative path: passwords\my-wordlist.txt" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "• Current directory: .\my-passwords.txt" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host ""
+            
+            $manualPath = $this.UIManager.GetUserInput("Enter password file path", "", "")
+            return $manualPath
+        }
+    }
+    
     # Initialize attack managers (NetworkManager and PasswordManager)
     [void] InitializeAttackManagers() {
         try {
@@ -1080,13 +1188,57 @@ For more information, visit: https://github.com/wifade/wifade
             # Initialize PasswordManager if not already done
             if ($null -eq $this.PasswordManager) {
                 $this.UIManager.ShowInfo("Initializing Password Manager...")
+                # Get the script root directory (WifadePS/Classes)
+                $scriptRoot = $PSScriptRoot
+                
+                # Get the WifadePS directory (parent of Classes)
+                $wifadePSDir = Split-Path -Parent $scriptRoot
+                
+                # Get the project root directory (parent of WifadePS)
+                $projectRoot = Split-Path -Parent $wifadePSDir
+                
+                # Default password file path
+                $defaultPasswordFile = "passwords\probable-v2-wpa-top4800.txt"
+                
+                # Determine the password file path
+                $passwordFilePath = ""
+                
+                # If a custom password file is specified in AppConfig, use that
+                if ($this.AppConfig.PasswordFile) {
+                    $this.UIManager.ShowInfo("Password file specified in config: $($this.AppConfig.PasswordFile)")
+                    
+                    # Check if it's a relative path
+                    if (-not [System.IO.Path]::IsPathRooted($this.AppConfig.PasswordFile)) {
+                        # Convert relative path to absolute
+                        $passwordFilePath = Join-Path -Path $projectRoot -ChildPath $this.AppConfig.PasswordFile
+                    }
+                    else {
+                        # Use the absolute path as is
+                        $passwordFilePath = $this.AppConfig.PasswordFile
+                    }
+                }
+                else {
+                    # Use default password file
+                    $passwordFilePath = Join-Path -Path $projectRoot -ChildPath $defaultPasswordFile
+                    $this.UIManager.ShowInfo("Using default password file: $passwordFilePath")
+                }
+                
+                # Verify the password file exists
+                if (-not (Test-Path $passwordFilePath)) {
+                    $this.UIManager.ShowError("Password file not found at: $passwordFilePath")
+                    throw "Required password file not found: $passwordFilePath"
+                }
+                else {
+                    $this.UIManager.ShowInfo("Using password file: $passwordFilePath")
+                }
+                
                 $passwordConfig = @{
-                    PasswordFilePath = $this.AppConfig.PasswordFile
-                    RateLimitEnabled = $this.AppConfig.StealthMode
-                    MinDelayMs       = $this.AppConfig.RateLimit
-                    MaxDelayMs       = $this.AppConfig.RateLimit * 2
+                    PasswordFilePath = $passwordFilePath
+                    RateLimitEnabled = $this.AppConfig.StealthMode -eq $true
+                    MinDelayMs       = if ($this.AppConfig.RateLimit) { $this.AppConfig.RateLimit } else { 1000 }
+                    MaxDelayMs       = if ($this.AppConfig.RateLimit) { $this.AppConfig.RateLimit * 2 } else { 2000 }
                     AttackStrategy   = [AttackStrategy]::Dictionary
-                    StealthMode      = $this.AppConfig.StealthMode
+                    StealthMode      = $this.AppConfig.StealthMode -eq $true
                 }
                 $this.PasswordManager = New-Object PasswordManager -ArgumentList $passwordConfig
                 $this.PasswordManager.Initialize($passwordConfig)
@@ -1150,11 +1302,6 @@ For more information, visit: https://github.com/wifade/wifade
             
             $this.UIManager.ShowInfo("Target: $($targetNetwork.SSID) ($($targetNetwork.EncryptionType))")
             $this.UIManager.ShowInfo("Total passwords to try: $maxAttempts")
-            $rateLimitingStatus = 'Disabled (1000ms)'
-            if ($this.AppConfig.StealthMode) {
-                $rateLimitingStatus = 'Enabled (' + $this.AppConfig.RateLimit + 'ms)'
-            }
-            $this.UIManager.ShowInfo("Rate limiting: $rateLimitingStatus")
             Write-Host ""
             
             # Store original connection for restoration if needed
@@ -1172,7 +1319,7 @@ For more information, visit: https://github.com/wifade/wifade
                     
                     # Skip passwords that are too short for WPA/WPA2 (minimum 8 characters)
                     if ($targetNetwork.EncryptionType -match "WPA|WPA2" -and $password.Length -lt 8) {
-                        if ($this.SettingsManager.IsDebugMode()) {
+                        if ($this.SettingsManager.IsVerboseMode()) {
                             $this.UIManager.ShowDebug("Skipping password '$password' - too short for WPA/WPA2 (minimum 8 characters)")
                         }
                         continue
@@ -1180,7 +1327,7 @@ For more information, visit: https://github.com/wifade/wifade
                     
                     # Skip passwords that are too short for WPA/WPA2 (minimum 8 characters)
                     if ($targetNetwork.EncryptionType -ne "Open" -and $password.Length -lt 8) {
-                        if ($this.SettingsManager.IsDebugMode()) {
+                        if ($this.SettingsManager.IsVerboseMode()) {
                             $this.UIManager.ShowDebug("Skipping password '$password' - too short for WPA/WPA2 (minimum 8 characters)")
                         }
                         continue
@@ -1204,14 +1351,8 @@ For more information, visit: https://github.com/wifade/wifade
                     $progressMessage = "Trying: $password (ETA: $($estimatedTimeRemaining.ToString('hh\:mm\:ss')))"
                     $this.UIManager.ShowProgress($attemptCount, $maxAttempts, $progressMessage)
                     
-                    # Apply rate limiting for realistic attack timing
-                    if ($this.AppConfig.StealthMode) {
-                        $this.PasswordManager.ImplementRateLimiting()
-                    }
-                    else {
-                        # Add minimum delay between attempts for stability
-                        Start-Sleep -Milliseconds 1000
-                    }
+                    # Add minimum delay between attempts for stability
+                    Start-Sleep -Milliseconds 1000
                     
                     # Attempt real Wi-Fi connection
                     $connectionResult = $this.AttemptWiFiConnection($targetNetwork.SSID, $password)
@@ -1229,13 +1370,11 @@ For more information, visit: https://github.com/wifade/wifade
                         $this.UIManager.ShowSuccess("SUCCESS! Connected to '$($targetNetwork.SSID)' with password: '$password'")
                         $this.UIManager.ShowSuccess("Attack completed in $($totalTime.ToString('hh\:mm\:ss')) after $attemptCount attempts")
                         
-                        # Auto-save successful password
-                        # TODO: Implement result saving functionality
-                        $this.UIManager.ShowInfo("Password automatically saved to results")
+
                         break
                     }
                     else {
-                        if ($this.SettingsManager.IsDebugMode()) {
+                        if ($this.SettingsManager.IsVerboseMode()) {
                             $this.UIManager.ShowDebug("Failed: $password - $($connectionResult.ErrorMessage)")
                         }
                         
@@ -1266,7 +1405,7 @@ For more information, visit: https://github.com/wifade/wifade
                 catch {
                     Write-Host ""
                     $this.UIManager.ShowError("Error during attempt $attemptCount : $($_.Exception.Message)")
-                    if ($this.SettingsManager.IsDebugMode()) {
+                    if ($this.SettingsManager.IsVerboseMode()) {
                         $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
                     }
                     
@@ -1330,7 +1469,7 @@ For more information, visit: https://github.com/wifade/wifade
         $connectSuccess = $false
         
         try {
-            $debugMode = $this.SettingsManager.IsDebugMode()
+            $debugMode = $this.SettingsManager.IsVerboseMode()
         }
         catch {
             $debugMode = $false
