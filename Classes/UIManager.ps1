@@ -143,19 +143,19 @@ class UIManager : IManager {
         $this.ClearScreen()
         
         $banner = @"
-            
-            █     █░ ██▓  █████▒▄▄▄      ▓█████▄ ▓█████ 
-            ▓█░ █ ░█░▓██▒▓██   ▒▒████▄    ▒██▀ ██▌▓█   ▀ 
-            ▒█░ █ ░█ ▒██▒▒████ ░▒██  ▀█▄  ░██   █▌▒███   
-            ░█░ █ ░█ ░██░░▓█▒  ░░██▄▄▄▄██ ░▓█▄   ▌▒▓█  ▄ 
-            ░░██▒██▓ ░██░░▒█░    ▓█   ▓██▒░▒████▓ ░▒████▒
-            ░ ▓░▒ ▒  ░▓   ▒ ░    ▒▒   ▓▒█░ ▒▒▓  ▒ ░░ ▒░ ░
-            ▒ ░ ░   ▒ ░ ░       ▒   ▒▒ ░ ░ ▒  ▒  ░ ░  ░
-            ░   ░   ▒ ░ ░ ░     ░   ▒    ░ ░  ░    ░   
-                ░     ░               ░  ░   ░       ░  ░
-                                            ░        
-                                            
-                █▓▒­░⡷⠂ 𝒫𝓇𝑜𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
+    
+    █     █░ ██▓  █████▒▄▄▄      ▓█████▄ ▓█████ 
+    ▓█░ █ ░█░▓██▒▓██   ▒▒████▄    ▒██▀ ██▌▓█   ▀ 
+    ▒█░ █ ░█ ▒██▒▒████ ░▒██  ▀█▄  ░██   █▌▒███   
+    ░█░ █ ░█ ░██░░▓█▒  ░░██▄▄▄▄██ ░▓█▄   ▌▒▓█  ▄ 
+    ░░██▒██▓ ░██░░▒█░    ▓█   ▓██▒░▒████▓ ░▒████▒
+    ░ ▓░▒ ▒  ░▓   ▒ ░    ▒▒   ▓▒█░ ▒▒▓  ▒ ░░ ▒░ ░
+    ▒ ░ ░   ▒ ░ ░       ▒   ▒▒ ░ ░ ▒  ▒  ░ ░  ░
+    ░   ░   ▒ ░ ░ ░     ░   ▒    ░ ░  ░    ░   
+        ░     ░               ░  ░   ░       ░  ░
+                                    ░        
+                                    
+        █▓▒­░⡷⠂ 𝒫𝓇𝑜𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
 "@
         
         Write-Host $banner -ForegroundColor Red
@@ -166,20 +166,29 @@ class UIManager : IManager {
     [string] ShowMainMenu() {
         $this.ShowBanner()
         
-        Write-Host "╭──📡 WIFADE ──────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "│                                MAIN MENU                                     │" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──📡 WIFADE ──────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                    MAIN MENU                     │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
+        
+        Write-Host "╭─ 📜 Available Options" -ForegroundColor $this.ColorScheme.Border
+        
+        # Calculate the maximum key length for proper padding
+        $maxKeyLength = ($this.MenuOptions.Main | ForEach-Object { $_.Key.Length } | Measure-Object -Maximum).Maximum
+        $paddingLength = $maxKeyLength + 1  # Add some extra space
         
         foreach ($option in $this.MenuOptions.Main) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "  [$($option.Key)]" -ForegroundColor $keyColor -NoNewline
-            Write-Host " $($option.Text)" -ForegroundColor $textColor
+            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
+            Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "$($option.Text)" -ForegroundColor $textColor
         }
         
-        Write-Host ""
-        Write-Host "Select an option: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "Enter option:" -ForegroundColor $this.ColorScheme.Info
+        Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
         
         return Read-Host
     }
@@ -189,9 +198,9 @@ class UIManager : IManager {
         $this.ClearScreen()
         $this.ShowBanner()
         
-        Write-Host "╭──💀 ATTACK MODE ────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "│                         WI-FI BRUTE FORCE OPTIONS                            │" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──💀 ATTACK MODE ─────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│            WI-FI BRUTE FORCE OPTIONS             │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
         # Add descriptive text
@@ -200,15 +209,24 @@ class UIManager : IManager {
         Write-Host "from either the built-in wordlist or your custom password file." -ForegroundColor $this.ColorScheme.Secondary
         Write-Host ""
         
+        Write-Host "╭─ 🔑 Password Sources" -ForegroundColor $this.ColorScheme.Border
+        
+        # Calculate the maximum key length for proper padding
+        $maxKeyLength = ($this.MenuOptions.AttackMode | ForEach-Object { $_.Key.Length } | Measure-Object -Maximum).Maximum
+        $paddingLength = $maxKeyLength + 2  # Add some extra space
+        
         foreach ($option in $this.MenuOptions.AttackMode) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "  [$($option.Key)]" -ForegroundColor $keyColor -NoNewline
-            Write-Host " $($option.Text)" -ForegroundColor $textColor
+            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
+            Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "$($option.Text)" -ForegroundColor $textColor
         }
         
-        Write-Host ""
-        Write-Host "Select option: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "Enter option:" -ForegroundColor $this.ColorScheme.Info
+        Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
         
         return Read-Host
     }
@@ -218,28 +236,39 @@ class UIManager : IManager {
         $this.ClearScreen()
         $this.ShowBanner()
         
-        Write-Host "╭──⚙️  SETTINGS ─────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "│                                SETTINGS                                      │" -ForegroundColor $this.ColorScheme.Border
-        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭──⚙️  SETTINGS ───────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                    SETTINGS                      │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
         # Show current settings
-        Write-Host "Current Settings:" -ForegroundColor $this.ColorScheme.Info
-        Write-Host "  Verbose Mode: " -ForegroundColor $this.ColorScheme.Secondary -NoNewline
+        Write-Host "╭─ 🔧 Current Configuration" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "Verbose Mode: " -ForegroundColor $this.ColorScheme.Info -NoNewline
         $verboseStatus = if ($this.VerboseMode) { "ON" } else { "OFF" }
         $verboseColor = if ($this.VerboseMode) { $this.ColorScheme.Success } else { $this.ColorScheme.Warning }
         Write-Host $verboseStatus -ForegroundColor $verboseColor
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
+        
+        Write-Host "╭─ ⚙️ Available Options" -ForegroundColor $this.ColorScheme.Border
+        
+        # Calculate the maximum key length for proper padding
+        $maxKeyLength = ($this.MenuOptions.Settings | ForEach-Object { $_.Key.Length } | Measure-Object -Maximum).Maximum
+        $paddingLength = $maxKeyLength + 2  # Add some extra space
         
         foreach ($option in $this.MenuOptions.Settings) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "  [$($option.Key)]" -ForegroundColor $keyColor -NoNewline
-            Write-Host " $($option.Text)" -ForegroundColor $textColor
+            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
+            Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "$($option.Text)" -ForegroundColor $textColor
         }
         
-        Write-Host ""
-        Write-Host "Select an option: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "Enter option:" -ForegroundColor $this.ColorScheme.Info
+        Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
         
         return Read-Host
     }
@@ -309,19 +338,21 @@ class UIManager : IManager {
         try {
             $consoleHost = Get-Host
             Write-Host $message -ForegroundColor $this.ColorScheme.Info
+            Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
             $null = $consoleHost.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         }
         catch {
             # Fallback to Read-Host if ReadKey is not available
-            $null = Read-Host $message
+            Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
+            $null = Read-Host
         }
     }
     
     # Get user confirmation
     [bool] GetConfirmation([string]$message, [bool]$defaultYes = $false) {
         $prompt = if ($defaultYes) { " (Y/n)" } else { " (y/N)" }
-        Write-Host "$message$prompt" -ForegroundColor $this.ColorScheme.Info -NoNewline
-        Write-Host ": " -NoNewline
+        Write-Host "$message$prompt" -ForegroundColor $this.ColorScheme.Info
+        Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
         
         $response = Read-Host
         
@@ -335,8 +366,8 @@ class UIManager : IManager {
     # Get user input with validation
     [string] GetUserInput([string]$prompt, [string]$validationPattern = "", [string]$errorMessage = "Invalid input. Please try again.") {
         do {
-            Write-Host $prompt -ForegroundColor $this.ColorScheme.Info -NoNewline
-            Write-Host ": " -NoNewline
+            Write-Host $prompt -ForegroundColor $this.ColorScheme.Info
+            Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
             $input = Read-Host
             
             if ([string]::IsNullOrWhiteSpace($validationPattern) -or $input -match $validationPattern) {
@@ -357,13 +388,23 @@ class UIManager : IManager {
         }
         
         Write-Host ""
-        Write-Host "Available Networks:" -ForegroundColor $this.ColorScheme.Primary
-        Write-Host ("=" * 80) -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╭─ 📶 Available Networks" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│" -ForegroundColor $this.ColorScheme.Border
         
-        $header = "  {0,-3} {1,-25} {2,-10} {3,-15} {4,-10}" -f "No.", "SSID", "Signal", "Encryption", "Status"
-        Write-Host $header -ForegroundColor $this.ColorScheme.Info
-        Write-Host "  " + ("-" * 75) -ForegroundColor $this.ColorScheme.Border
+        # Table header
+        Write-Host "│ " -NoNewline -ForegroundColor $this.ColorScheme.Border
+        Write-Host "#  " -NoNewline -ForegroundColor $this.ColorScheme.Info
+        Write-Host "SSID                     " -NoNewline -ForegroundColor $this.ColorScheme.Info
+        Write-Host "Signal     " -NoNewline -ForegroundColor $this.ColorScheme.Info
+        Write-Host "Encryption      " -NoNewline -ForegroundColor $this.ColorScheme.Info
+        Write-Host "Status" -ForegroundColor $this.ColorScheme.Info
         
+        # Table separator
+        Write-Host "│ " -NoNewline -ForegroundColor $this.ColorScheme.Border
+        Write-Host "─" -NoNewline -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor $this.ColorScheme.Secondary
+        
+        # Table content
         for ($i = 0; $i -lt $networks.Count; $i++) {
             $network = $networks[$i]
             $signalBar = $this.GetSignalStrengthBar($network.SignalStrength)
@@ -371,10 +412,16 @@ class UIManager : IManager {
             
             $status = if ($network.IsConnectable) { "Available" } else { "Unavailable" }
             
-            $line = "  {0,-3} {1,-25} {2,-10} {3,-15} {4,-10}" -f ($i + 1), $network.SSID, $signalText, $network.EncryptionType, $status
-            Write-Host $line -ForegroundColor $this.ColorScheme.Secondary
+            Write-Host "│ " -NoNewline -ForegroundColor $this.ColorScheme.Border
+            Write-Host ("{0,-3}" -f ($i + 1)) -NoNewline -ForegroundColor $this.ColorScheme.Highlight
+            Write-Host ("{0,-25}" -f $network.SSID) -NoNewline -ForegroundColor $this.ColorScheme.Secondary
+            Write-Host ("{0,-10}" -f $signalText) -NoNewline -ForegroundColor $this.ColorScheme.Secondary
+            Write-Host ("{0,-15}" -f $network.EncryptionType) -NoNewline -ForegroundColor $this.ColorScheme.Secondary
+            Write-Host ("{0,-10}" -f $status) -ForegroundColor $this.ColorScheme.Secondary
         }
         
+        # Table bottom border
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
     }
     

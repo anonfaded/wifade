@@ -157,16 +157,16 @@ class ApplicationController {
         $this.UIManager.ShowBanner()
         
         $warningText = @"
-╭──⚠️  WARNING ──────────────────────────────────────────────────────────────────╮
-│                            ETHICAL USAGE WARNING                             │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  • This tool is for EDUCATIONAL and ETHICAL SECURITY TESTING only           │
-│  • You must OWN the networks or have EXPLICIT PERMISSION to test them       │
-│  • Unauthorized network access may be ILLEGAL in your jurisdiction          │
-│  • Users are solely responsible for legal compliance                        │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+╭──⚠️  WARNING ──────────────────────────────────────╮
+│          ETHICAL USAGE WARNING           │
+├────────────────────────────────────────────────────┤
+│                                          │
+│  • For EDUCATIONAL and ETHICAL use only  │
+│  • You must OWN or have PERMISSION       │
+│  • Unauthorized access may be ILLEGAL    │
+│  • Users are responsible for compliance  │
+│                                          │
+╰────────────────────────────────────────────────────╯
 "@
         
         # Display the warning text with the border in red
@@ -228,9 +228,9 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "│                            WI-FI MANAGER                                     │" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                  WI-FI MANAGER                   │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             try {
@@ -284,9 +284,9 @@ class ApplicationController {
                     $this.UIManager.ClearScreen()
                     $this.UIManager.ShowBanner()
                     
-                    Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-                    Write-Host "│                            WI-FI MANAGER                                     │" -ForegroundColor $this.UIManager.ColorScheme.Border
-                    Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "╭──🔍 NETWORK SCANNER ─────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "│                  WI-FI MANAGER                   │" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
                     Write-Host ""
                     
                     # Show current connection status
@@ -309,13 +309,32 @@ class ApplicationController {
                     $this.UIManager.ShowNetworkList($networks)
                     
                     Write-Host ""
-                    Write-Host "Wi-Fi Manager Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
-                    Write-Host "  [1-$($networks.Count)] Connect to network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "  [r] Rescan networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "  [w] Restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "  [d] Disconnect from current network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "  [s] Show current connection status" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "  [b] Back to main menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "╭─ 🔧 Available Options" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "1-$($networks.Count)") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Connect to network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "r") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Rescan networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "w") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "d") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Disconnect from current network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "s") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Show current connection status" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-5}" -f "b") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Back to main menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                     Write-Host ""
                     
                     $choice = $this.UIManager.GetUserInput("Select an option", "^(\d+|[rRwWdDsSbB])$", "Please enter a valid option")
@@ -382,17 +401,27 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╭──🔌 CONNECTION ────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "│                           CONNECT TO NETWORK                                 │" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╭──🔌 CONNECTION ──────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                CONNECT TO NETWORK                │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             # Show network details
-            $this.UIManager.ShowInfo("Network Details:")
-            Write-Host "  SSID: $($network.SSID)" -ForegroundColor White
-            Write-Host "  Encryption: $($network.EncryptionType)" -ForegroundColor White
-            Write-Host "  Signal Strength: $($network.SignalStrength)%" -ForegroundColor White
-            Write-Host "  Authentication: $($network.AuthenticationMethod)" -ForegroundColor White
+            Write-Host "╭─ 📶 Network Details" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "SSID: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host "$($network.SSID)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "Encryption: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host "$($network.EncryptionType)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "Signal Strength: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host "$($network.SignalStrength)%" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "Authentication: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host "$($network.AuthenticationMethod)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             # Check if network is open (no password required)
@@ -440,13 +469,23 @@ class ApplicationController {
             if ($currentConnection -and $currentConnection.SSID -eq $ssid) {
                 $this.UIManager.ShowSuccess("Already connected to '$ssid'!")
                 Write-Host ""
-                $this.UIManager.ShowInfo("Connection Details:")
-                Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
-                Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
-                Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                Write-Host "╭─ 📶 Connection Details" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "SSID: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host "$($currentConnection.SSID)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Signal: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host "$($currentConnection.SignalStrength)%" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Encryption: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host "$($currentConnection.EncryptionType)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 if ($currentConnection.Channel -gt 0) {
-                    Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Channel: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host "$($currentConnection.Channel)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 }
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                 $this.UIManager.WaitForKeyPress("Press any key to continue...")
                 return
             }
@@ -463,24 +502,36 @@ class ApplicationController {
                 $currentConnection = $this.NetworkManager.GetCurrentConnection()
                 if ($currentConnection) {
                     Write-Host ""
-                    $this.UIManager.ShowInfo("Connection Details:")
-                    Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
-                    Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
-                    Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                    Write-Host "╭─ 📶 Connection Details" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "│" -ForegroundColor $this.UIManager.ColorScheme.Border
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "SSID: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host "$($currentConnection.SSID)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Signal: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host "$($currentConnection.SignalStrength)%" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "Encryption: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host "$($currentConnection.EncryptionType)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     if ($currentConnection.Channel -gt 0) {
-                        Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                        Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                        Write-Host "Channel: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                        Write-Host "$($currentConnection.Channel)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     }
                     
                     # Try to get IP information
                     try {
                         $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
                         if ($ipConfig -and $ipConfig.IPv4Address) {
-                            Write-Host "  Private IP: $($ipConfig.IPv4Address.IPAddress)" -ForegroundColor White
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "Private IP: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host "$($ipConfig.IPv4Address.IPAddress)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                         }
                     }
                     catch {
                         # Ignore IP retrieval errors
                     }
+                    Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                 }
             }
             else {
@@ -647,9 +698,9 @@ class ApplicationController {
             $this.UIManager.ClearScreen()
             $this.UIManager.ShowBanner()
             
-            Write-Host "╭──📊 STATUS ───────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "│                         CONNECTION STATUS                                    │" -ForegroundColor $this.UIManager.ColorScheme.Border
-            Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╭──📊 STATUS ──────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│                CONNECTION STATUS                 │" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
             Write-Host ""
             
             $currentConnection = $this.NetworkManager.GetCurrentConnection()
@@ -657,22 +708,50 @@ class ApplicationController {
             if ($currentConnection) {
                 $this.UIManager.ShowSuccess("Connected to Wi-Fi Network")
                 Write-Host ""
-                Write-Host "Network Information:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                Write-Host "╭─ 📶 Network Information" -ForegroundColor $this.UIManager.ColorScheme.Border
                 if ($currentConnection.DisplayName -and $currentConnection.DisplayName -ne $currentConnection.SSID) {
-                    Write-Host "  Network Name: $($currentConnection.DisplayName)" -ForegroundColor White
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-16}" -f "Network Name") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "$($currentConnection.DisplayName)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 }
-                Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
-                Write-Host "  Signal Strength: $($currentConnection.SignalStrength)%" -ForegroundColor White
-                Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
-                Write-Host "  Authentication: $($currentConnection.AuthenticationMethod)" -ForegroundColor White
-                Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
-                Write-Host "  BSSID: $($currentConnection.BSSID)" -ForegroundColor White
-                Write-Host "  Network Type: $($currentConnection.NetworkType)" -ForegroundColor White
-                Write-Host "  Last Seen: $($currentConnection.LastSeen.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor White
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "SSID") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.SSID)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Signal Strength") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.SignalStrength)%" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Encryption") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.EncryptionType)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Authentication") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.AuthenticationMethod)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Channel") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.Channel)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "BSSID") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.BSSID)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Network Type") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.NetworkType)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host ("{0,-16}" -f "Last Seen") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "$($currentConnection.LastSeen.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                 
                 # Get IP configuration information
                 Write-Host ""
-                Write-Host "IP Configuration:" -ForegroundColor $this.UIManager.ColorScheme.Primary
+                Write-Host "╭─ 🌐 IP Configuration" -ForegroundColor $this.UIManager.ColorScheme.Border
                 try {
                     # Get Wi-Fi adapter IP configuration
                     $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.NetProfile.Name -eq $currentConnection.SSID } | Select-Object -First 1
@@ -680,46 +759,70 @@ class ApplicationController {
                     if ($ipConfig) {
                         # Private IP Address
                         if ($ipConfig.IPv4Address) {
-                            Write-Host "  Private IP: $($ipConfig.IPv4Address.IPAddress)" -ForegroundColor White
-                            Write-Host "  Subnet Mask: $($ipConfig.IPv4Address.PrefixLength) bits" -ForegroundColor White
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host ("{0,-16}" -f "Private IP") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "$($ipConfig.IPv4Address.IPAddress)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                            
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host ("{0,-16}" -f "Subnet Mask") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "$($ipConfig.IPv4Address.PrefixLength) bits" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                         }
                         
                         # Default Gateway
                         if ($ipConfig.IPv4DefaultGateway) {
-                            Write-Host "  Default Gateway: $($ipConfig.IPv4DefaultGateway.NextHop)" -ForegroundColor White
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host ("{0,-16}" -f "Default Gateway") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "$($ipConfig.IPv4DefaultGateway.NextHop)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                         }
                         
                         # DNS Servers
                         if ($ipConfig.DNSServer) {
                             $dnsServers = $ipConfig.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | Select-Object -ExpandProperty ServerAddresses
                             if ($dnsServers) {
-                                Write-Host "  DNS Servers: $($dnsServers -join ', ')" -ForegroundColor White
+                                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                                Write-Host ("{0,-16}" -f "DNS Servers") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                                Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                                Write-Host "$($dnsServers -join ', ')" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                             }
                         }
                         
                         # Get Public IP Address
-                        Write-Host "  Public IP: " -NoNewline -ForegroundColor White
+                        Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                        Write-Host ("{0,-16}" -f "Public IP") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                        Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                         try {
                             $publicIP = (Invoke-RestMethod -Uri "https://api.ipify.org" -TimeoutSec 5 -ErrorAction Stop).Trim()
-                            Write-Host "$publicIP" -ForegroundColor Green
+                            Write-Host "$publicIP" -ForegroundColor $this.UIManager.ColorScheme.Success
                         }
                         catch {
-                            Write-Host "[Unable to retrieve]" -ForegroundColor Gray
+                            Write-Host "[Unable to retrieve at the moment :(]" -ForegroundColor $this.UIManager.ColorScheme.Verbose
                         }
                         
                         # Network adapter status
                         $adapter = Get-NetAdapter -InterfaceAlias "Wi-Fi*" | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
                         if ($adapter) {
-                            Write-Host "  Link Speed: $($adapter.LinkSpeed)" -ForegroundColor White
-                            Write-Host "  MAC Address: $($adapter.MacAddress)" -ForegroundColor White
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host ("{0,-16}" -f "Link Speed") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "$($adapter.LinkSpeed)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                            
+                            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host ("{0,-16}" -f "MAC Address") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                            Write-Host "$($adapter.MacAddress)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                         }
                     }
                     else {
-                        Write-Host "  [IP configuration not available]" -ForegroundColor Gray
+                        Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                        Write-Host "[IP configuration not available]" -ForegroundColor $this.UIManager.ColorScheme.Verbose
                     }
                 }
                 catch {
-                    Write-Host "  [Error retrieving IP information: $($_.Exception.Message)]" -ForegroundColor Red
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "[Error retrieving IP information: $($_.Exception.Message)]" -ForegroundColor $this.UIManager.ColorScheme.Error
                 }
                 
                 # Try to get saved password using both SSID and DisplayName
@@ -729,23 +832,70 @@ class ApplicationController {
                 }
                 
                 if (-not [string]::IsNullOrWhiteSpace($savedPassword)) {
-                    Write-Host "  Saved Password: $savedPassword" -ForegroundColor White
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-16}" -f "Saved Password") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "$savedPassword" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                 }
                 else {
-                    Write-Host "  Saved Password: [Not available or open network]" -ForegroundColor Gray
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host ("{0,-16}" -f "Saved Password") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+                    Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "[Not available or open network]" -ForegroundColor $this.UIManager.ColorScheme.Verbose
                 }
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
             }
             else {
                 $this.UIManager.ShowWarning("Not connected to any Wi-Fi network")
                 Write-Host ""
-                $this.UIManager.ShowInfo("Use the Wi-Fi Manager to scan and connect to available networks.")
+                Write-Host "╭─ ℹ️ Connection Status" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "No active Wi-Fi connection detected" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Use the Wi-Fi Manager to scan and connect to available networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
             }
             
             # Show adapter information
             Write-Host ""
-            Write-Host "Adapter Information:" -ForegroundColor $this.UIManager.ColorScheme.Primary
-            $adapterSummary = $this.NetworkManager.GetAdapterSummary()
-            Write-Host $adapterSummary -ForegroundColor White
+            Write-Host "╭─ 📡 Adapter Information" -ForegroundColor $this.UIManager.ColorScheme.Border
+            Write-Host "│" -ForegroundColor $this.UIManager.ColorScheme.Border
+            
+            # Get adapter status information
+            if ($this.NetworkManager.PrimaryAdapter) {
+                $primaryAdapterName = $this.NetworkManager.PrimaryAdapter.Name
+            } else {
+                $primaryAdapterName = "None"
+            }
+            
+            # Display adapter information with consistent formatting
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-19}" -f "Primary Adapter") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "$primaryAdapterName" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-19}" -f "Total Adapters") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "$($this.NetworkManager.AdapterCache.Count)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-19}" -f "Connection Status") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "$($this.NetworkManager.ConnectionStatus)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-19}" -f "Last Scan") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "$($this.NetworkManager.LastAdapterScan.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            
+            Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host ("{0,-19}" -f "Available Networks") -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
+            Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+            Write-Host "$($this.NetworkManager.AvailableNetworks.Count)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            
+            Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
             
         }
         catch {
@@ -788,9 +938,9 @@ class ApplicationController {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
-        Write-Host "╭──💀 ATTACK ───────────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-        Write-Host "│                         WI-FI BRUTE FORCE ATTACK                             │" -ForegroundColor $this.UIManager.ColorScheme.Border
-        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╭──💀 ATTACK ──────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "│             WI-FI BRUTE FORCE ATTACK             │" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
         Write-Host ""
         
         try {
@@ -816,19 +966,24 @@ class ApplicationController {
                 $this.UIManager.ShowNetworkList($networks)
                 
                 # Display options in a consistent style
-                Write-Host "Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[1-$($networks.Count)]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[r]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[w]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[b]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to go back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╭─ 🎯 Available Options" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "1-$($networks.Count)" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "r" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "w" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "b" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                 Write-Host ""
                 
                 $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRwWbB])$", "Please enter a valid option")
@@ -914,9 +1069,9 @@ class ApplicationController {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
-        Write-Host "╭──📁 CUSTOM FILE ───────────────────────────────────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
-        Write-Host "│                         CUSTOM PASSWORD FILE                                 │" -ForegroundColor $this.UIManager.ColorScheme.Border
-        Write-Host "╰──────────────────────────────────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╭──📁 CUSTOM FILE ─────────────────────────────────╮" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "│               CUSTOM PASSWORD FILE               │" -ForegroundColor $this.UIManager.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.UIManager.ColorScheme.Border
         Write-Host ""
         
         try {
@@ -1010,16 +1165,20 @@ class ApplicationController {
                 $this.UIManager.ShowNetworkList($networks)
                 
                 # Display options in a consistent style
-                Write-Host "Options:" -ForegroundColor $this.UIManager.ColorScheme.Primary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[1-$($networks.Count)]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[r]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                Write-Host "  • Enter " -ForegroundColor $this.UIManager.ColorScheme.Secondary -NoNewline
-                Write-Host "[b]" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
-                Write-Host " to go back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╭─ 📄 Available Options" -ForegroundColor $this.UIManager.ColorScheme.Border
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "1-$($networks.Count)" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Select a network to attack" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "r" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Rescan for networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "b" -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
+                Write-Host " : " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                Write-Host "Back to previous menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
                 Write-Host ""
                 
                 $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRbB])$", "Please enter a valid option")
@@ -1122,32 +1281,26 @@ class ApplicationController {
         $this.UIManager.ShowBanner()
         
         $helpText = @"
-╭──❓ HELP ─────────────────────────────────────────────────────────────────────╮
-│                                  HELP                                        │
-╰──────────────────────────────────────────────────────────────────────────────╯
+╭──❓ INFO ────────────────────────────────────────╮
+│                      HELP                        │
+╰──────────────────────────────────────────────────╯
 
 MAIN MENU OPTIONS:
-  1. Scan Wi-Fi Networks    - Discover available Wi-Fi networks in range
+  1. Scan Wi-Fi Networks   - Discover available Wi-Fi networks in range
   2. Attack Mode           - Choose from various password attack strategies
-  3. View Results          - Review previous attack results and statistics
-  4. Settings              - Configure application settings and preferences
-  5. Help                  - Display this help information
+  3. Settings              - Configure application settings and preferences
+  4. Help                  - Display this help information
   q. Quit                  - Exit the application
 
-ATTACK MODES:
-  • Dictionary Attack      - Use a wordlist to attempt common passwords
-  • SSID-Based Attack     - Generate passwords based on network names
-  • Hybrid Attack         - Combine multiple attack strategies
-  • Custom Attack         - Configure custom attack parameters
+ATTACK MODE:
+  • Dictionary Attack     - Use a wordlist to attempt common passwords
+  • Custom Dictionary     - Add your own wordlist
 
 SETTINGS:
   • Debug Mode            - Enable detailed debugging information
-  • Stealth Mode          - Add delays between connection attempts
-  • Rate Limit            - Configure delay between password attempts
-  • File Configuration    - Set custom SSID and password file paths
 
 KEYBOARD SHORTCUTS:
-  • Ctrl+C               - Cancel current operation
+  • Ctrl+C                - Cancel current operation
 
 
 ETHICAL USAGE:
