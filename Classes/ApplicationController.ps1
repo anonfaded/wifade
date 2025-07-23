@@ -125,16 +125,6 @@ class ApplicationController {
                 return
             }
             
-            # Check ethical disclaimer
-            $disclaimerAccepted = $this.SettingsManager.IsEthicalDisclaimerAccepted()
-            if ($disclaimerAccepted -eq $false) {
-                $userAccepted = $this.ShowEthicalDisclaimer()
-                if ($userAccepted -eq $false) {
-                    $this.UIManager.ShowError("Ethical acknowledgment required. Exiting...")
-                    return
-                }
-            }
-            
             # Main application loop
             while ($this.IsRunning) {
                 try {
@@ -171,21 +161,10 @@ class ApplicationController {
 │                            ETHICAL USAGE WARNING                             │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-║  This tool is designed for EDUCATIONAL and ETHICAL SECURITY TESTING only.   ║
-║                                                                              ║
-║  LEGAL REQUIREMENTS:                                                         ║
-║  • You must own the networks you are testing, OR                            ║
-║  • You must have explicit written permission from the network owner         ║
-║                                                                              ║
-║  PROHIBITED USES:                                                            ║
-║  • Testing networks without permission                                       ║
-║  • Accessing networks for malicious purposes                                 ║
-║  • Any activity that violates local, state, or federal laws                 ║
-║                                                                              ║
-║  DISCLAIMER:                                                                 ║
-║  • Users are solely responsible for compliance with applicable laws          ║
-║  • The developers assume no liability for misuse of this tool               ║
-║  • Unauthorized network access may result in criminal prosecution           ║
+│  • This tool is for EDUCATIONAL and ETHICAL SECURITY TESTING only           │
+│  • You must OWN the networks or have EXPLICIT PERMISSION to test them       │
+│  • Unauthorized network access may be ILLEGAL in your jurisdiction          │
+│  • Users are solely responsible for legal compliance                        │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 "@
@@ -778,6 +757,17 @@ class ApplicationController {
 
     # Handle attack mode menu
     [void] HandleAttackMode() {
+        # Check ethical disclaimer only when entering attack mode
+        $disclaimerAccepted = $this.SettingsManager.IsEthicalDisclaimerAccepted()
+        if ($disclaimerAccepted -eq $false) {
+            $userAccepted = $this.ShowEthicalDisclaimer()
+            if ($userAccepted -eq $false) {
+                $this.UIManager.ShowError("Ethical acknowledgment required to use attack features.")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+        }
+        
         do {
             $choice = $this.UIManager.ShowAttackModeMenu()
             
