@@ -533,50 +533,141 @@ function Show-ParameterList {
         Display concise list of all available parameters
     #>
     
-    $paramList = @"
-wifade - Quick Parameter Reference
-====================================
+    # Header with border
+    Write-Host "╭─ " -ForegroundColor Red -NoNewline
+    Write-Host "📋 Wifade - Quick Parameter Reference" -ForegroundColor Blue -NoNewline
 
-QUICK ACTIONS:
-  -IP                         Show current private IP address
-  -Status                     Show Wi-Fi connection status
-  -Scan                       List available Wi-Fi networks
-  -PublicIP                   Show current public IP address
-  -Gateway                    Show default gateway IP
-  -DNS                        Show DNS servers
-  -MAC                        Show Wi-Fi adapter MAC address
-  -Speed                      Show connection speed
-  -Restart                    Restart Wi-Fi adapter
 
-CONNECTION:
-  -Connect SSID password      Connect to Wi-Fi network
-  SSID password               Connect to Wi-Fi network (direct)
-
-INTERACTIVE MODE:
-  (no parameters)             Launch full interactive interface
-
-CONFIGURATION:
-  -VerboseOutput, -v          Enable verbose output
-
-BUILT-IN WORDLIST:
-  Default wordlist: passwords\probable-v2-wpa-top4800.txt (4700+ common passwords)
-  Custom wordlists can be selected through the interactive Attack Mode menu
-
-HELP:
-  -Help, -h                   Show detailed help information
-  -List                       Show this parameter list
-
-EXAMPLES:
-  .\wifade.ps1 -IP                    # Show IP address
-  .\wifade.ps1 -Scan                  # List networks
-  .\wifade.ps1 MyWiFi password123     # Connect to network
-  .\wifade.ps1 "WiFi Name" password   # Connect (SSID with spaces)
-  .\wifade.ps1                        # Launch interactive mode
-
-For detailed help: .\wifade.ps1 -Help
-"@
     
-    Write-Host $paramList -ForegroundColor White
+    # QUICK ACTIONS Section
+    Write-Host ""
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host ""
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "⚡ QUICK ACTIONS:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-IP" -ForegroundColor Red -NoNewline
+    Write-Host "                         " -NoNewline
+    Write-Host "Show current private IP address" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Status" -ForegroundColor Red -NoNewline
+    Write-Host "                     " -NoNewline
+    Write-Host "Show Wi-Fi connection status" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Scan" -ForegroundColor Red -NoNewline
+    Write-Host "                       " -NoNewline
+    Write-Host "List available Wi-Fi networks" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-PublicIP" -ForegroundColor Red -NoNewline
+    Write-Host "                   " -NoNewline
+    Write-Host "Show current public IP address" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Gateway" -ForegroundColor Red -NoNewline
+    Write-Host "                    " -NoNewline
+    Write-Host "Show default gateway IP" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-DNS" -ForegroundColor Red -NoNewline
+    Write-Host "                        " -NoNewline
+    Write-Host "Show DNS servers" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-MAC" -ForegroundColor Red -NoNewline
+    Write-Host "                        " -NoNewline
+    Write-Host "Show Wi-Fi adapter MAC address" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Speed" -ForegroundColor Red -NoNewline
+    Write-Host "                      " -NoNewline
+    Write-Host "Show connection speed" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Restart" -ForegroundColor Red -NoNewline
+    Write-Host "                    " -NoNewline
+    Write-Host "Restart Wi-Fi adapter" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # CONNECTION Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "🔗 CONNECTION:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Connect SSID password" -ForegroundColor Red -NoNewline
+    Write-Host "      " -NoNewline
+    Write-Host "Connect to Wi-Fi network" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "SSID password" -ForegroundColor Red -NoNewline
+    Write-Host "               " -NoNewline
+    Write-Host "Connect to Wi-Fi network (direct)" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # INTERACTIVE MODE Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "🎮 INTERACTIVE MODE:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "(no parameters)" -ForegroundColor Red -NoNewline
+    Write-Host "             " -NoNewline
+    Write-Host "Launch full interactive interface" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # CONFIGURATION Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "⚙️  CONFIGURATION:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-VerboseOutput, -v" -ForegroundColor Red -NoNewline
+    Write-Host "          " -NoNewline
+    Write-Host "Enable verbose output" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # BUILT-IN WORDLIST Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "📚 BUILT-IN WORDLIST:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "Default wordlist: " -ForegroundColor White -NoNewline
+    Write-Host "passwords\probable-v2-wpa-top4800.txt" -ForegroundColor Red -NoNewline
+    Write-Host " (4700+ common passwords)" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "Custom wordlists can be selected through the interactive Attack Mode menu" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # HELP Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "❓ HELP:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Help, -h" -ForegroundColor Red -NoNewline
+    Write-Host "                   " -NoNewline
+    Write-Host "Show detailed help information" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-List" -ForegroundColor Red -NoNewline
+    Write-Host "                       " -NoNewline
+    Write-Host "Show this parameter list" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # EXAMPLES Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "💡 EXAMPLES:" -ForegroundColor Blue
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -IP" -ForegroundColor Red -NoNewline
+    Write-Host "                    " -NoNewline
+    Write-Host "# Show IP address" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -Scan" -ForegroundColor Red -NoNewline
+    Write-Host "                  " -NoNewline
+    Write-Host "# List networks" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 MyWiFi password123" -ForegroundColor Red -NoNewline
+    Write-Host "     " -NoNewline
+    Write-Host "# Connect to network" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host '.\wifade.ps1 "WiFi Name" password' -ForegroundColor Red -NoNewline
+    Write-Host "   " -NoNewline
+    Write-Host "# Connect (SSID with spaces)" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1" -ForegroundColor Red -NoNewline
+    Write-Host "                        " -NoNewline
+    Write-Host "# Launch interactive mode" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # Footer
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "For detailed help: " -ForegroundColor White -NoNewline
+    Write-Host ".\wifade.ps1 -Help" -ForegroundColor Red
+    Write-Host "╰────────────────────────────────────────────────────" -ForegroundColor Red
 }
 
 # Second Show-ParameterList function removed to fix duplicate function error
