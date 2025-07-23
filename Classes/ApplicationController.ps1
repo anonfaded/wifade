@@ -144,7 +144,7 @@ class ApplicationController {
                 }
             }
             
-            $this.UIManager.ShowInfo("Thank you for using wifade!")
+            $this.UIManager.ShowInfo("Thank you for using Wifade!")
         }
         catch {
             Write-Error "Fatal error in application: $($_.Exception.Message)"
@@ -1337,52 +1337,86 @@ class ApplicationController {
         $this.UIManager.ClearScreen()
         $this.UIManager.ShowBanner()
         
-        $helpText = @"
-╭──❓ INFO ────────────────────────────────────────╮
-│                      HELP                        │
-╰──────────────────────────────────────────────────╯
-
-MAIN MENU OPTIONS:
-  1. Scan Wi-Fi Networks   - Discover available Wi-Fi networks in range
-  2. Attack Mode           - Choose from various password attack strategies
-  3. Settings              - Configure application settings and preferences
-  4. Help                  - Display this help information
-  q. Quit                  - Exit the application
-
-ATTACK MODE:
-  • Dictionary Attack     - Use a wordlist to attempt common passwords
-  • Custom Dictionary     - Add your own wordlist
-
-SETTINGS:
-  • Debug Mode            - Enable detailed debugging information
-
-KEYBOARD SHORTCUTS:
-  • Ctrl+C                - Cancel current operation
-
-
-ETHICAL USAGE:
-This tool is intended for educational purposes and ethical security testing only.
-Always ensure you have explicit permission to test network security.
-
-For more information, visit: https://github.com/anonfaded/wifade
-"@
+        # Header with pipe style
+        Write-Host "╭──" -ForegroundColor Red -NoNewline
+        Write-Host "❓ INFO " -ForegroundColor Red -NoNewline
+        Write-Host "────────────────────────────────────────╮" -ForegroundColor Red
+        Write-Host "│" -ForegroundColor Red -NoNewline
+        Write-Host "                      HELP                        " -ForegroundColor Red -NoNewline
+        Write-Host "│" -ForegroundColor Red
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor Red
+        Write-Host ""
         
-        # Display the help text with the border in red
-        $lines = $helpText -split "`n"
+        # MAIN MENU OPTIONS section
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "MAIN MENU OPTIONS:" -ForegroundColor Blue
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  1. " -ForegroundColor Red -NoNewline
+        Write-Host "Scan Wi-Fi Networks   " -ForegroundColor White -NoNewline
+        Write-Host "- Discover available Wi-Fi networks in range" -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  2. " -ForegroundColor Red -NoNewline
+        Write-Host "Attack Mode           " -ForegroundColor White -NoNewline
+        Write-Host "- Choose from various password attack strategies" -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  3. " -ForegroundColor Red -NoNewline
+        Write-Host "Settings              " -ForegroundColor White -NoNewline
+        Write-Host "- Configure application settings and preferences" -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  4. " -ForegroundColor Red -NoNewline
+        Write-Host "Help                  " -ForegroundColor White -NoNewline
+        Write-Host "- Display this help information" -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  q. " -ForegroundColor Red -NoNewline
+        Write-Host "Quit                  " -ForegroundColor White -NoNewline
+        Write-Host "- Exit the application" -ForegroundColor White
+        Write-Host "│" -ForegroundColor Red
         
-        # First line (top border)
-        Write-Host $lines[0] -ForegroundColor $this.UIManager.ColorScheme.Border
+        # ATTACK MODE section
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "ATTACK MODE:" -ForegroundColor Blue
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  • " -ForegroundColor Red -NoNewline
+        Write-Host "Dictionary Attack     " -ForegroundColor White -NoNewline
+        Write-Host "- Use a wordlist to attempt common passwords" -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  • " -ForegroundColor Red -NoNewline
+        Write-Host "Custom Dictionary     " -ForegroundColor White -NoNewline
+        Write-Host "- Add your own wordlist" -ForegroundColor White
+        Write-Host "│" -ForegroundColor Red
         
-        # Second line (header)
-        Write-Host $lines[1] -ForegroundColor $this.UIManager.ColorScheme.Border
+        # SETTINGS section
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "SETTINGS:" -ForegroundColor Blue
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  • " -ForegroundColor Red -NoNewline
+        Write-Host "Debug Mode            " -ForegroundColor White -NoNewline
+        Write-Host "- Enable detailed debugging information" -ForegroundColor White
+        Write-Host "│" -ForegroundColor Red
         
-        # Third line (bottom border)
-        Write-Host $lines[2] -ForegroundColor $this.UIManager.ColorScheme.Border
+        # KEYBOARD SHORTCUTS section
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "KEYBOARD SHORTCUTS:" -ForegroundColor Blue
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "  • " -ForegroundColor Red -NoNewline
+        Write-Host "Ctrl+C                " -ForegroundColor White -NoNewline
+        Write-Host "- Cancel current operation" -ForegroundColor White
+        Write-Host "│" -ForegroundColor Red
+        Write-Host "│" -ForegroundColor Red
         
-        # Rest of the text
-        for ($i = 3; $i -lt $lines.Length; $i++) {
-            Write-Host $lines[$i] -ForegroundColor White
-        }
+        # ETHICAL USAGE section
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "ETHICAL USAGE:" -ForegroundColor Blue
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "This tool is intended for educational purposes and ethical security testing only." -ForegroundColor White
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "Always ensure you have explicit permission to test network security." -ForegroundColor White
+        Write-Host "│" -ForegroundColor Red
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "For more information, visit: " -ForegroundColor White -NoNewline
+        Write-Host "https://github.com/anonfaded/wifade" -ForegroundColor Red
+        Write-Host ""
+        
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
