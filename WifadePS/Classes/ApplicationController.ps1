@@ -436,11 +436,26 @@ class ApplicationController {
     # Attempt to connect to a network
     [void] AttemptNetworkConnection([string]$ssid, [string]$password) {
         try {
-            $this.UIManager.ShowInfo("Attempting to connect to '$ssid'...")
-            $this.UIManager.ShowInfo("This may take up to 15 seconds...")
+            # Check if already connected to this network
+            $currentConnection = $this.NetworkManager.GetCurrentConnection()
+            if ($currentConnection -and $currentConnection.SSID -eq $ssid) {
+                $this.UIManager.ShowSuccess("Already connected to '$ssid'!")
+                Write-Host ""
+                $this.UIManager.ShowInfo("Connection Details:")
+                Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
+                Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
+                Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+                if ($currentConnection.Channel -gt 0) {
+                    Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                }
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
             
-            # Use NetworkManager's connection method with shorter timeout
-            $connectionAttempt = $this.NetworkManager.AttemptConnection($ssid, $password, 15)
+            $this.UIManager.ShowInfo("Attempting to connect to '$ssid'...")
+            
+            # Use NetworkManager's connection method with shorter timeout (8 seconds instead of 15)
+            $connectionAttempt = $this.NetworkManager.AttemptConnection($ssid, $password, 8)
             
             if ($connectionAttempt.Success) {
                 $this.UIManager.ShowSuccess("Successfully connected to '$ssid'!")
@@ -453,19 +468,46 @@ class ApplicationController {
                     Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
                     Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
                     Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
-                    Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                    if ($currentConnection.Channel -gt 0) {
+                        Write-Host "  Channel: $($currentConnection.Channel)" -ForegroundColor White
+                    }
+                    
+                    # Try to get IP information
+                    try {
+                        $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
+                        if ($ipConfig -and $ipConfig.IPv4Address) {
+                            Write-Host "  Private IP: $($ipConfig.IPv4Address.IPAddress)" -ForegroundColor White
+                        }
+                    }
+                    catch {
+                        # Ignore IP retrieval errors
+                    }
                 }
             }
             else {
-                $this.UIManager.ShowError("Failed to connect to '$ssid'")
-                if ($connectionAttempt.ErrorMessage) {
-                    $this.UIManager.ShowError("Error: $($connectionAttempt.ErrorMessage)")
+                # Provide specific error messages based on the failure type
+                if ($connectionAttempt.ErrorMessage -match "authentication|password|credential") {
+                    $this.UIManager.ShowError("Failed to connect to '$ssid' - Incorrect password")
+                    $this.UIManager.ShowWarning("Please verify the password and try again.")
+                }
+                elseif ($connectionAttempt.ErrorMessage -match "timeout") {
+                    $this.UIManager.ShowError("Failed to connect to '$ssid' - Connection timeout")
+                    $this.UIManager.ShowWarning("The network may be out of range or experiencing issues.")
+                }
+                else {
+                    $this.UIManager.ShowError("Failed to connect to '$ssid'")
+                    if ($connectionAttempt.ErrorMessage) {
+                        $this.UIManager.ShowError("Error: $($connectionAttempt.ErrorMessage)")
+                    }
                 }
             }
             
         }
         catch {
             $this.UIManager.ShowError("Connection attempt failed: $($_.Exception.Message)")
+            if ($this.SettingsManager.IsDebugMode()) {
+                $this.UIManager.ShowDebug("Error details: $($_.Exception)")
+            }
         }
         
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
