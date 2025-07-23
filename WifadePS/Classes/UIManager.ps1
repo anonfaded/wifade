@@ -74,8 +74,6 @@ class UIManager : IManager {
             )
             Settings   = @(
                 @{ Key = "1"; Text = "Toggle Verbose Mode"; Action = "ToggleVerbose" }
-                @{ Key = "2"; Text = "Configure Files"; Action = "ConfigureFiles" }
-                @{ Key = "3"; Text = "Export Settings"; Action = "ExportSettings" }
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )
         }

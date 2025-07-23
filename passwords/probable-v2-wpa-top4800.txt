@@ -1,5 +1,7 @@
 password
 123456789
+superstrong9
+anonymous
 12345678
 1q2w3e4r
 sunshine

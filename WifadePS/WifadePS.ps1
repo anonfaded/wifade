@@ -21,11 +21,7 @@
     
 
     
-.PARAMETER Timeout
-    Connection timeout in seconds (default: 30)
-    
-.PARAMETER MaxAttempts
-    Maximum attempts per SSID (default: unlimited)
+
     
 .EXAMPLE
     .\WifadePS.ps1
@@ -73,11 +69,7 @@ param(
     
 
     
-    [Parameter(Mandatory = $false, HelpMessage = "Connection timeout in seconds")]
-    [int]$Timeout = 30,
-    
-    [Parameter(Mandatory = $false, HelpMessage = "Maximum attempts per SSID (0 = unlimited)")]
-    [int]$MaxAttempts = 0,
+
     
     [Parameter(Mandatory = $false, HelpMessage = "Display current Wi-Fi private IP address and exit")]
     [switch]$IP,
@@ -547,8 +539,6 @@ CONFIGURATION:
   -SSIDFile, -s <file>        Custom SSID file (default: ssid.txt)
   -PasswordFile, -w <file>    Custom password file (default: passwords.txt)
   -VerboseOutput, -v          Enable verbose output
-  -Timeout <seconds>          Set connection timeout
-  -MaxAttempts <number>       Limit attempts per SSID
 
 HELP:
   -Help, -h                   Show detailed help information
@@ -594,8 +584,6 @@ OPTIONS:
     -Restart                    Restart Wi-Fi adapter and exit
     -Connect                    Connect to Wi-Fi network (requires SSID and password)
     -VerboseOutput, -v          Enable verbose output mode
-    -Timeout <seconds>          Connection timeout in seconds (default: 30)
-    -MaxAttempts <number>       Maximum attempts per SSID (default: unlimited)
 
 POSITIONAL PARAMETERS:
     SSID                        Network name to connect to (use quotes for names with spaces)
@@ -644,8 +632,8 @@ EXAMPLES:
     .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
     
-    .\WifadePS.ps1 -VerboseOutput -MaxAttempts 50 -Timeout 15
-        Run with verbose output, 50 attempts per SSID and 15-second timeout
+    .\WifadePS.ps1 -VerboseOutput
+        Run with verbose output enabled
 
 CONFIGURATION FILES:
     SSID File Format:
@@ -846,8 +834,6 @@ function Main {
             SSIDFile     = $SSIDFile
             PasswordFile = $PasswordFile
             VerboseMode  = $VerboseOutput.IsPresent
-            Timeout      = $Timeout
-            MaxAttempts  = $MaxAttempts
         }
         
         Write-Host "Starting WifadePS..." -ForegroundColor Green

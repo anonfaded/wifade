@@ -992,8 +992,6 @@ class ApplicationController {
             
             switch ($choice.ToLower()) {
                 "1" { $this.HandleToggleVerbose() }
-                "2" { $this.HandleConfigureFiles() }
-                "3" { $this.HandleExportSettings() }
                 "b" { return }
                 default {
                     $this.UIManager.ShowWarning("Invalid option. Please try again.")
@@ -1017,32 +1015,7 @@ class ApplicationController {
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
-    # Handle configure files
-    [void] HandleConfigureFiles() {
-        $this.UIManager.ShowWarning("File configuration functionality is not yet implemented.")
-        $this.UIManager.ShowInfo("This feature will be available in the next update.")
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
-    
-    # Handle export settings
-    [void] HandleExportSettings() {
-        $defaultPath = "wifadeps_settings_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
-        $filePath = $this.UIManager.GetUserInput("Enter export file path", "", "")
-        
-        if ([string]::IsNullOrWhiteSpace($filePath)) {
-            $filePath = $defaultPath
-        }
-        
-        try {
-            $this.SettingsManager.ExportSettings($filePath)
-            $this.UIManager.ShowSuccess("Settings exported to: $filePath")
-        }
-        catch {
-            $this.UIManager.ShowError("Failed to export settings: $($_.Exception.Message)")
-        }
-        
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
+
     
     # Handle help
     [void] HandleHelp() {
