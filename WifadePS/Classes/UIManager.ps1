@@ -67,7 +67,7 @@ class UIManager : IManager {
                 @{ Key = "q"; Text = "Quit"; Action = "Quit" }
             )
             AttackMode = @(
-                @{ Key = "1"; Text = "Use Built-in Wordlist (4800+ common passwords)"; Action = "DictionaryAttack" }
+                @{ Key = "1"; Text = "Use Built-in Wordlist (4700+ common passwords)"; Action = "DictionaryAttack" }
                 @{ Key = "2"; Text = "Use Custom Password File (select your own wordlist)"; Action = "CustomPasswordFile" }
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )

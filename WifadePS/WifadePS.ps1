@@ -548,7 +548,7 @@ CONFIGURATION:
   -VerboseOutput, -v          Enable verbose output
 
 BUILT-IN WORDLIST:
-  Default wordlist: passwords\probable-v2-wpa-top4800.txt (4800+ common passwords)
+  Default wordlist: passwords\probable-v2-wpa-top4800.txt (4700+ common passwords)
   Custom wordlists can be selected through the interactive Attack Mode menu
 
 HELP:
@@ -645,7 +645,7 @@ EXAMPLES:
 
 BUILT-IN WORDLIST:
     Default wordlist: passwords\probable-v2-wpa-top4800.txt
-    Contains 4800+ most common Wi-Fi passwords for effective dictionary attacks
+    Contains 4700+ most common Wi-Fi passwords for effective dictionary attacks
     
 CUSTOM PASSWORD FILES:
     Format: One password per line, plain text (.txt file)
@@ -662,7 +662,7 @@ INTERACTIVE INTERFACE:
     
     1. Scan Wi-Fi Networks    - Discover available Wi-Fi networks in range
     2. Attack Mode           - Choose from password attack strategies:
-                              • Dictionary Attack (uses built-in 4800+ password wordlist)
+                              • Dictionary Attack (uses built-in 4700+ password wordlist)
                               • Custom Password File (select your own wordlist)
     3. View Results          - Review previous attack results and statistics
     4. Settings              - Configure application settings and preferences

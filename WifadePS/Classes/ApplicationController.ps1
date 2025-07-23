@@ -1293,6 +1293,51 @@ For more information, visit: https://github.com/wifade/wifade
     # Execute dictionary attack on target network
     [void] ExecuteDictionaryAttack([NetworkProfile]$targetNetwork) {
         try {
+            # Clear screen and show hacker-style animation
+            $this.UIManager.ClearScreen()
+            
+            # Display ASCII art and animation - now in red
+            Write-Host @"
+                        ⠀⠀⠀⠀⣀⣤⣤⣶⣾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀ ⣷⣶⣦⣤⣀⠀⠀⠀⠀⠀
+                        ⢀⣴⣶⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⣧⣼⠀⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣿⣷⣦⣄⡀
+                        ⠀⠀⠀⠈⠉⠛⣿⣿⣿⣿⣿⣷⣦⣀⢸⣿⣿⡇⣀⣤⣿⣿⣿⣿⣿⣿⠟⠋⠉⠀⠀⠀⠀
+                        ⠀⠀⠀⠀⠀⠀ ⠸⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠋⠀⠀⠀⠀⠀⠀⠀
+                        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠉⠻⣿⣿⣿⣿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠙⠋⠀
+"@ -ForegroundColor Red
+            
+            # Simulate terminal activation with typing effect - now in red and faster
+            Write-Host "Terminal X activated..." -ForegroundColor Red -NoNewline
+            Start-Sleep -Milliseconds 200
+            Write-Host "." -ForegroundColor Red -NoNewline
+            Start-Sleep -Milliseconds 200
+            Write-Host "." -ForegroundColor Red -NoNewline
+            Start-Sleep -Milliseconds 200
+            Write-Host "." -ForegroundColor Red
+            Start-Sleep -Milliseconds 200
+            
+            # Show initialization sequence - faster and in red
+            Write-Host "Initializing attack modules..." -ForegroundColor Red
+            Start-Sleep -Milliseconds 300
+            Write-Host "Loading password database..." -ForegroundColor Red
+            Start-Sleep -Milliseconds 300
+            Write-Host "Establishing connection to target network..." -ForegroundColor Red
+            Start-Sleep -Milliseconds 300
+            Write-Host "Bypassing security protocols..." -ForegroundColor Red
+            Start-Sleep -Milliseconds 300
+            Write-Host "Attack sequence ready." -ForegroundColor Red
+            Start-Sleep -Milliseconds 1000
+            
+            # Show target information - faster
+            Write-Host ""
+            Write-Host "TARGET ACQUIRED: " -ForegroundColor Red -NoNewline
+            Write-Host "$($targetNetwork.SSID)" -ForegroundColor Yellow
+            Write-Host "SECURITY: " -ForegroundColor Red -NoNewline
+            Write-Host "$($targetNetwork.EncryptionType)" -ForegroundColor Yellow
+            Write-Host ""
+            Start-Sleep -Milliseconds 400
+            
+            # Start the actual attack
             $this.UIManager.ShowInfo("Starting brute force attack on '$($targetNetwork.SSID)'...")
             
             # Validate target network
