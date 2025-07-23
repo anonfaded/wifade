@@ -1,4 +1,4 @@
-# Data Model Classes for WifadePS
+# Data Model Classes for wifade
 
 # Base interface for all manager classes
 class IManager {

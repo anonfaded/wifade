@@ -11,7 +11,7 @@ The Windows PowerShell version of Wifade will be a complete rewrite that maintai
 The application follows a modular, object-oriented design with the following core components:
 
 ```
-WifadePS (Main Entry Point)
+wifade (Main Entry Point)
 ├── ConfigurationManager (Parameter parsing, file handling)
 ├── NetworkManager (Wi-Fi operations, adapter management)
 ├── PasswordManager (Password list management, attack strategies)

@@ -1,4 +1,4 @@
-# NetworkManager Class for WifadePS
+# NetworkManager Class for wifade
 # Handles Wi-Fi adapter detection, network operations, and connection management
 
 class NetworkManager : IManager {

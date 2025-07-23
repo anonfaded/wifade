@@ -1,4 +1,4 @@
-# ConfigurationManager Class for WifadePS
+# ConfigurationManager Class for wifade
 # Handles command-line parameter parsing and configuration file management
 
 class ConfigurationManager : IManager {
@@ -432,10 +432,10 @@ Configuration Summary:
     # Display help information
     [void] ShowHelp() {
         $helpText = @"
-WifadePS - Windows PowerShell Wi-Fi Security Testing Tool
+wifade - Windows PowerShell Wi-Fi Security Testing Tool
 
 USAGE:
-    .\WifadePS.ps1 [OPTIONS]
+    .\wifade.ps1 [OPTIONS]
 
 OPTIONS:
     -s, --ssid <file>           Path to SSID file (default: ssid.txt)
@@ -448,13 +448,13 @@ OPTIONS:
     --max-attempts <number>     Maximum attempts per SSID (default: unlimited)
 
 EXAMPLES:
-    .\WifadePS.ps1
+    .\wifade.ps1
         Run with default configuration files
     
-    .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
+    .\wifade.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
     
-    .\WifadePS.ps1 --stealth --rate-limit 2000 --verbose
+    .\wifade.ps1 --stealth --rate-limit 2000 --verbose
         Run in stealth mode with 2-second delays and verbose output
 
 CONFIGURATION FILES:

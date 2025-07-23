@@ -1,4 +1,4 @@
-# ApplicationController Class for WifadePS
+# ApplicationController Class for wifade
 # Main application controller that orchestrates the interactive CLI interface
 
 class ApplicationController {
@@ -156,7 +156,7 @@ class ApplicationController {
                 }
             }
             
-            $this.UIManager.ShowInfo("Thank you for using WifadePS!")
+            $this.UIManager.ShowInfo("Thank you for using wifade!")
         }
         catch {
             Write-Error "Fatal error in application: $($_.Exception.Message)"
@@ -1223,14 +1223,11 @@ For more information, visit: https://github.com/wifade/wifade
             # Initialize PasswordManager if not already done
             if ($null -eq $this.PasswordManager) {
                 $this.UIManager.ShowInfo("Initializing Password Manager...")
-                # Get the script root directory (WifadePS/Classes)
+                # Get the script root directory (Classes)
                 $scriptRoot = $PSScriptRoot
                 
-                # Get the WifadePS directory (parent of Classes)
-                $wifadePSDir = Split-Path -Parent $scriptRoot
-                
-                # Get the project root directory (parent of WifadePS)
-                $projectRoot = Split-Path -Parent $wifadePSDir
+                # Get the project root directory (parent of Classes)
+                $projectRoot = Split-Path -Parent $scriptRoot
                 
                 # Default password file path
                 $defaultPasswordFile = "passwords\probable-v2-wpa-top4800.txt"
@@ -1240,8 +1237,6 @@ For more information, visit: https://github.com/wifade/wifade
                 
                 # If a custom password file is specified in AppConfig, use that
                 if ($this.AppConfig.PasswordFile) {
-                    $this.UIManager.ShowInfo("Password file specified in config: $($this.AppConfig.PasswordFile)")
-                    
                     # Check if it's a relative path
                     if (-not [System.IO.Path]::IsPathRooted($this.AppConfig.PasswordFile)) {
                         # Convert relative path to absolute
@@ -1301,7 +1296,7 @@ For more information, visit: https://github.com/wifade/wifade
                         ⠀⠀⠀⠀⣀⣤⣤⣶⣾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀ ⣷⣶⣦⣤⣀⠀⠀⠀⠀⠀
                         ⢀⣴⣶⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⣧⣼⠀⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣿⣷⣦⣄⡀
                         ⠀⠀⠀⠈⠉⠛⣿⣿⣿⣿⣿⣷⣦⣀⢸⣿⣿⡇⣀⣤⣿⣿⣿⣿⣿⣿⠟⠋⠉⠀⠀⠀⠀
-                        ⠀⠀⠀⠀⠀⠀ ⠸⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠋⠀⠀⠀⠀⠀⠀⠀
+                        ⠀⠀⠀⠀⠀⠀⠸⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠋⠀⠀⠀⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠉⠻⣿⣿⣿⣿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠙⠋⠀
 "@ -ForegroundColor Red
@@ -1385,7 +1380,7 @@ For more information, visit: https://github.com/wifade/wifade
                 return
             }
             
-            $this.UIManager.ShowInfo("Target: $($targetNetwork.SSID) ($($targetNetwork.EncryptionType))")
+
             $this.UIManager.ShowInfo("Total passwords to try: $maxAttempts")
             Write-Host ""
             

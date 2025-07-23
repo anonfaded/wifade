@@ -1,4 +1,4 @@
-# Base Classes and Interfaces for WifadePS
+# Base Classes and Interfaces for wifade
 
 # Base exception class for all application errors
 class WifadeException : System.Exception {

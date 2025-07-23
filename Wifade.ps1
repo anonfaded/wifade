@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    WifadePS - Windows PowerShell Wi-Fi Security Testing Tool
+    wifade - Windows PowerShell Wi-Fi Security Testing Tool
     
 .DESCRIPTION
     A PowerShell implementation of the Wifade Wi-Fi password brute-forcing tool
@@ -24,22 +24,22 @@
 
     
 .EXAMPLE
-    .\WifadePS.ps1
+    .\wifade.ps1
     Run with default configuration files
     
 .EXAMPLE
-    .\WifadePS.ps1 -SSIDFile "custom_ssids.txt" -PasswordFile "custom_passwords.txt"
+    .\wifade.ps1 -SSIDFile "custom_ssids.txt" -PasswordFile "custom_passwords.txt"
     Run with custom configuration files
     
 .EXAMPLE
-    .\WifadePS.ps1 -VerboseOutput
+    .\wifade.ps1 -VerboseOutput
     Run with verbose output enabled
     
 .NOTES
     This tool is intended for educational purposes and ethical security testing only.
     Always ensure you have explicit permission to test network security.
     
-    Author: WifadePS Development Team
+    Author: wifade Development Team
     Version: 1.0.0
     
 .LINK
@@ -134,7 +134,7 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 . "$ScriptRoot\Classes\ApplicationController.ps1"
 
 # Application constants
-$Script:APP_NAME = "WifadePS"
+$Script:APP_NAME = "wifade"
 $Script:APP_VERSION = "1.0.0"
 $Script:APP_DESCRIPTION = "Windows PowerShell Wi-Fi Security Testing Tool"
 
@@ -523,7 +523,7 @@ function Show-ParameterList {
     #>
     
     $paramList = @"
-WifadePS - Quick Parameter Reference
+wifade - Quick Parameter Reference
 ====================================
 
 QUICK ACTIONS:
@@ -556,13 +556,13 @@ HELP:
   -List                       Show this parameter list
 
 EXAMPLES:
-  .\WifadePS.ps1 -IP                    # Show IP address
-  .\WifadePS.ps1 -Scan                  # List networks
-  .\WifadePS.ps1 MyWiFi password123     # Connect to network
-  .\WifadePS.ps1 "WiFi Name" password   # Connect (SSID with spaces)
-  .\WifadePS.ps1                        # Launch interactive mode
+  .\wifade.ps1 -IP                    # Show IP address
+  .\wifade.ps1 -Scan                  # List networks
+  .\wifade.ps1 MyWiFi password123     # Connect to network
+  .\wifade.ps1 "WiFi Name" password   # Connect (SSID with spaces)
+  .\wifade.ps1                        # Launch interactive mode
 
-For detailed help: .\WifadePS.ps1 -Help
+For detailed help: .\wifade.ps1 -Help
 "@
     
     Write-Host $paramList -ForegroundColor White
@@ -578,7 +578,7 @@ function Show-Help {
     
     $helpText = @"
 USAGE:
-    .\WifadePS.ps1 [OPTIONS]
+    .\wifade.ps1 [OPTIONS]
 
 OPTIONS:
     -Help, -h                   Display this help information
@@ -599,46 +599,46 @@ POSITIONAL PARAMETERS:
     Password                    Network password
 
 EXAMPLES:
-    .\WifadePS.ps1
+    .\wifade.ps1
         Run with default configuration files (ssid.txt and passwords.txt)
     
-    .\WifadePS.ps1 -IP
+    .\wifade.ps1 -IP
         Display current Wi-Fi private IP address and exit
     
-    .\WifadePS.ps1 -Status
+    .\wifade.ps1 -Status
         Display comprehensive Wi-Fi connection status and exit
     
-    .\WifadePS.ps1 -Scan
+    .\wifade.ps1 -Scan
         Scan and list available Wi-Fi networks and exit
     
-    .\WifadePS.ps1 -PublicIP
+    .\wifade.ps1 -PublicIP
         Display current public IP address and exit
     
-    .\WifadePS.ps1 -Gateway
+    .\wifade.ps1 -Gateway
         Display default gateway IP address and exit
     
-    .\WifadePS.ps1 -DNS
+    .\wifade.ps1 -DNS
         Display DNS servers and exit
     
-    .\WifadePS.ps1 -MAC
+    .\wifade.ps1 -MAC
         Display Wi-Fi adapter MAC address and exit
     
-    .\WifadePS.ps1 -Speed
+    .\wifade.ps1 -Speed
         Display Wi-Fi connection speed and exit
     
-    .\WifadePS.ps1 -Restart
+    .\wifade.ps1 -Restart
         Restart Wi-Fi adapter and exit
     
-    .\WifadePS.ps1 -Connect MyNetwork mypassword123
+    .\wifade.ps1 -Connect MyNetwork mypassword123
         Connect to Wi-Fi network using -Connect flag (no quotes needed for simple names)
     
-    .\WifadePS.ps1 MyNetwork mypassword123
+    .\wifade.ps1 MyNetwork mypassword123
         Connect to Wi-Fi network using positional parameters (no quotes needed)
     
-    .\WifadePS.ps1 "2nd Floor" mypassword123
+    .\wifade.ps1 "2nd Floor" mypassword123
         Connect to network with spaces in SSID (quotes required for SSID with spaces)
     
-    .\WifadePS.ps1 -VerboseOutput
+    .\wifade.ps1 -VerboseOutput
         Run with verbose output for detailed information
     
 
@@ -826,8 +826,8 @@ function Main {
         if ($Connect.IsPresent -or $ConnectSSID) {
             if ([string]::IsNullOrWhiteSpace($ConnectSSID)) {
                 Write-Host "Error: SSID is required for connection" -ForegroundColor Red
-                Write-Host "Usage: .\WifadePS.ps1 -Connect 'SSID Name' 'password'" -ForegroundColor Yellow
-                Write-Host "   or: .\WifadePS.ps1 'SSID Name' 'password'" -ForegroundColor Yellow
+                Write-Host "Usage: .\wifade.ps1 -Connect 'SSID Name' 'password'" -ForegroundColor Yellow
+                Write-Host "   or: .\wifade.ps1 'SSID Name' 'password'" -ForegroundColor Yellow
                 exit 1
             }
             
@@ -844,7 +844,7 @@ function Main {
             PasswordFile = $PasswordFile
         }
         
-        Write-Host "Starting WifadePS..." -ForegroundColor Green
+        Write-Host "Starting wifade..." -ForegroundColor Green
         
         # Initialize and start the interactive application
         $appController = [ApplicationController]::new($appConfig)

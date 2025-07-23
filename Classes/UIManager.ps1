@@ -1,4 +1,4 @@
-# UIManager Class for WifadePS
+# UIManager Class for wifade
 # Handles interactive CLI interface, menus, and user interactions
 
 class UIManager : IManager {
@@ -117,7 +117,7 @@ class UIManager : IManager {
         try {
             # Set console title
             $host = Get-Host
-            $host.UI.RawUI.WindowTitle = "WifadePS - Wi-Fi Security Testing Tool"
+            $host.UI.RawUI.WindowTitle = "wifade - Wi-Fi Security Testing Tool"
             
             # Enable ANSI color support if possible
             $psVersion = Get-Variable PSVersionTable -ValueOnly -ErrorAction SilentlyContinue

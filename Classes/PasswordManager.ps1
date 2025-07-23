@@ -1,4 +1,4 @@
-# PasswordManager Class for WifadePS
+# PasswordManager Class for wifade
 # Handles password list management, attack strategies, and statistics tracking
 
 class PasswordManager : IManager {

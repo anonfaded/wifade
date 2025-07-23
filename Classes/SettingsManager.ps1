@@ -1,4 +1,4 @@
-# SettingsManager Class for WifadePS
+# SettingsManager Class for wifade
 # Handles persistent configuration and settings storage
 
 class SettingsManager : IManager {
@@ -24,7 +24,7 @@ class SettingsManager : IManager {
         $this.Configuration = @{}
         
         # Set default config file path
-        $configDir = Join-Path $env:USERPROFILE ".wifadeps"
+        $configDir = Join-Path $env:USERPROFILE ".wifade"
         if (-not (Test-Path $configDir)) {
             New-Item -ItemType Directory -Path $configDir -Force | Out-Null
         }
