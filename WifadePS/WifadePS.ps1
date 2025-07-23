@@ -19,14 +19,7 @@
 .PARAMETER VerboseOutput
     Enable verbose output mode
     
-.PARAMETER DebugMode
-    Enable debug mode
-    
-.PARAMETER Stealth
-    Enable stealth mode with rate limiting
-    
-.PARAMETER RateLimit
-    Rate limit in milliseconds between attempts (default: 1000)
+
     
 .PARAMETER Timeout
     Connection timeout in seconds (default: 30)
@@ -43,8 +36,8 @@
     Run with custom configuration files
     
 .EXAMPLE
-    .\WifadePS.ps1 -Stealth -RateLimit 2000 -DebugMode
-    Run in stealth mode with 2-second delays and debug output
+    .\WifadePS.ps1 -VerboseOutput
+    Run with verbose output enabled
     
 .NOTES
     This tool is intended for educational purposes and ethical security testing only.
@@ -78,15 +71,7 @@ param(
     [Alias("v")]
     [switch]$VerboseOutput,
     
-    [Parameter(Mandatory = $false, HelpMessage = "Enable debug mode")]
-    [Alias("d")]
-    [switch]$DebugMode,
-    
-    [Parameter(Mandatory = $false, HelpMessage = "Enable stealth mode")]
-    [switch]$Stealth,
-    
-    [Parameter(Mandatory = $false, HelpMessage = "Rate limit in milliseconds")]
-    [int]$RateLimit = 1000,
+
     
     [Parameter(Mandatory = $false, HelpMessage = "Connection timeout in seconds")]
     [int]$Timeout = 30,
@@ -561,10 +546,7 @@ INTERACTIVE MODE:
 CONFIGURATION:
   -SSIDFile, -s <file>        Custom SSID file (default: ssid.txt)
   -PasswordFile, -w <file>    Custom password file (default: passwords.txt)
-  -DebugMode, -d              Enable debug output
   -VerboseOutput, -v          Enable verbose output
-  -Stealth                    Enable stealth mode with delays
-  -RateLimit <ms>             Set delay between attempts
   -Timeout <seconds>          Set connection timeout
   -MaxAttempts <number>       Limit attempts per SSID
 
@@ -612,9 +594,6 @@ OPTIONS:
     -Restart                    Restart Wi-Fi adapter and exit
     -Connect                    Connect to Wi-Fi network (requires SSID and password)
     -VerboseOutput, -v          Enable verbose output mode
-    -DebugMode, -d              Enable debug mode with detailed information
-    -Stealth                    Enable stealth mode with rate limiting
-    -RateLimit <ms>             Rate limit in milliseconds (default: 1000)
     -Timeout <seconds>          Connection timeout in seconds (default: 30)
     -MaxAttempts <number>       Maximum attempts per SSID (default: unlimited)
 
@@ -665,11 +644,8 @@ EXAMPLES:
     .\WifadePS.ps1 -s "my_ssids.txt" -w "my_passwords.txt"
         Run with custom SSID and password files
     
-    .\WifadePS.ps1 -Stealth -RateLimit 2000 -VerboseOutput
-        Run in stealth mode with 2-second delays and verbose output
-    
-    .\WifadePS.ps1 -DebugMode -MaxAttempts 50 -Timeout 15
-        Run in debug mode with 50 attempts per SSID and 15-second timeout
+    .\WifadePS.ps1 -VerboseOutput -MaxAttempts 50 -Timeout 15
+        Run with verbose output, 50 attempts per SSID and 15-second timeout
 
 CONFIGURATION FILES:
     SSID File Format:
@@ -870,9 +846,6 @@ function Main {
             SSIDFile     = $SSIDFile
             PasswordFile = $PasswordFile
             VerboseMode  = $VerboseOutput.IsPresent
-            DebugMode    = $DebugMode.IsPresent
-            StealthMode  = $Stealth.IsPresent
-            RateLimit    = $RateLimit
             Timeout      = $Timeout
             MaxAttempts  = $MaxAttempts
         }

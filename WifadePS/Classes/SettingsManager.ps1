@@ -34,10 +34,7 @@ class SettingsManager : IManager {
         $this.DefaultSettings = @{
             EthicalDisclaimerAccepted     = $false
             EthicalDisclaimerAcceptedDate = $null
-            DebugMode                     = $false
             VerboseMode                   = $false
-            StealthMode                   = $false
-            RateLimitMs                   = 1000
             ConnectionTimeoutSeconds      = 30
             MaxAttemptsPerSSID            = 0
             DefaultSSIDFile               = "ssid.txt"
@@ -49,7 +46,7 @@ class SettingsManager : IManager {
                 Warning   = "Yellow"
                 Error     = "Red"
                 Info      = "Blue"
-                Debug     = "Gray"
+                Verbose   = "Gray"
                 Highlight = "Magenta"
                 Border    = "DarkCyan"
             }
@@ -177,17 +174,6 @@ class SettingsManager : IManager {
         Write-Debug "Ethical disclaimer reset"
     }
     
-    # Get debug mode setting
-    [bool] IsDebugMode() {
-        return $this.GetSetting('DebugMode') -eq $true
-    }
-    
-    # Set debug mode
-    [void] SetDebugMode([bool]$enabled) {
-        $this.SetSetting('DebugMode', $enabled)
-        $this.SaveSettings()
-    }
-    
     # Get verbose mode setting
     [bool] IsVerboseMode() {
         return $this.GetSetting('VerboseMode') -eq $true
@@ -196,37 +182,6 @@ class SettingsManager : IManager {
     # Set verbose mode
     [void] SetVerboseMode([bool]$enabled) {
         $this.SetSetting('VerboseMode', $enabled)
-        $this.SaveSettings()
-    }
-    
-    # Get stealth mode setting
-    [bool] IsStealthMode() {
-        return $this.GetSetting('StealthMode') -eq $true
-    }
-    
-    # Set stealth mode
-    [void] SetStealthMode([bool]$enabled) {
-        $this.SetSetting('StealthMode', $enabled)
-        $this.SaveSettings()
-    }
-    
-    # Get rate limit setting
-    [int] GetRateLimit() {
-        $rateLimit = $this.GetSetting('RateLimitMs')
-        if ($rateLimit) { 
-            return $rateLimit 
-        }
-        else { 
-            return 1000 
-        }
-    }
-    
-    # Set rate limit
-    [void] SetRateLimit([int]$milliseconds) {
-        if ($milliseconds -lt 0 -or $milliseconds -gt 60000) {
-            throw [ConfigurationException]::new("Rate limit must be between 0 and 60000 milliseconds", "RateLimitMs")
-        }
-        $this.SetSetting('RateLimitMs', $milliseconds)
         $this.SaveSettings()
     }
     

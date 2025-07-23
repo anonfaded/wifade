@@ -39,72 +39,69 @@ class ApplicationController {
     # Initialize the ApplicationController
     [void] Initialize([hashtable]$config) {
         try {
-            Write-Host "[DEBUG] Step 1: Starting ApplicationController initialization..." -ForegroundColor Yellow
+            Write-Verbose "Starting ApplicationController initialization..."
             
             # Apply configuration
-            Write-Host "[DEBUG] Step 2: Applying configuration..." -ForegroundColor Yellow
+            Write-Verbose "Applying configuration..."
             if ($config.Count -gt 0) {
                 $this.Configuration = $config
                 $this.ApplyConfiguration($config)
             }
-            Write-Host "[DEBUG] Step 2: Configuration applied successfully" -ForegroundColor Green
+            Write-Verbose "Configuration applied successfully"
             
             # Initialize SettingsManager first
-            Write-Host "[DEBUG] Step 3: Initializing SettingsManager..." -ForegroundColor Yellow
+            Write-Verbose "Initializing SettingsManager..."
             try {
                 $this.SettingsManager = New-Object SettingsManager
                 $this.SettingsManager.Initialize(@{})
-                Write-Host "[DEBUG] Step 3: SettingsManager initialized successfully" -ForegroundColor Green
+                Write-Verbose "SettingsManager initialized successfully"
             }
             catch {
-                Write-Host "[DEBUG] Step 3: SettingsManager failed: $($_.Exception.Message)" -ForegroundColor Red
+                Write-Verbose "SettingsManager failed: $($_.Exception.Message)"
                 Write-Warning "Could not initialize SettingsManager: $($_.Exception.Message)"
             }
             
             # Initialize UIManager with settings
-            Write-Host "[DEBUG] Step 4: Preparing UIManager configuration..." -ForegroundColor Yellow
-            $debugMode = $false
+            Write-Verbose "Preparing UIManager configuration..."
             $verboseMode = $false
             $colorScheme = @{}
             
             if ($null -ne $this.SettingsManager) {
-                Write-Host "[DEBUG] Step 4a: Getting settings from SettingsManager..." -ForegroundColor Yellow
+                Write-Verbose "Getting settings from SettingsManager..."
                 try {
-                    $debugMode = $this.SettingsManager.IsDebugMode()
                     $verboseMode = $this.SettingsManager.IsVerboseMode()
                     $colorScheme = $this.SettingsManager.GetColorScheme()
-                    Write-Host "[DEBUG] Step 4a: Settings retrieved successfully" -ForegroundColor Green
+                    Write-Verbose "Settings retrieved successfully"
                 }
                 catch {
-                    Write-Host "[DEBUG] Step 4a: Failed to get settings: $($_.Exception.Message)" -ForegroundColor Red
+                    Write-Verbose "Failed to get settings: $($_.Exception.Message)"
                     Write-Warning "Could not get settings: $($_.Exception.Message)"
                 }
             }
             
-            Write-Host "[DEBUG] Step 5: Creating UIManager..." -ForegroundColor Yellow
+            Write-Verbose "Creating UIManager..."
             $uiConfig = @{
-                DebugMode   = $debugMode
                 VerboseMode = $verboseMode
                 ColorScheme = $colorScheme
             }
             try {
                 $this.UIManager = New-Object UIManager -ArgumentList $uiConfig
-                Write-Host "[DEBUG] Step 5a: UIManager object created" -ForegroundColor Green
+                Write-Verbose "UIManager object created"
                 $this.UIManager.Initialize($uiConfig)
-                Write-Host "[DEBUG] Step 5b: UIManager initialized successfully" -ForegroundColor Green
+                Write-Verbose "UIManager initialized successfully"
             }
             catch {
-                Write-Host "[DEBUG] Step 5: UIManager failed: $($_.Exception.Message)" -ForegroundColor Red
-                Write-Host "[DEBUG] Step 5: Full error: $($_.Exception)" -ForegroundColor Red
+                Write-Verbose "UIManager failed: $($_.Exception.Message)"
+                Write-Verbose "Full error: $($_.Exception)"
                 Write-Warning "Could not initialize UIManager: $($_.Exception.Message)"
             }
             
             $this.IsInitialized = $true
-            Write-Host "[DEBUG] Step 6: ApplicationController initialization completed successfully" -ForegroundColor Green
+            Write-Verbose "ApplicationController initialization completed successfully"
         }
         catch {
-            Write-Host "[DEBUG] FATAL ERROR in Initialize: $($_.Exception.Message)" -ForegroundColor Red
-            Write-Host "[DEBUG] FATAL ERROR details: $($_.Exception)" -ForegroundColor Red
+            Write-Verbose "FATAL ERROR in Initialize: $($_.Exception.Message)"
+            Write-Verbose "FATAL ERROR details: $($_.Exception)"
             throw "Failed to initialize ApplicationController: $($_.Exception.Message)"
         }
     }
@@ -152,8 +149,8 @@ class ApplicationController {
                 }
                 catch {
                     $this.UIManager.ShowError("An error occurred: $($_.Exception.Message)")
-                    if ($this.SettingsManager.IsDebugMode()) {
-                        $this.UIManager.ShowDebug("Stack trace: $($_.ScriptStackTrace)")
+                    if ($this.SettingsManager.IsVerboseMode()) {
+                        $this.UIManager.ShowVerbose("Stack trace: $($_.ScriptStackTrace)")
                     }
                     $this.UIManager.WaitForKeyPress("Press any key to continue...")
                 }
@@ -994,11 +991,9 @@ class ApplicationController {
             $choice = $this.UIManager.ShowSettingsMenu()
             
             switch ($choice.ToLower()) {
-                "1" { $this.HandleToggleDebug() }
-                "2" { $this.HandleToggleStealth() }
-                "3" { $this.HandleSetRateLimit() }
-                "4" { $this.HandleConfigureFiles() }
-                "5" { $this.HandleExportSettings() }
+                "1" { $this.HandleToggleVerbose() }
+                "2" { $this.HandleConfigureFiles() }
+                "3" { $this.HandleExportSettings() }
                 "b" { return }
                 default {
                     $this.UIManager.ShowWarning("Invalid option. Please try again.")
@@ -1008,50 +1003,17 @@ class ApplicationController {
         } while ($true)
     }
     
-    # Handle toggle debug mode
-    [void] HandleToggleDebug() {
-        $currentState = $this.SettingsManager.IsDebugMode()
-        $newDebugState = $currentState -eq $false
-        $this.SettingsManager.SetDebugMode($newDebugState)
-        $this.UIManager.ToggleDebugMode()
+    # Handle toggle verbose mode
+    [void] HandleToggleVerbose() {
+        $currentState = $this.SettingsManager.IsVerboseMode()
+        $newVerboseState = $currentState -eq $false
+        $this.SettingsManager.SetVerboseMode($newVerboseState)
         
         $newState = "disabled"
-        if ($newDebugState -eq $true) {
+        if ($newVerboseState -eq $true) {
             $newState = "enabled"
         }
-        $this.UIManager.ShowSuccess("Debug mode $newState")
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
-    
-    # Handle toggle stealth mode
-    [void] HandleToggleStealth() {
-        $currentState = $this.SettingsManager.IsStealthMode()
-        $newStealthState = $currentState -eq $false
-        $this.SettingsManager.SetStealthMode($newStealthState)
-        
-        $newState = "disabled"
-        if ($newStealthState -eq $true) {
-            $newState = "enabled"
-        }
-        $this.UIManager.ShowSuccess("Stealth mode $newState")
-        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-    }
-    
-    # Handle set rate limit
-    [void] HandleSetRateLimit() {
-        $currentLimit = $this.SettingsManager.GetRateLimit()
-        $this.UIManager.ShowInfo("Current rate limit: $currentLimit ms")
-        
-        $newLimit = $this.UIManager.GetUserInput("Enter new rate limit (0-60000 ms)", "^\d+$", "Please enter a valid number")
-        
-        try {
-            $this.SettingsManager.SetRateLimit([int]$newLimit)
-            $this.UIManager.ShowSuccess("Rate limit set to $newLimit ms")
-        }
-        catch {
-            $this.UIManager.ShowError("Failed to set rate limit: $($_.Exception.Message)")
-        }
-        
+        $this.UIManager.ShowSuccess("Verbose mode $newState")
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     

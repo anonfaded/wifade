@@ -3,7 +3,6 @@
 
 class UIManager : IManager {
     [hashtable]$ColorScheme
-    [bool]$DebugMode
     [bool]$VerboseMode
     [hashtable]$MenuOptions
     [string]$CurrentMenu
@@ -35,12 +34,11 @@ class UIManager : IManager {
             Warning   = "Yellow"
             Error     = "Red"
             Info      = "Blue"
-            Debug     = "Gray"
+            Verbose   = "Gray"
             Highlight = "Magenta"
             Border    = "DarkCyan"
         }
         
-        $this.DebugMode = $false
         $this.VerboseMode = $false
         $this.CurrentMenu = "Main"
         
@@ -75,11 +73,9 @@ class UIManager : IManager {
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )
             Settings   = @(
-                @{ Key = "1"; Text = "Toggle Debug Mode"; Action = "ToggleDebug" }
-                @{ Key = "2"; Text = "Toggle Stealth Mode"; Action = "ToggleStealth" }
-                @{ Key = "3"; Text = "Set Rate Limit"; Action = "SetRateLimit" }
-                @{ Key = "4"; Text = "Configure Files"; Action = "ConfigureFiles" }
-                @{ Key = "5"; Text = "Export Settings"; Action = "ExportSettings" }
+                @{ Key = "1"; Text = "Toggle Verbose Mode"; Action = "ToggleVerbose" }
+                @{ Key = "2"; Text = "Configure Files"; Action = "ConfigureFiles" }
+                @{ Key = "3"; Text = "Export Settings"; Action = "ExportSettings" }
                 @{ Key = "b"; Text = "Back to Main Menu"; Action = "BackToMain" }
             )
         }
@@ -88,7 +84,7 @@ class UIManager : IManager {
     # Initialize the UIManager
     [void] Initialize([hashtable]$config) {
         try {
-            Write-Debug "Initializing UIManager..."
+            Write-Verbose "Initializing UIManager..."
             
             # Apply configuration
             if ($config.Count -gt 0) {
@@ -100,7 +96,7 @@ class UIManager : IManager {
             $this.InitializeConsole()
             
             $this.IsInitialized = $true
-            Write-Debug "UIManager initialized successfully"
+            Write-Verbose "UIManager initialized successfully"
         }
         catch {
             throw [ConfigurationException]::new("Failed to initialize UIManager: $($_.Exception.Message)", $_.Exception)
@@ -109,9 +105,6 @@ class UIManager : IManager {
     
     # Apply configuration settings
     [void] ApplyConfiguration([hashtable]$config) {
-        if ($config.ContainsKey('DebugMode')) {
-            $this.DebugMode = $config['DebugMode']
-        }
         if ($config.ContainsKey('VerboseMode')) {
             $this.VerboseMode = $config['VerboseMode']
         }
@@ -144,7 +137,7 @@ class UIManager : IManager {
             }
         }
         catch {
-            Write-Debug "Could not initialize console settings: $($_.Exception.Message)"
+            Write-Verbose "Could not initialize console settings: $($_.Exception.Message)"
         }
     }
     
@@ -229,10 +222,6 @@ class UIManager : IManager {
         
         # Show current settings
         Write-Host "Current Settings:" -ForegroundColor $this.ColorScheme.Info
-        Write-Host "  Debug Mode: " -ForegroundColor $this.ColorScheme.Secondary -NoNewline
-        $debugStatus = if ($this.DebugMode) { "ON" } else { "OFF" }
-        $debugColor = if ($this.DebugMode) { $this.ColorScheme.Success } else { $this.ColorScheme.Warning }
-        Write-Host $debugStatus -ForegroundColor $debugColor
         Write-Host "  Verbose Mode: " -ForegroundColor $this.ColorScheme.Secondary -NoNewline
         $verboseStatus = if ($this.VerboseMode) { "ON" } else { "OFF" }
         $verboseColor = if ($this.VerboseMode) { $this.ColorScheme.Success } else { $this.ColorScheme.Warning }
@@ -294,17 +283,10 @@ class UIManager : IManager {
         Write-Host "ℹ $message" -ForegroundColor $this.ColorScheme.Info
     }
     
-    # Display debug message (only if debug mode is enabled)
-    [void] ShowDebug([string]$message) {
-        if ($this.DebugMode) {
-            Write-Host "[DEBUG] $message" -ForegroundColor $this.ColorScheme.Debug
-        }
-    }
-    
     # Display verbose message (only if verbose mode is enabled)
     [void] ShowVerbose([string]$message) {
         if ($this.VerboseMode) {
-            Write-Host "[VERBOSE] $message" -ForegroundColor $this.ColorScheme.Debug
+            Write-Host "[VERBOSE] $message" -ForegroundColor $this.ColorScheme.Verbose
         }
     }
     
@@ -397,12 +379,7 @@ class UIManager : IManager {
         else { return "░░░░" }
     }
     
-    # Toggle debug mode
-    [void] ToggleDebugMode() {
-        $this.DebugMode = -not $this.DebugMode
-        $status = if ($this.DebugMode) { "enabled" } else { "disabled" }
-        $this.ShowSuccess("Debug mode $status")
-    }
+
     
     # Toggle verbose mode
     [void] ToggleVerboseMode() {
@@ -419,7 +396,7 @@ class UIManager : IManager {
     # Dispose resources
     [void] Dispose() {
         try {
-            Write-Debug "Disposing UIManager resources..."
+            Write-Verbose "Disposing UIManager resources..."
             
             # Reset console title
             try {
@@ -431,7 +408,7 @@ class UIManager : IManager {
             }
             
             $this.IsInitialized = $false
-            Write-Debug "UIManager disposed successfully"
+            Write-Verbose "UIManager disposed successfully"
         }
         catch {
             Write-Warning "Error during UIManager disposal: $($_.Exception.Message)"
