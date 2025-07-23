@@ -158,14 +158,14 @@ class ApplicationController {
         
         $warningText = @"
 ╭──⚠️  WARNING ──────────────────────────────────────╮
-│          ETHICAL USAGE WARNING           │
+│               ETHICAL USAGE WARNING                │
 ├────────────────────────────────────────────────────┤
-│                                          │
-│  • For EDUCATIONAL and ETHICAL use only  │
-│  • You must OWN or have PERMISSION       │
-│  • Unauthorized access may be ILLEGAL    │
-│  • Users are responsible for compliance  │
-│                                          │
+│                                                    │
+│  • For EDUCATIONAL and ETHICAL use only            │
+│  • You must OWN or have PERMISSION                 │
+│  • Unauthorized access may be ILLEGAL              │
+│  • Users are responsible for compliance            │
+│                                                    │
 ╰────────────────────────────────────────────────────╯
 "@
         

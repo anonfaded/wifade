@@ -754,121 +754,210 @@ function Show-ParameterList {
 function Show-Help {
     <#
     .SYNOPSIS
-        Display detailed help information
+        Display detailed help information with styled output
     #>
     
-    $helpText = @"
-USAGE:
-    .\wifade.ps1 [OPTIONS]
-
-OPTIONS:
-    -Help, -h                   Display this help information
-    -IP                         Display current Wi-Fi private IP address and exit
-    -Status                     Display current Wi-Fi connection status and exit
-    -Scan                       Scan and list available Wi-Fi networks and exit
-    -PublicIP                   Display current public IP address and exit
-    -Gateway                    Display default gateway IP address and exit
-    -DNS                        Display DNS servers and exit
-    -MAC                        Display Wi-Fi adapter MAC address and exit
-    -Speed                      Display Wi-Fi connection speed and exit
-    -Restart                    Restart Wi-Fi adapter and exit
-    -Connect                    Connect to Wi-Fi network (requires SSID and password)
-    -VerboseOutput, -v          Enable verbose output mode
-
-POSITIONAL PARAMETERS:
-    SSID                        Network name to connect to (use quotes for names with spaces)
-    Password                    Network password
-
-EXAMPLES:
-    .\wifade.ps1
-        Run with default configuration files (ssid.txt and passwords.txt)
-    
-    .\wifade.ps1 -IP
-        Display current Wi-Fi private IP address and exit
-    
-    .\wifade.ps1 -Status
-        Display comprehensive Wi-Fi connection status and exit
-    
-    .\wifade.ps1 -Scan
-        Scan and list available Wi-Fi networks and exit
-    
-    .\wifade.ps1 -PublicIP
-        Display current public IP address and exit
-    
-    .\wifade.ps1 -Gateway
-        Display default gateway IP address and exit
-    
-    .\wifade.ps1 -DNS
-        Display DNS servers and exit
-    
-    .\wifade.ps1 -MAC
-        Display Wi-Fi adapter MAC address and exit
-    
-    .\wifade.ps1 -Speed
-        Display Wi-Fi connection speed and exit
-    
-    .\wifade.ps1 -Restart
-        Restart Wi-Fi adapter and exit
-    
-    .\wifade.ps1 -Connect MyNetwork mypassword123
-        Connect to Wi-Fi network using -Connect flag (no quotes needed for simple names)
-    
-    .\wifade.ps1 MyNetwork mypassword123
-        Connect to Wi-Fi network using positional parameters (no quotes needed)
-    
-    .\wifade.ps1 "2nd Floor" mypassword123
-        Connect to network with spaces in SSID (quotes required for SSID with spaces)
-    
-    .\wifade.ps1 -VerboseOutput
-        Run with verbose output for detailed information
-    
+    Write-Host ""
+    Write-Host "╭─ " -ForegroundColor Red -NoNewline
+    Write-Host "📖 Wifade Help Documentation" -ForegroundColor Blue -NoNewline
 
 
-BUILT-IN WORDLIST:
-    Default wordlist: passwords\probable-v2-wpa-top4800.txt
-    Contains 4700+ most common Wi-Fi passwords for effective dictionary attacks
     
-CUSTOM PASSWORD FILES:
-    Format: One password per line, plain text (.txt file)
-    Example content:
-        password123
-        12345678
-        qwerty123
-        welcome123
+    # USAGE Section
+    Write-Host ""
+    Write-Host ""
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "🚀 USAGE:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 [OPTIONS]" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
     
-    Custom wordlists can be selected through Attack Mode → Custom Password File
-
-INTERACTIVE INTERFACE:
-    The tool provides an interactive menu-driven interface with the following options:
+    # OPTIONS Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "⚙️  OPTIONS:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Help, -h" -ForegroundColor Red -NoNewline
+    Write-Host "                   Display this help information" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-IP" -ForegroundColor Red -NoNewline
+    Write-Host "                         Display current Wi-Fi private IP address and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Status" -ForegroundColor Red -NoNewline
+    Write-Host "                     Display current Wi-Fi connection status and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Scan" -ForegroundColor Red -NoNewline
+    Write-Host "                       Scan and list available Wi-Fi networks and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-PublicIP" -ForegroundColor Red -NoNewline
+    Write-Host "                   Display current public IP address and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Gateway" -ForegroundColor Red -NoNewline
+    Write-Host "                    Display default gateway IP address and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-DNS" -ForegroundColor Red -NoNewline
+    Write-Host "                        Display DNS servers and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-MAC" -ForegroundColor Red -NoNewline
+    Write-Host "                        Display Wi-Fi adapter MAC address and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Speed" -ForegroundColor Red -NoNewline
+    Write-Host "                      Display Wi-Fi connection speed and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Restart" -ForegroundColor Red -NoNewline
+    Write-Host "                    Restart Wi-Fi adapter and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Connect" -ForegroundColor Red -NoNewline
+    Write-Host "                    Connect to Wi-Fi network (requires SSID and password)" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-VerboseOutput, -v" -ForegroundColor Red -NoNewline
+    Write-Host "          Enable verbose output mode" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
     
-    1. Scan Wi-Fi Networks    - Discover available Wi-Fi networks in range
-    2. Attack Mode           - Choose from password attack strategies:
-                              • Dictionary Attack (uses built-in 4700+ password wordlist)
-                              • Custom Password File (select your own wordlist)
-    3. View Results          - Review previous attack results and statistics
-    4. Settings              - Configure application settings and preferences
-    5. Help                  - Display help information
-    q. Quit                  - Exit the application
-
-ETHICAL USAGE:
-    This tool is intended for educational purposes and ethical security testing only.
+    # POSITIONAL PARAMETERS Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "📝 POSITIONAL PARAMETERS:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "SSID" -ForegroundColor Red -NoNewline
+    Write-Host "                        Network name to connect to (use quotes for names with spaces)" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Password" -ForegroundColor Red -NoNewline
+    Write-Host "                    Network password" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
     
-    IMPORTANT LEGAL NOTICE:
-    - Only test networks you own or have explicit written permission to test
-    - Unauthorized access to computer networks is illegal in most jurisdictions
-    - Users are solely responsible for compliance with applicable laws
-    - The developers assume no liability for misuse of this tool
-
-SYSTEM REQUIREMENTS:
-    - Windows 10/11 or Windows Server 2016+
-    - PowerShell 5.1 or PowerShell 7.x
-    - Wi-Fi adapter with appropriate drivers
-    - Administrator privileges (recommended)
-
-For more information, visit: https://github.com/anonfaded/wifade
-"@
+    # EXAMPLES Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "💡 EXAMPLES:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Run the tool" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -IP" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Display current Wi-Fi private IP address and exit" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -Status" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Display comprehensive Wi-Fi connection status and exit" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -Scan" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Scan and list available Wi-Fi networks and exit" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 -Connect MyNetwork mypassword123" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Connect to Wi-Fi network using -Connect flag" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 MyNetwork mypassword123" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Connect to Wi-Fi network using positional parameters" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host ".\wifade.ps1 " -ForegroundColor Red -NoNewline
+    Write-Host '"2nd Floor"' -ForegroundColor Red -NoNewline
+    Write-Host " mypassword123" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "Connect to network with spaces in SSID (quotes required)" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
     
-    Write-Host $helpText -ForegroundColor White
+    # BUILT-IN WORDLIST Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "📚 BUILT-IN WORDLIST:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Default wordlist: " -ForegroundColor White -NoNewline
+    Write-Host "passwords\probable-v2-wpa-top4800.txt" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Contains 4700+ most common Wi-Fi passwords for effective dictionary attacks" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # CUSTOM PASSWORD FILES Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "📄 CUSTOM PASSWORD FILES:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Format: " -ForegroundColor White -NoNewline
+    Write-Host "One password per line, plain text (.txt file)" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Example content:" -ForegroundColor White
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "password123" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "12345678" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "qwerty123" -ForegroundColor Red
+    Write-Host "│        " -ForegroundColor Red -NoNewline
+    Write-Host "welcome123" -ForegroundColor Red
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "Custom wordlists can be selected through Attack Mode → Custom Password File" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # INTERACTIVE INTERFACE Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "🖥️  INTERACTIVE INTERFACE:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "The tool provides an interactive menu-driven interface with the following options:" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "1. Scan Wi-Fi Networks" -ForegroundColor Red -NoNewline
+    Write-Host "   - Discover available Wi-Fi networks in range" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "2. Attack Mode" -ForegroundColor Red -NoNewline
+    Write-Host "           - Choose the default dictionary or custom:" -ForegroundColor White
+    Write-Host "│                              " -ForegroundColor Red -NoNewline
+    Write-Host "• Dictionary Attack (uses built-in 4700+ password wordlist)" -ForegroundColor White
+    Write-Host "│                              " -ForegroundColor Red -NoNewline
+    Write-Host "• Custom Password File (select your own wordlist)" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "3. Settings" -ForegroundColor Red -NoNewline
+    Write-Host "              - Configure application settings and preferences" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "4. Help" -ForegroundColor Red -NoNewline
+    Write-Host "                  - Display this help page" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "q. Quit" -ForegroundColor Red -NoNewline
+    Write-Host "                  - Exit the application" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # ETHICAL USAGE Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "⚖️  ETHICAL USAGE:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "This tool is intended for educational purposes and ethical security testing only." -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "IMPORTANT LEGAL NOTICE:" -ForegroundColor Red
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- Only test networks you own or have explicit written permission to test" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- Unauthorized access to computer networks is illegal in most jurisdictions" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- Users are solely responsible for compliance with applicable laws" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- The developer isn’t responsible for any misuse — if you do something shady, they’re out of the picture" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # SYSTEM REQUIREMENTS Section
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "💻 SYSTEM REQUIREMENTS:" -ForegroundColor Blue
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- Windows 10/11 or Linux/MacOS(Coming soon)" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- PowerShell 5.1 or PowerShell 7.x" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "- Administrator privileges (recommended)" -ForegroundColor White
+    Write-Host "│" -ForegroundColor Red
+    
+    # Footer
+    Write-Host "│ " -ForegroundColor Red -NoNewline
+    Write-Host "For more information, visit: " -ForegroundColor White -NoNewline
+    Write-Host "https://github.com/anonfaded/Wifade" -ForegroundColor Red
+    Write-Host "╰────────────────────────────────────────────────────────────────────────────────" -ForegroundColor Red
+    Write-Host ""
 }
 
 function Main {
