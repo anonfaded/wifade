@@ -164,8 +164,6 @@ class UIManager : IManager {
     
     # Display the main menu
     [string] ShowMainMenu() {
-        $this.ShowBanner()
-        
         Write-Host "╭──📡 WIFADE ──────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
         Write-Host "│                    MAIN MENU                     │" -ForegroundColor $this.ColorScheme.Border
         Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border

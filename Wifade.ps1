@@ -131,11 +131,12 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 . "$ScriptRoot\Classes\PasswordManager.ps1"
 . "$ScriptRoot\Classes\SettingsManager.ps1"
 . "$ScriptRoot\Classes\UIManager.ps1"
+. "$ScriptRoot\Classes\VersionChecker.ps1"
 . "$ScriptRoot\Classes\ApplicationController.ps1"
 
 # Application constants
 $Script:APP_NAME = "wifade"
-$Script:APP_VERSION = "1.0.0"
+$Script:APP_VERSION = $Script:WIFADE_VERSION  # Use version from VersionChecker
 $Script:APP_DESCRIPTION = "Windows PowerShell Wi-Fi Security Testing Tool"
 
 function Get-WiFiPrivateIP {
@@ -1112,11 +1113,25 @@ function Main {
             PasswordFile = $PasswordFile
         }
         
-        Write-Host "Starting wifade..." -ForegroundColor Green
+        Write-Host "Starting Wifade..." -ForegroundColor Green
+        
+        # Initialize version checker (uses version constant from VersionChecker.ps1)
+        $versionChecker = [VersionChecker]::new("https://github.com/anonfaded/wifade", $VerboseOutput.IsPresent)
+        
+        # Check for updates (non-blocking and silent unless verbose)
+        if ($VerboseOutput.IsPresent) {
+            $updateResult = $versionChecker.CheckForUpdates()
+        } else {
+            $updateResult = $versionChecker.CheckForUpdatesQuiet()
+        }
         
         # Initialize and start the interactive application
         $appController = [ApplicationController]::new($appConfig)
         $appController.Initialize($appConfig)
+        
+        # Pass version checker to application controller for UI display
+        $appController.VersionChecker = $versionChecker
+        
         $appController.Start()
         
     }

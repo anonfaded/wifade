@@ -48,7 +48,7 @@ class SettingsManager : IManager {
                 Border    = "Red"
             }
             LastUsed                      = $null
-            Version                       = "1.0.0"
+            Version                       = $Script:WIFADE_VERSION
         }
         
         $this.Settings = @{}

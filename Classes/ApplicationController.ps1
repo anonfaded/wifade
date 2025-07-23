@@ -9,6 +9,7 @@ class ApplicationController {
     [object]$NetworkManager
     [object]$PasswordManager
     [object]$ConfigurationManager
+    [object]$VersionChecker
     [bool]$IsRunning
     [string]$CurrentMenu
     [hashtable]$AppConfig
@@ -261,6 +262,15 @@ class ApplicationController {
     
     # Handle main menu interactions
     [void] HandleMainMenu() {
+        # Clear screen and show banner
+        $this.UIManager.ClearScreen()
+        $this.UIManager.ShowBanner()
+        
+        # Show update notification if available
+        if ($null -ne $this.VersionChecker -and $this.VersionChecker.UpdateAvailable) {
+            $this.VersionChecker.ShowUpdateNotification()
+        }
+        
         $choice = $this.UIManager.ShowMainMenu()
         
         switch ($choice.ToLower()) {
