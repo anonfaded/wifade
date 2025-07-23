@@ -783,7 +783,7 @@ class ApplicationController {
         $this.UIManager.ShowBanner()
         
         Write-Host "╔══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "║                           DICTIONARY ATTACK                                  ║" -ForegroundColor Cyan
+        Write-Host "║                         WI-FI BRUTE FORCE ATTACK                             ║" -ForegroundColor Cyan
         Write-Host "╚══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
         
@@ -801,12 +801,31 @@ class ApplicationController {
                 return
             }
             
+            # Initialize networkChoice variable
+            $networkChoice = ""
+            
             # Network selection loop with rescan and Wi-Fi restart options
             do {
                 # Display networks and let user select
                 $this.UIManager.ShowNetworkList($networks)
                 
-                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, 'w' to restart Wi-Fi adapter, or 'b' to go back", "^(\d+|[rRwWbB])$", "Please enter a valid network number, 'r' to rescan, 'w' to restart Wi-Fi adapter, or 'b' to go back")
+                # Display options in a consistent style
+                Write-Host "Options:" -ForegroundColor Cyan
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[1-$($networks.Count)]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to select a network to attack" -ForegroundColor White
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[r]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to rescan for networks" -ForegroundColor White
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[w]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to restart Wi-Fi adapter" -ForegroundColor White
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[b]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to go back to previous menu" -ForegroundColor White
+                Write-Host ""
+                
+                $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRwWbB])$", "Please enter a valid option")
                 
                 # Check if user wants to go back
                 if ($networkChoice.ToLower() -eq "b") {
@@ -859,7 +878,7 @@ class ApplicationController {
             $this.UIManager.ShowInfo("Target network: $($targetNetwork.SSID)")
             
             # Confirm attack
-            $confirmed = $this.UIManager.GetConfirmation("Start dictionary attack on '$($targetNetwork.SSID)'?", $false)
+            $confirmed = $this.UIManager.GetConfirmation("Start brute force attack on '$($targetNetwork.SSID)'?", $false)
             if (-not $confirmed) {
                 $this.UIManager.ShowInfo("Attack cancelled.")
                 $this.UIManager.WaitForKeyPress("Press any key to continue...")
@@ -871,7 +890,7 @@ class ApplicationController {
             
         }
         catch {
-            $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
+            $this.UIManager.ShowError("Brute force attack failed: $($_.Exception.Message)")
             if ($this.SettingsManager.IsVerboseMode()) {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
@@ -976,12 +995,28 @@ class ApplicationController {
                 return
             }
             
+            # Initialize networkChoice variable
+            $networkChoice = ""
+            
             # Network selection loop with rescan option
             do {
                 # Display networks and let user select
                 $this.UIManager.ShowNetworkList($networks)
                 
-                $networkChoice = $this.UIManager.GetUserInput("Enter network number to attack (1-$($networks.Count)), 'r' to rescan, or 'b' to go back", "^(\d+|[rRbB])$", "Please enter a valid network number, 'r' to rescan, or 'b' to go back")
+                # Display options in a consistent style
+                Write-Host "Options:" -ForegroundColor Cyan
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[1-$($networks.Count)]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to select a network to attack" -ForegroundColor White
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[r]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to rescan for networks" -ForegroundColor White
+                Write-Host "  • Enter " -ForegroundColor White -NoNewline
+                Write-Host "[b]" -ForegroundColor Yellow -NoNewline
+                Write-Host " to go back to previous menu" -ForegroundColor White
+                Write-Host ""
+                
+                $networkChoice = $this.UIManager.GetUserInput("Select option", "^(\d+|[rRbB])$", "Please enter a valid option")
                 
                 # Check if user wants to go back
                 if ($networkChoice.ToLower() -eq "b") {
@@ -1229,7 +1264,12 @@ For more information, visit: https://github.com/wifade/wifade
                     throw "Required password file not found: $passwordFilePath"
                 }
                 else {
-                    $this.UIManager.ShowInfo("Using password file: $passwordFilePath")
+                    # Only show the full path in verbose mode
+                    $this.UIManager.ShowVerbose("Using password file: $passwordFilePath")
+                    
+                    # In normal mode, just show a simple confirmation
+                    $fileName = Split-Path -Leaf $passwordFilePath
+                    $this.UIManager.ShowInfo("Using password file: $fileName")
                 }
                 
                 $passwordConfig = @{
@@ -1253,7 +1293,7 @@ For more information, visit: https://github.com/wifade/wifade
     # Execute dictionary attack on target network
     [void] ExecuteDictionaryAttack([NetworkProfile]$targetNetwork) {
         try {
-            $this.UIManager.ShowInfo("Starting dictionary attack on '$($targetNetwork.SSID)'...")
+            $this.UIManager.ShowInfo("Starting brute force attack on '$($targetNetwork.SSID)'...")
             
             # Validate target network
             if (-not $targetNetwork -or [string]::IsNullOrWhiteSpace($targetNetwork.SSID)) {
@@ -1263,7 +1303,7 @@ For more information, visit: https://github.com/wifade/wifade
             # Check if network requires authentication
             if ($targetNetwork.EncryptionType -eq "Open" -or $targetNetwork.AuthenticationMethod -eq "Open") {
                 $this.UIManager.ShowWarning("Target network '$($targetNetwork.SSID)' is open (no password required)")
-                $confirmed = $this.UIManager.GetConfirmation("Continue with dictionary attack anyway?", $false)
+                $confirmed = $this.UIManager.GetConfirmation("Continue with brute force attack anyway?", $false)
                 if (-not $confirmed) {
                     $this.UIManager.ShowInfo("Attack cancelled.")
                     $this.UIManager.WaitForKeyPress("Press any key to continue...")
@@ -1295,7 +1335,7 @@ For more information, visit: https://github.com/wifade/wifade
             
             # Validate password list
             if ($maxAttempts -eq 0) {
-                $this.UIManager.ShowError("No passwords available for dictionary attack. Check password file: $($this.AppConfig.PasswordFile)")
+                $this.UIManager.ShowError("No passwords available for brute force attack. Check password file: $($this.AppConfig.PasswordFile)")
                 $this.UIManager.WaitForKeyPress("Press any key to continue...")
                 return
             }
@@ -1422,11 +1462,11 @@ For more information, visit: https://github.com/wifade/wifade
             # Show final results
             $totalTime = (Get-Date) - $startTime
             if ($successfulConnection) {
-                $this.UIManager.ShowSuccess("Dictionary attack completed successfully!")
+                $this.UIManager.ShowSuccess("Brute force attack completed successfully!")
                 $this.UIManager.ShowSuccess("Total time: $($totalTime.ToString('hh\:mm\:ss'))")
             }
             else {
-                $this.UIManager.ShowWarning("Dictionary attack completed without success.")
+                $this.UIManager.ShowWarning("Brute force attack completed without success.")
                 $this.UIManager.ShowInfo("Tried $attemptCount of $maxAttempts passwords in $($totalTime.ToString('hh\:mm\:ss'))")
                 
                 if ($attemptCount -lt $maxAttempts) {
@@ -1451,7 +1491,7 @@ For more information, visit: https://github.com/wifade/wifade
             
         }
         catch {
-            $this.UIManager.ShowError("Dictionary attack failed: $($_.Exception.Message)")
+            $this.UIManager.ShowError("Brute force attack failed: $($_.Exception.Message)")
             throw
         }
     }
