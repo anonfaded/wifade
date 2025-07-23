@@ -423,6 +423,14 @@ class ApplicationController {
                 return
             }
             
+            # Validate password before attempting connection
+            $passwordValidation = $this.NetworkManager.ValidatePassword($password, $network)
+            if (-not $passwordValidation.IsValid) {
+                $this.UIManager.ShowError("Invalid password: $($passwordValidation.ErrorMessage)")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
             # Attempt connection
             $this.AttemptNetworkConnection($network.SSID, $password)
             
@@ -486,7 +494,10 @@ class ApplicationController {
             }
             else {
                 # Provide specific error messages based on the failure type
-                if ($connectionAttempt.ErrorMessage -match "authentication|password|credential") {
+                if ($connectionAttempt.ErrorMessage -match "must be between 8 and 63 characters|must be at least 8 characters|WEP password must be") {
+                    $this.UIManager.ShowError("Invalid password format: $($connectionAttempt.ErrorMessage)")
+                }
+                elseif ($connectionAttempt.ErrorMessage -match "authentication|password|credential") {
                     $this.UIManager.ShowError("Failed to connect to '$ssid' - Incorrect password")
                     $this.UIManager.ShowWarning("Please verify the password and try again.")
                 }

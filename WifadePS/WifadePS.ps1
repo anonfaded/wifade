@@ -463,6 +463,21 @@ function Connect-WiFiNetwork {
             return $true
         }
         
+        # Validate password if provided (skip validation for open networks)
+        if (-not [string]::IsNullOrWhiteSpace($Password)) {
+            # Try to find the network to get its security information
+            $networks = $networkManager.ScanNetworks()
+            $targetNetwork = $networks | Where-Object { $_.SSID -eq $SSID } | Select-Object -First 1
+            
+            if ($targetNetwork) {
+                $passwordValidation = $networkManager.ValidatePassword($Password, $targetNetwork)
+                if (-not $passwordValidation.IsValid) {
+                    Write-Host "Invalid password: $($passwordValidation.ErrorMessage)" -ForegroundColor Red
+                    return $false
+                }
+            }
+        }
+        
         # Attempt connection
         Write-Host "Attempting connection..." -ForegroundColor Yellow
         $connectionResult = $networkManager.AttemptConnection($SSID, $Password, 8)
@@ -489,7 +504,10 @@ function Connect-WiFiNetwork {
         }
         else {
             # Provide specific error messages based on the failure type
-            if ($connectionResult.ErrorMessage -match "authentication|password|credential") {
+            if ($connectionResult.ErrorMessage -match "must be between 8 and 63 characters|must be at least 8 characters|WEP password must be") {
+                Write-Host "Invalid password format: $($connectionResult.ErrorMessage)" -ForegroundColor Red
+            }
+            elseif ($connectionResult.ErrorMessage -match "authentication|password|credential") {
                 Write-Host "Failed to connect to '$SSID' - Incorrect password" -ForegroundColor Red
                 Write-Host "Please verify the password and try again." -ForegroundColor Yellow
             }

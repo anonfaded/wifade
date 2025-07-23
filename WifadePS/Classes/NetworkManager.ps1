@@ -1327,6 +1327,68 @@ class NetworkManager : IManager {
         return $technicalName
     }
 
+    # Validate password requirements for different network types
+    [hashtable] ValidatePassword([string]$password, [NetworkProfile]$networkInfo) {
+        $result = @{
+            IsValid        = $true
+            ErrorMessage   = ""
+            RequiredLength = 0
+        }
+        
+        try {
+            if (-not $networkInfo) {
+                $result.IsValid = $false
+                $result.ErrorMessage = "Network information not available"
+                return $result
+            }
+            
+            # Check for open networks (no password required)
+            if ($networkInfo.EncryptionType -eq "Open" -or $networkInfo.AuthenticationMethod -eq "Open") {
+                return $result  # Open networks don't need password validation
+            }
+            
+            # Determine encryption type and validate accordingly
+            $encryptionType = $networkInfo.EncryptionType.ToLower()
+            $authMethod = $networkInfo.AuthenticationMethod.ToLower()
+            
+            # WEP validation
+            if ($encryptionType -eq "wep" -or $authMethod -match "wep") {
+                # WEP keys can be 5 or 13 characters (ASCII) or 10 or 26 characters (hex)
+                if ($password.Length -ne 5 -and $password.Length -ne 13 -and $password.Length -ne 10 -and $password.Length -ne 26) {
+                    $result.IsValid = $false
+                    $result.ErrorMessage = "WEP password must be 5 or 13 characters (ASCII) or 10 or 26 characters (hexadecimal)"
+                    $result.RequiredLength = 5
+                    return $result
+                }
+            }
+            # WPA/WPA2/WPA3 validation
+            elseif ($encryptionType -match "wpa" -or $authMethod -match "wpa") {
+                if ($password.Length -lt 8 -or $password.Length -gt 63) {
+                    $result.IsValid = $false
+                    $result.ErrorMessage = "WPA/WPA2/WPA3 password must be between 8 and 63 characters"
+                    $result.RequiredLength = 8
+                    return $result
+                }
+            }
+            # Default validation for unknown encryption types
+            else {
+                if ($password.Length -lt 8) {
+                    $result.IsValid = $false
+                    $result.ErrorMessage = "Password must be at least 8 characters for secured networks"
+                    $result.RequiredLength = 8
+                    return $result
+                }
+            }
+            
+            return $result
+        }
+        catch {
+            $result.IsValid = $false
+            $result.ErrorMessage = "Password validation failed: $($_.Exception.Message)"
+            return $result
+        }
+    }
+
     # Get adapter summary for display
     [string] GetAdapterSummary() {
         $primaryAdapterName = "None"
@@ -1377,6 +1439,14 @@ NetworkManager Status:
             
             # Disconnect from current network if connected
             $this.DisconnectFromNetwork()
+            
+            # Validate password before creating profile
+            if ($targetNetwork -and -not [string]::IsNullOrWhiteSpace($password)) {
+                $passwordValidation = $this.ValidatePassword($password, $targetNetwork)
+                if (-not $passwordValidation.IsValid) {
+                    throw [NetworkException]::new($passwordValidation.ErrorMessage, $this.PrimaryAdapter.Name, $ssid)
+                }
+            }
             
             # Create or update network profile
             $profileCreated = $this.CreateNetworkProfile($ssid, $password, $targetNetwork)
@@ -1795,7 +1865,7 @@ NetworkManager Status:
                 
                 # Check for Windows error events that might indicate authentication failure
                 try {
-                    $recentEvents = Get-WinEvent -FilterHashtable @{LogName='System'; ID=10028,10029,10030; StartTime=(Get-Date).AddMinutes(-1)} -MaxEvents 5 -ErrorAction SilentlyContinue
+                    $recentEvents = Get-WinEvent -FilterHashtable @{LogName = 'System'; ID = 10028, 10029, 10030; StartTime = (Get-Date).AddMinutes(-1) } -MaxEvents 5 -ErrorAction SilentlyContinue
                     if ($recentEvents) {
                         foreach ($event in $recentEvents) {
                             if ($event.Message -match "authentication|credential|password") {
