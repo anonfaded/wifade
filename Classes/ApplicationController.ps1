@@ -213,7 +213,7 @@ class ApplicationController {
             Write-Host "If YES, type exactly: " -ForegroundColor White -NoNewline
             Write-Host "ILoveFadSecLab" -ForegroundColor Red
             Write-Host "│ " -ForegroundColor Red -NoNewline
-            Write-Host "If NO, just type anything else and face the consequences! 😈" -ForegroundColor White
+            Write-Host "If NO, just type anything else and don't worry I won't delete your system32 folder! 😈" -ForegroundColor White
             Write-Host "╰────────────────────────────────────────────────────────────" -ForegroundColor Red
             Write-Host ""
             
