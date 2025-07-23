@@ -1586,11 +1586,32 @@ NetworkManager Status:
             }
             
             if (-not $connectSuccess) {
-                $result.ErrorMessage = "netsh connect command failed: $($result.Output)"
+                $outputText = $result.Output
+                
+                # Check for specific error patterns in netsh output
+                if ($outputText -match "profile.*not found|cannot find") {
+                    $result.ErrorMessage = "Network profile not found - the network may not be available"
+                }
+                elseif ($outputText -match "interface.*not found|no wireless") {
+                    $result.ErrorMessage = "Wi-Fi adapter not found or disabled"
+                }
+                elseif ($outputText -match "access.*denied|permission") {
+                    $result.ErrorMessage = "Access denied - administrator privileges may be required"
+                }
+                else {
+                    $result.ErrorMessage = "Connection command failed: $outputText"
+                }
+                
                 Write-Verbose $result.ErrorMessage
             }
             else {
                 Write-Verbose "Connection command executed successfully"
+                
+                # Even if the command succeeded, check the output for warnings
+                $outputText = $result.Output
+                if ($outputText -match "connection request was completed successfully") {
+                    Write-Verbose "Connection request acknowledged by Windows"
+                }
             }
             
             return $result
@@ -1709,22 +1730,38 @@ NetworkManager Status:
             Write-Verbose "Validating connection to $ssid"
             
             $startTime = Get-Date
-            $maxWaitTime = $timeoutSeconds
+            $maxWaitTime = [Math]::Min($timeoutSeconds, 8)  # Reduce max wait time to 8 seconds
+            $checkInterval = 500  # Check every 500ms for faster response
             
-            # Wait for connection to establish
+            # Wait for connection to establish with more frequent checks
             while (((Get-Date) - $startTime).TotalSeconds -lt $maxWaitTime) {
-                $currentConnection = $this.GetCurrentConnection()
+                # Check connection status using netsh wlan show interfaces
+                $interfaceOutput = & netsh wlan show interfaces 2>$null
                 
-                $currentConnectionSSID = 'null'
-                if ($currentConnection) {
-                    $currentConnectionSSID = $currentConnection.SSID
-                }
-                Write-Verbose "Validation check: Current connection SSID='$currentConnectionSSID', Target SSID='$ssid'"
-                
-                if ($currentConnection -and $currentConnection.SSID -eq $ssid) {
-                    # Additional validation: Check if we actually have a good signal and proper connection
-                    if ($currentConnection.SignalStrength -gt 0) {
-                        Write-Verbose "Connection validation successful: SSID match and good signal"
+                if ($LASTEXITCODE -eq 0) {
+                    $connectionState = ""
+                    $connectedSSID = ""
+                    $signalStrength = 0
+                    
+                    foreach ($line in $interfaceOutput) {
+                        $line = $line.Trim()
+                        if ($line -match "State\s*:\s*(.+)") {
+                            $connectionState = $matches[1].Trim()
+                        }
+                        elseif ($line -match "SSID\s*:\s*(.+)") {
+                            $connectedSSID = $matches[1].Trim()
+                        }
+                        elseif ($line -match "Signal\s*:\s*(\d+)%") {
+                            $signalStrength = [int]$matches[1]
+                        }
+                    }
+                    
+                    Write-Verbose "Connection state: '$connectionState', SSID: '$connectedSSID', Signal: $signalStrength%"
+                    
+                    # Check for successful connection
+                    if ($connectionState -eq "connected" -and $connectedSSID -eq $ssid -and $signalStrength -gt 0) {
+                        Write-Verbose "Connection validation successful: Connected to $ssid with $signalStrength% signal"
+                        $currentConnection = $this.GetCurrentConnection()
                         return @{
                             Success        = $true
                             ConnectionInfo = $currentConnection
@@ -1732,31 +1769,72 @@ NetworkManager Status:
                             ValidationTime = ((Get-Date) - $startTime).TotalSeconds
                         }
                     }
-                    else {
-                        Write-Verbose "SSID matches but signal strength is 0, continuing to wait..."
+                    
+                    # Check for authentication failure states
+                    if ($connectionState -match "(authentication|authenticating)" -and ((Get-Date) - $startTime).TotalSeconds -gt 3) {
+                        Write-Verbose "Authentication appears to be stuck, likely wrong password"
+                        return @{
+                            Success        = $false
+                            ConnectionInfo = $null
+                            ErrorMessage   = "Authentication failed - incorrect password"
+                            ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                        }
+                    }
+                    
+                    # Check for disconnected state after attempting connection
+                    if ($connectionState -eq "disconnected" -and ((Get-Date) - $startTime).TotalSeconds -gt 2) {
+                        Write-Verbose "Connection returned to disconnected state, likely authentication failure"
+                        return @{
+                            Success        = $false
+                            ConnectionInfo = $null
+                            ErrorMessage   = "Connection failed - authentication error or incorrect password"
+                            ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                        }
                     }
                 }
                 
-                # Check adapter status
-                $adapterStatus = $this.GetAdapterStatus()
-                if (-not $adapterStatus.IsHealthy) {
-                    return @{
-                        Success        = $false
-                        ConnectionInfo = $null
-                        ErrorMessage   = "Wi-Fi adapter is not healthy: $($adapterStatus.ErrorMessage)"
-                        ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                # Check for Windows error events that might indicate authentication failure
+                try {
+                    $recentEvents = Get-WinEvent -FilterHashtable @{LogName='System'; ID=10028,10029,10030; StartTime=(Get-Date).AddMinutes(-1)} -MaxEvents 5 -ErrorAction SilentlyContinue
+                    if ($recentEvents) {
+                        foreach ($event in $recentEvents) {
+                            if ($event.Message -match "authentication|credential|password") {
+                                Write-Verbose "Windows event suggests authentication failure"
+                                return @{
+                                    Success        = $false
+                                    ConnectionInfo = $null
+                                    ErrorMessage   = "Authentication failed - incorrect password (Windows event detected)"
+                                    ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                                }
+                            }
+                        }
                     }
                 }
+                catch {
+                    # Ignore event log errors, continue with other validation methods
+                }
                 
-                Start-Sleep -Milliseconds 1000
+                Start-Sleep -Milliseconds $checkInterval
             }
             
-            # Connection timeout
+            # Final check - if we're still not connected after timeout, it's likely a failure
+            $finalCheck = $this.GetCurrentConnection()
+            if ($finalCheck -and $finalCheck.SSID -eq $ssid -and $finalCheck.SignalStrength -gt 0) {
+                Write-Verbose "Final validation successful after timeout period"
+                return @{
+                    Success        = $true
+                    ConnectionInfo = $finalCheck
+                    ErrorMessage   = ""
+                    ValidationTime = ((Get-Date) - $startTime).TotalSeconds
+                }
+            }
+            
+            # Connection timeout or failure
             return @{
                 Success        = $false
                 ConnectionInfo = $null
-                ErrorMessage   = "Connection timeout after $maxWaitTime seconds"
-                ValidationTime = $maxWaitTime
+                ErrorMessage   = "Connection failed - timeout or incorrect password"
+                ValidationTime = ((Get-Date) - $startTime).TotalSeconds
             }
         }
         catch {

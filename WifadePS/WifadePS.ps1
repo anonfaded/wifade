@@ -445,9 +445,27 @@ function Connect-WiFiNetwork {
         $networkManager = New-Object NetworkManager -ArgumentList $networkConfig
         $networkManager.Initialize($networkConfig)
         
+        # Check if already connected to this network
+        $currentConnection = $networkManager.GetCurrentConnection()
+        if ($currentConnection -and $currentConnection.SSID -eq $SSID) {
+            Write-Host "Already connected to '$SSID'!" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "Connection Details:" -ForegroundColor Cyan
+            Write-Host "  SSID: $($currentConnection.SSID)" -ForegroundColor White
+            Write-Host "  Signal: $($currentConnection.SignalStrength)%" -ForegroundColor White
+            Write-Host "  Encryption: $($currentConnection.EncryptionType)" -ForegroundColor White
+            
+            # Get IP information
+            $privateIP = Get-WiFiPrivateIP
+            if ($privateIP) {
+                Write-Host "  Private IP: $privateIP" -ForegroundColor White
+            }
+            return $true
+        }
+        
         # Attempt connection
-        Write-Host "Attempting connection (this may take up to 15 seconds)..." -ForegroundColor Yellow
-        $connectionResult = $networkManager.AttemptConnection($SSID, $Password, 15)
+        Write-Host "Attempting connection..." -ForegroundColor Yellow
+        $connectionResult = $networkManager.AttemptConnection($SSID, $Password, 8)
         
         if ($connectionResult.Success) {
             Write-Host "Successfully connected to '$SSID'!" -ForegroundColor Green
@@ -470,9 +488,20 @@ function Connect-WiFiNetwork {
             return $true
         }
         else {
-            Write-Host "Failed to connect to '$SSID'" -ForegroundColor Red
-            if ($connectionResult.ErrorMessage) {
-                Write-Host "Error: $($connectionResult.ErrorMessage)" -ForegroundColor Red
+            # Provide specific error messages based on the failure type
+            if ($connectionResult.ErrorMessage -match "authentication|password|credential") {
+                Write-Host "Failed to connect to '$SSID' - Incorrect password" -ForegroundColor Red
+                Write-Host "Please verify the password and try again." -ForegroundColor Yellow
+            }
+            elseif ($connectionResult.ErrorMessage -match "timeout") {
+                Write-Host "Failed to connect to '$SSID' - Connection timeout" -ForegroundColor Red
+                Write-Host "The network may be out of range or experiencing issues." -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "Failed to connect to '$SSID'" -ForegroundColor Red
+                if ($connectionResult.ErrorMessage) {
+                    Write-Host "Error: $($connectionResult.ErrorMessage)" -ForegroundColor Red
+                }
             }
             return $false
         }
