@@ -1433,22 +1433,37 @@ class ApplicationController {
     # Show file picker dialog for selecting password files
     [string] ShowFilePickerDialog() {
         try {
-            # Try to use Windows Forms file dialog
-            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            # Check if we're on Windows and Windows Forms is available
+            if (-not (Test-Path Function:\Test-IsWindows)) {
+                # Define the function if it doesn't exist
+                function Test-IsWindows {
+                    return [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+                }
+            }
             
-            $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
-            $fileDialog.Title = "Select Password File"
-            $fileDialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
-            $fileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($PWD.Path)
-            $fileDialog.Multiselect = $false
-            
-            $result = $fileDialog.ShowDialog()
-            
-            if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-                return $fileDialog.FileName
+            if ((Test-IsWindows) -and $Script:WindowsFormsAvailable) {
+                # Try to use Windows Forms file dialog
+                Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+                
+                $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
+                $fileDialog.Title = "Select Password File"
+                $fileDialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
+                $fileDialog.InitialDirectory = [System.IO.Path]::GetDirectoryName($PWD.Path)
+                $fileDialog.Multiselect = $false
+                
+                $result = $fileDialog.ShowDialog()
+                
+                # Use string comparison instead of enum to avoid type loading issues
+                if ($result.ToString() -eq "OK") {
+                    return $fileDialog.FileName
+                }
+                else {
+                    return ""
+                }
             }
             else {
-                return ""
+                # Fallback for non-Windows or when Windows Forms is not available
+                throw "Windows Forms not available on this platform"
             }
         }
         catch {
