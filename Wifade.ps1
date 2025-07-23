@@ -273,7 +273,22 @@ function Get-WiFiStatus {
         $currentConnection = $networkManager.GetCurrentConnection()
         
         if (-not $currentConnection) {
-            return "Not connected to any Wi-Fi network"
+            # Display styled "not connected" message
+            Write-Host ""
+            Write-Host "╭─ " -ForegroundColor Red -NoNewline
+            Write-Host "📶 Wi-Fi Connection Status" -ForegroundColor Blue -NoNewline
+
+            Write-Host "│" -ForegroundColor Red -NoNewline
+            Write-Host "                                    " -NoNewline
+            Write-Host "│" -ForegroundColor Red
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host "❌ Not connected to any Wi-Fi network" -ForegroundColor Red
+            Write-Host "│" -ForegroundColor Red -NoNewline
+            Write-Host "                                    " -NoNewline
+            Write-Host "│" -ForegroundColor Red
+            Write-Host "╰────────────────────────────────────" -ForegroundColor Red
+            Write-Host ""
+            return
         }
         
         # Get IP information
@@ -281,19 +296,83 @@ function Get-WiFiStatus {
         $publicIP = Get-WiFiPublicIP
         $gateway = Get-WiFiGateway
         
-        # Format output
-        $status = @()
-        $status += "SSID: $($currentConnection.SSID)"
-        $status += "Signal: $($currentConnection.SignalStrength)%"
-        $status += "Encryption: $($currentConnection.EncryptionType)"
-        if ($privateIP) { $status += "Private IP: $privateIP" }
-        if ($publicIP) { $status += "Public IP: $publicIP" } else { $status += "Public IP: [Unable to retrieve]" }
-        if ($gateway) { $status += "Gateway: $gateway" }
+        # Create signal strength visual
+        $signalStrength = $currentConnection.SignalStrength
+        $signalBars = ""
+        if ($signalStrength -ge 75) { $signalBars = "████" }
+        elseif ($signalStrength -ge 50) { $signalBars = "███░" }
+        elseif ($signalStrength -ge 25) { $signalBars = "██░░" }
+        elseif ($signalStrength -gt 0) { $signalBars = "█░░░" }
+        else { $signalBars = "░░░░" }
         
-        return $status -join "`n"
+        # Display styled status information
+        Write-Host ""
+        Write-Host "╭─ " -ForegroundColor Red -NoNewline
+        Write-Host "📶 Wi-Fi Connection Status" -ForegroundColor Blue -NoNewline
+
+        Write-Host ""
+
+        
+        # Using proper string formatting with consistent padding (10 chars + colon)
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host ("{0,-10} : " -f "SSID") -ForegroundColor Blue -NoNewline
+        Write-Host "$($currentConnection.SSID)" -ForegroundColor White
+        
+        # Signal with bars
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host ("{0,-10} : " -f "Signal") -ForegroundColor Blue -NoNewline
+        Write-Host "$signalBars $($signalStrength)%" -ForegroundColor White
+        
+        # Encryption
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host ("{0,-10} : " -f "Encryption") -ForegroundColor Blue -NoNewline
+        Write-Host "$($currentConnection.EncryptionType)" -ForegroundColor White
+        
+        # Private IP
+        if ($privateIP) {
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host ("{0,-10} : " -f "Private IP") -ForegroundColor Blue -NoNewline
+            Write-Host "$privateIP" -ForegroundColor White
+        }
+        
+        # Public IP
+        if ($publicIP) {
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host ("{0,-10} : " -f "Public IP") -ForegroundColor Blue -NoNewline
+            Write-Host "$publicIP" -ForegroundColor White
+        } else {
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host ("{0,-10} : " -f "Public IP") -ForegroundColor Blue -NoNewline
+            Write-Host "[Unable to retrieve]" -ForegroundColor Red
+        }
+        
+        # Gateway
+        if ($gateway) {
+            Write-Host "│ " -ForegroundColor Red -NoNewline
+            Write-Host ("{0,-10} : " -f "Gateway") -ForegroundColor Blue -NoNewline
+            Write-Host "$gateway" -ForegroundColor White
+        }
+        
+
+        Write-Host "╰────────────────────────────────────" -ForegroundColor Red
+        Write-Host ""
     }
     catch {
-        return $null
+        # Display styled error message
+        Write-Host ""
+        Write-Host "╭─ " -ForegroundColor Red -NoNewline
+        Write-Host "📶 Wi-Fi Connection Status" -ForegroundColor Blue -NoNewline
+        Write-Host " ─╮" -ForegroundColor Red
+        Write-Host "│" -ForegroundColor Red -NoNewline
+        Write-Host "                                    " -NoNewline
+        Write-Host "│" -ForegroundColor Red
+        Write-Host "│ " -ForegroundColor Red -NoNewline
+        Write-Host "❌ Unable to retrieve Wi-Fi status" -ForegroundColor Red
+        Write-Host "│" -ForegroundColor Red -NoNewline
+        Write-Host "                                    " -NoNewline
+        Write-Host "│" -ForegroundColor Red
+        Write-Host "╰────────────────────────────────────╯" -ForegroundColor Red
+        Write-Host ""
     }
 }
 
@@ -826,12 +905,11 @@ function Main {
         
         # Show status if requested
         if ($Status.IsPresent) {
-            $status = Get-WiFiStatus
-            if ($status) {
-                Write-Host $status
+            try {
+                Get-WiFiStatus
             }
-            else {
-                Write-Host "Unable to retrieve Wi-Fi status" -ForegroundColor Red
+            catch {
+                Write-Host "Unable to retrieve Wi-Fi status: $($_.Exception.Message)" -ForegroundColor Red
                 exit 1
             }
             return
