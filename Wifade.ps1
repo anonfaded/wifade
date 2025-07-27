@@ -7,12 +7,6 @@
     A PowerShell implementation of the Wifade Wi-Fi password brute-forcing tool
     designed for ethical security testing on Windows systems.
     
-.PARAMETER SSIDFile
-    Path to file containing target SSID list (default: ssid.txt)
-    
-.PARAMETER PasswordFile
-    Path to file containing password list (default: passwords.txt)
-    
 .PARAMETER Help
     Display help information
     
@@ -34,10 +28,6 @@
     Run with default configuration files
     
 .EXAMPLE
-    wifade -SSIDFile "custom_ssids.txt" -PasswordFile "custom_passwords.txt"
-    Run with custom configuration files
-    
-.EXAMPLE
     wifade -VerboseOutput
     Run with verbose output enabled
     
@@ -49,8 +39,8 @@
     This tool is intended for educational purposes and ethical security testing only.
     Always ensure you have explicit permission to test network security.
     
-    Author: wifade Development Team
-    Version: 1.0.0
+    Author: Faded
+    Version: 2.0
     
 .LINK
     https://github.com/anonfaded/wifade
