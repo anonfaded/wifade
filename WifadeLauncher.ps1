@@ -63,15 +63,18 @@ $ErrorActionPreference = "SilentlyContinue"
 # Restore error action preference for the rest of the script
 $ErrorActionPreference = "Continue"
 
-# Get the directory where this launcher is located
+
+
+# Get the directory where this launcher is located robustly.
+# This .NET method is the most reliable way for a script/EXE to find its own location.
 try {
-    if ($MyInvocation.MyCommand.Path) {
-        $LauncherDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $LauncherDir = Split-Path -Parent ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)
+} catch {
+    if ($PSCommandPath) {
+        $LauncherDir = Split-Path -Parent $PSCommandPath
     } else {
         $LauncherDir = $PWD.Path
     }
-} catch {
-    $LauncherDir = $PWD.Path
 }
 
 $WifadeCoreExe = Join-Path $LauncherDir "WifadeCore.exe"
@@ -110,40 +113,46 @@ if (-not $quickCommands) {
     Write-Host ""
 }
 
+
 # Forward all arguments to WifadeCore.exe
 try {
-    if ($args.Count -gt 0 -or $quickCommands -or $Restart -or $Connect) {
-        # Build argument list
-        $argumentList = @()
-        if ($Help) { $argumentList += "-Help" }
-        if ($Version) { $argumentList += "-Version" }
-        if ($Status) { $argumentList += "-Status" }
-        if ($Scan) { $argumentList += "-Scan" }
-        if ($VerboseOutput) { $argumentList += "-VerboseOutput" }
-        if ($List) { $argumentList += "-List" }
-        if ($IP) { $argumentList += "-IP" }
-        if ($PublicIP) { $argumentList += "-PublicIP" }
-        if ($Gateway) { $argumentList += "-Gateway" }
-        if ($DNS) { $argumentList += "-DNS" }
-        if ($MAC) { $argumentList += "-MAC" }
-        if ($Speed) { $argumentList += "-Speed" }
-        if ($Restart) { $argumentList += "-Restart" }
-        if ($Connect) { $argumentList += "-Connect" }
-        $argumentList += $args
-        
-        # Use Start-Process to better control the execution environment
-        if ($argumentList.Count -gt 0) {
-            $process = Start-Process -FilePath $WifadeCoreExe -ArgumentList $argumentList -Wait -PassThru -NoNewWindow
-            $exitCode = $process.ExitCode
-        } else {
-            $process = Start-Process -FilePath $WifadeCoreExe -Wait -PassThru -NoNewWindow
-            $exitCode = $process.ExitCode
-        }
-        
-        # Exit with the same code as WifadeCore.exe
-        exit $exitCode
+    $argumentList = @()
+    # Smartly determine if this is an implicit connection request.
+    # If there are positional arguments but no other command switches are active,
+    # then prepend the -Connect switch.
+    $isOtherCommand = $Help -or $Version -or $Status -or $Scan -or $VerboseOutput `
+        -or $List -or $IP -or $PublicIP -or $Gateway -or $DNS `
+        -or $MAC -or $Speed -or $Restart -or $Connect
+
+    if ($args.Count -gt 0 -and -not $isOtherCommand) {
+        $argumentList += "-Connect"
+    }
+
+    # Build the full argument list from provided switches
+    if ($Help) { $argumentList += "-Help" }
+    if ($Version) { $argumentList += "-Version" }
+    if ($Status) { $argumentList += "-Status" }
+    if ($Scan) { $argumentList += "-Scan" }
+    if ($VerboseOutput) { $argumentList += "-VerboseOutput" }
+    if ($List) { $argumentList += "-List" }
+    if ($IP) { $argumentList += "-IP" }
+    if ($PublicIP) { $argumentList += "-PublicIP" }
+    if ($Gateway) { $argumentList += "-Gateway" }
+    if ($DNS) { $argumentList += "-DNS" }
+    if ($MAC) { $argumentList += "-MAC" }
+    if ($Speed) { $argumentList += "-Speed" }
+    if ($Restart) { $argumentList += "-Restart" }
+    if ($Connect) { $argumentList += "-Connect" }
+
+    # Add the positional arguments at the end
+    $argumentList += $args
+
+    # Determine if we run in interactive mode or with arguments
+    if ($argumentList.Count -gt 0) {
+        $process = Start-Process -FilePath $WifadeCoreExe -ArgumentList $argumentList -Wait -PassThru -NoNewWindow
+        exit $process.ExitCode
     } else {
-        # Use Start-Process for interactive mode to suppress stderr console errors
+        # Launch in interactive mode
         $process = Start-Process -FilePath $WifadeCoreExe -Wait -PassThru -NoNewWindow
         exit $process.ExitCode
     }
@@ -151,7 +160,6 @@ try {
     Write-Host "❌ Failed to launch WifadeCore.exe" -ForegroundColor Red
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Yellow
     Write-Host "WifadeCore.exe path: $WifadeCoreExe" -ForegroundColor Gray
-    
     # Only prompt for input if not running a quick command
     if (-not ($quickCommands -or $Restart -or $Connect)) {
         Read-Host "Press Enter to exit"

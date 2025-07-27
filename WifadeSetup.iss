@@ -12,7 +12,7 @@
 #define MyAppVersion "2.0"
 #define MyAppPublisher "FadSec Lab"
 #define MyAppURL "https://github.com/anonfaded/wifade"
-#define MyAppExeName "Wifade.exe"
+#define MyAppExeName "wifade.exe"
 #define MyAppCoreExeName "WifadeCore.exe"
 #define MyAppDescription "WiFi Security Testing Tool with Built-in Bruteforcer"
 
@@ -39,8 +39,8 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
 VersionInfoVersion={#MyAppVersion}
@@ -54,13 +54,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
-Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
-Name: "addtopath"; Description: "Add {#MyAppName} to system PATH (enables 'wifade' command in terminal)"; GroupDescription: "Command Line Access"; Flags: checkedonce
 
 [Files]
 ; Main application files
 Source: "build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\{#MyAppCoreExeName}"; DestDir: "{app}"; Flags: ignoreversion
+
 
 ; Documentation and support files
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
@@ -74,26 +73,49 @@ Source: "img\icon.png"; DestDir: "{app}\img"; Flags: ignoreversion
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "{#MyAppDescription}"; IconFilename: "{app}\img\logo.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"; Comment: "Uninstall {#MyAppName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "{#MyAppDescription}"; IconFilename: "{app}\img\logo.ico"; Tasks: desktopicon
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "{#MyAppDescription}"; IconFilename: "{app}\img\logo.ico"; Tasks: quicklaunchicon
 
 [Registry]
-; Add to system PATH if user selected the option
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Tasks: addtopath; Check: NeedsAddPath('{app}')
 
 ; Add application registry entries
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
 
-; Add wifade command alias
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\wifade.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekey
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\wifade.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
 
 ; [Run] section removed to disable launch button on finish page
 
 [UninstallRun]
-Filename: "{cmd}"; Parameters: "/c ""setx PATH ""%PATH:{app};=%"" /M"""; Flags: runhidden; Tasks: addtopath
 
 [Code]
+const
+  EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+
+procedure EnvAddPath(Path: string);
+var
+  Paths: string;
+begin
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths) then
+    Paths := '';
+  if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then exit;
+  if Paths = '' then
+    Paths := Path
+  else
+    Paths := Paths + ';' + Path;
+  RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths);
+end;
+
+procedure EnvRemovePath(Path: string);
+var
+  Paths: string;
+  P: Integer;
+begin
+  if RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths) then
+  begin
+    P := Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';');
+    if P = 0 then exit;
+    Delete(Paths, P - 1, Length(Path) + 1);
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths);
+  end;
+end;
 function NeedsAddPath(Param: string): boolean;
 var
   OrigPath: string;
@@ -111,46 +133,15 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ResultCode: Integer;
 begin
   if CurStep = ssPostInstall then
-  begin
-    // Refresh environment variables
-    if IsTaskSelected('addtopath') then
-    begin
-      // Broadcast WM_SETTINGCHANGE to notify all applications about environment change
-      if Exec('cmd.exe', '/c echo Environment updated', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      begin
-        // Success
-      end;
-    end;
-  end;
+    EnvAddPath(ExpandConstant('{app}'));
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-var
-  Path: string;
-  AppPath: string;
-  ResultCode: Integer;
 begin
   if CurUninstallStep = usPostUninstall then
-  begin
-    // Remove from PATH during uninstall
-    AppPath := ExpandConstant('{app}');
-    if RegQueryStringValue(HKEY_LOCAL_MACHINE,
-      'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', Path) then
-    begin
-      // Remove the app path from PATH
-      StringChangeEx(Path, ';' + AppPath, '', True);
-      StringChangeEx(Path, AppPath + ';', '', True);
-      StringChangeEx(Path, AppPath, '', True);
-      
-      // Update the registry
-      RegWriteStringValue(HKEY_LOCAL_MACHINE,
-        'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'Path', Path);
-    end;
-  end;
+    EnvRemovePath(ExpandConstant('{app}'));
 end;
 
 [Messages]
