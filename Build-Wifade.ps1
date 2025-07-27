@@ -217,6 +217,131 @@ $combinedScript = $header + "`n" + $versionDefinition + $combinedClasses + "`n" 
 # Write the combined script
 Set-Content -Path $outputScript -Value $combinedScript -Encoding UTF8
 
+# Process icon to create proper multi-resolution ICO file
+Write-Host "Processing icon file..." -ForegroundColor Yellow
+
+$pngPath = Join-Path $scriptRoot "img\icon.png"
+$icoPath = Join-Path $scriptRoot "img\logo.ico"
+$processedIcoPath = Join-Path $buildDir "logo.ico"
+
+if (Test-Path $pngPath) {
+    Write-Host "  Found PNG source: $pngPath" -ForegroundColor Cyan
+    
+    try {
+        # Load System.Drawing assembly for image processing
+        Add-Type -AssemblyName System.Drawing
+        
+        # Load the original PNG
+        $originalImage = [System.Drawing.Image]::FromFile($pngPath)
+        
+        # Define standard ICO sizes (most important ones)
+        $iconSizes = @(16, 24, 32, 48, 64, 128, 256)
+        
+        Write-Host "  Creating multi-resolution ICO with sizes: $($iconSizes -join ', ')" -ForegroundColor Cyan
+        
+        # Create a temporary directory for individual icon files
+        $tempIconDir = Join-Path $buildDir "temp_icons"
+        if (Test-Path $tempIconDir) { Remove-Item $tempIconDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $tempIconDir -Force | Out-Null
+        
+        $tempIconFiles = @()
+        
+        # Create resized versions
+        foreach ($size in $iconSizes) {
+            $tempIconFile = Join-Path $tempIconDir "icon_$size.png"
+            
+            # Create new bitmap with the target size
+            $resizedBitmap = New-Object System.Drawing.Bitmap($size, $size)
+            $graphics = [System.Drawing.Graphics]::FromImage($resizedBitmap)
+            
+            # Set high quality rendering
+            $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+            $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+            $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+            $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+            
+            # Draw the resized image
+            $graphics.DrawImage($originalImage, 0, 0, $size, $size)
+            
+            # Save as PNG
+            $resizedBitmap.Save($tempIconFile, [System.Drawing.Imaging.ImageFormat]::Png)
+            
+            # Cleanup
+            $graphics.Dispose()
+            $resizedBitmap.Dispose()
+            
+            $tempIconFiles += $tempIconFile
+        }
+        
+        # Dispose original image
+        $originalImage.Dispose()
+        
+        # Use magick (ImageMagick) if available, otherwise try convert command
+        $magickAvailable = $false
+        try {
+            $null = Get-Command "magick" -ErrorAction Stop
+            $magickAvailable = $true
+            Write-Host "  Using ImageMagick to create ICO file..." -ForegroundColor Cyan
+        }
+        catch {
+            Write-Host "  ImageMagick not found, trying alternative method..." -ForegroundColor Yellow
+        }
+        
+        if ($magickAvailable) {
+            # Use ImageMagick to create proper ICO file
+            $magickArgs = @($tempIconFiles) + @($processedIcoPath)
+            & magick @magickArgs
+            
+            if (Test-Path $processedIcoPath) {
+                Write-Host "  ✅ Successfully created multi-resolution ICO file" -ForegroundColor Green
+                $iconPath = $processedIcoPath
+            } else {
+                Write-Warning "  ⚠️ ImageMagick failed, using original ICO file"
+                if (Test-Path $icoPath) {
+                    Copy-Item $icoPath $processedIcoPath
+                    $iconPath = $processedIcoPath
+                }
+            }
+        } else {
+            # Fallback: Copy original ICO if it exists
+            Write-Host "  Using original ICO file (ImageMagick not available for multi-resolution)" -ForegroundColor Yellow
+            if (Test-Path $icoPath) {
+                Copy-Item $icoPath $processedIcoPath
+                $iconPath = $processedIcoPath
+                Write-Host "  ✅ Copied original ICO file" -ForegroundColor Green
+            } else {
+                Write-Warning "  ⚠️ No ICO file found, executable will be built without icon"
+                $iconPath = $null
+            }
+        }
+        
+        # Cleanup temp directory
+        if (Test-Path $tempIconDir) {
+            Remove-Item $tempIconDir -Recurse -Force
+        }
+    }
+    catch {
+        Write-Warning "  ⚠️ Icon processing failed: $($_.Exception.Message)"
+        Write-Host "  Using original ICO file if available..." -ForegroundColor Yellow
+        if (Test-Path $icoPath) {
+            Copy-Item $icoPath $processedIcoPath
+            $iconPath = $processedIcoPath
+        } else {
+            $iconPath = $null
+        }
+    }
+} else {
+    Write-Warning "  PNG source not found: $pngPath"
+    if (Test-Path $icoPath) {
+        Copy-Item $icoPath $processedIcoPath
+        $iconPath = $processedIcoPath
+        Write-Host "  Using existing ICO file" -ForegroundColor Cyan
+    } else {
+        Write-Warning "  No icon files found, executable will be built without icon"
+        $iconPath = $null
+    }
+}
+
 # Compile to executable using ps2exe
 Write-Host "Compiling to executable: $outputExe" -ForegroundColor Yellow
 
@@ -248,9 +373,11 @@ try {
     }
     
     # Add icon if it exists
-    if (Test-Path $iconPath) {
+    if ($iconPath -and (Test-Path $iconPath)) {
         $compileParams.IconFile = $iconPath
-        Write-Host "Using icon: $iconPath" -ForegroundColor Cyan
+        Write-Host "Using processed icon: $iconPath" -ForegroundColor Cyan
+    } else {
+        Write-Host "No icon will be embedded in executable" -ForegroundColor Yellow
     }
     
     # Compile the script
