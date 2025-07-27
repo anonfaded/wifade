@@ -1437,7 +1437,36 @@ class ApplicationController {
             if (-not (Test-Path Function:\Test-IsWindows)) {
                 # Define the function if it doesn't exist
                 function Test-IsWindows {
-                    return [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+                    try {
+                        # Check for /proc/version (Linux-specific)
+                        if (Test-Path "/proc/version") {
+                            return $false  # Definitely Linux
+                        }
+                        
+                        # Check for WSL environment variables
+                        if ($env:WSL_DISTRO_NAME -or $env:WSLENV) {
+                            return $false  # Treat WSL as Linux for networking purposes
+                        }
+                        
+                        # Standard Windows detection
+                        $isWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+                        
+                        # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
+                        if ($isWindows) {
+                            try {
+                                $null = Get-Command "netsh" -ErrorAction Stop
+                                return $true
+                            }
+                            catch {
+                                return $false  # Treat as Linux if netsh is not available
+                            }
+                        }
+                        
+                        return $false
+                    }
+                    catch {
+                        return $false  # Default to Linux approach if detection fails
+                    }
                 }
             }
             

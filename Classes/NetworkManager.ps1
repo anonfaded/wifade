@@ -79,11 +79,11 @@ class NetworkManager : IManager {
         }
     }
     
-    # Detect available Wi-Fi adapters using WMI
+    # Detect available Wi-Fi adapters using OS-appropriate methods
     [System.Collections.ArrayList] DetectWiFiAdapters() {
         try {
-            # Use OS-specific detection logic
-            $isWindowsOS = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+            # Enhanced OS detection that properly handles WSL
+            $isWindowsOS = $this.IsWindowsEnvironment()
             
             if ($isWindowsOS) {
                 return $this.DetectWiFiAdaptersWindows()
@@ -94,6 +94,49 @@ class NetworkManager : IManager {
         }
         catch {
             throw [NetworkException]::new("Failed to detect Wi-Fi adapters: $($_.Exception.Message)", $_.Exception)
+        }
+    }
+    
+    # Enhanced Windows environment detection that handles WSL properly
+    [bool] IsWindowsEnvironment() {
+        try {
+            # Check if we're in WSL (Windows Subsystem for Linux)
+            if (Test-Path "/proc/version") {
+                $procVersion = Get-Content "/proc/version" -ErrorAction SilentlyContinue
+                if ($procVersion -and $procVersion -match "(Microsoft|WSL)") {
+                    Write-Verbose "Detected WSL environment - using Linux networking approach"
+                    return $false  # Treat WSL as Linux for networking purposes
+                }
+            }
+            
+            # Check for WSL environment variables
+            if ($env:WSL_DISTRO_NAME -or $env:WSLENV) {
+                Write-Verbose "Detected WSL via environment variables - using Linux networking approach"
+                return $false  # Treat WSL as Linux for networking purposes
+            }
+            
+            # Standard Windows detection
+            $isWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+            
+            # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
+            if ($isWindows) {
+                try {
+                    $null = Get-Command "netsh" -ErrorAction Stop
+                    Write-Verbose "Detected native Windows environment with netsh available"
+                    return $true
+                }
+                catch {
+                    Write-Verbose "Windows platform detected but netsh unavailable - likely WSL environment"
+                    return $false  # Treat as Linux if netsh is not available
+                }
+            }
+            
+            Write-Verbose "Detected non-Windows environment"
+            return $false
+        }
+        catch {
+            Write-Verbose "Error in OS detection, defaulting to Linux approach: $($_.Exception.Message)"
+            return $false  # Default to Linux approach if detection fails
         }
     }
     
@@ -510,9 +553,7 @@ class NetworkManager : IManager {
             }
             
             # Use OS-specific logic for getting adapter status
-            $isWindowsOS = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
-            
-            if ($isWindowsOS) {
+            if ($this.IsWindowsEnvironment()) {
                 return $this.GetAdapterStatusWindows($targetAdapter)
             }
             else {
