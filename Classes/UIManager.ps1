@@ -64,6 +64,7 @@ class UIManager : IManager {
                 @{ Key = "2"; Text = "Attack Mode"; Action = "AttackMode" }
                 @{ Key = "3"; Text = "Settings"; Action = "Settings" }
                 @{ Key = "4"; Text = "Help"; Action = "Help" }
+                @{ Key = "5"; Text = "About"; Action = "About" }
                 @{ Key = "q"; Text = "Quit"; Action = "Quit" }
             )
             AttackMode = @(
@@ -156,6 +157,7 @@ class UIManager : IManager {
                                         ░        
                                         
             █▓▒­░⡷⠂ 𝒫𝓇𝑜𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
+            
 "@
 
     Write-Host $bannerTop -ForegroundColor Red
@@ -203,6 +205,59 @@ class UIManager : IManager {
         Write-Host "❯ " -ForegroundColor $this.ColorScheme.Highlight -NoNewline
         
         return Read-Host
+    }
+    
+    # Display about page
+    [void] ShowAboutPage([string]$version = "2.0") {
+        $this.ClearScreen()
+        $this.ShowBanner()
+        
+        Write-Host "╭──ℹ️  ABOUT ──────────────────────────────────────╮" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│                     ABOUT                        │" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "╰──────────────────────────────────────────────────╯" -ForegroundColor $this.ColorScheme.Border
+        Write-Host ""
+        
+        # App version
+        Write-Host "╭─ 📋 Application Information" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "Version: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "v$version" -ForegroundColor $this.ColorScheme.Highlight
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "Platform: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "Windows PowerShell" -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "Purpose: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "Wi-Fi Management Tool" -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+        Write-Host ""
+        
+        # Links and contact
+        Write-Host "╭─ 🔗 Links & Contact" -ForegroundColor $this.ColorScheme.Border
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "🎯 Author: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "Faded" -ForegroundColor $this.ColorScheme.Highlight
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "💬 Discord: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "https://discord.gg/kvAZvdkuuN" -ForegroundColor $this.ColorScheme.Success
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "📂 GitHub: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "https://github.com/anonfaded/wifade" -ForegroundColor $this.ColorScheme.Success
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "🏢 Project by: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "FadSec Lab" -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+        Write-Host ""
+        
+
+        $fadseclabLogo = @"
+
+ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▒▒▒▒▒▒ ▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒         
+ ▓▓▓▓▓▓▓ ▓▓   ▓▓▓▓    ▓▓▒▒▒▒▒▒       ▒▒ ▒▒      ▓    ▓  
+ ▓▓      ▓▓▓▓▓▓▓▓▓    ▓▓      ▒▒     ▒▒ ▒▒      ▓ ▓▓ ▓▓ 
+ ▓▓      ▓▓   ▓▓▓▓▓▓▓▓▓ ▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒         
+"@
+        Write-Host $fadseclabLogo -ForegroundColor $this.ColorScheme.Primary
+        $this.WaitForKeyPress("Press any key to return to main menu...")
     }
     
     # Display attack mode menu

@@ -278,6 +278,7 @@ class ApplicationController {
             "2" { $this.HandleAttackMode() }
             "3" { $this.HandleSettings() }
             "4" { $this.HandleHelp() }
+            "5" { $this.HandleAbout() }
             "q" { 
                 $this.IsRunning = $false
                 return
@@ -631,6 +632,12 @@ class ApplicationController {
         }
         
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
+    }
+    
+    # Handle about page
+    [void] HandleAbout() {
+        $version = if ($null -ne $this.VersionChecker) { $this.VersionChecker.CurrentVersion } else { "2.0" }
+        $this.UIManager.ShowAboutPage($version)
     }
     
     # Handle disconnecting from current network
