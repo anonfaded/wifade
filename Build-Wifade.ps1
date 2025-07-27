@@ -5,7 +5,7 @@
 # 
 # REQUIREMENTS:
 # - Run as Administrator (required for ps2exe compilation)
-# - PowerShell 5.1 or later
+# - PowerShell 7.x
 # - ps2exe module (will be installed automatically if missing)
 #
 # USAGE:
@@ -158,7 +158,9 @@ if ($matches.Success) {
 $classFiles = @(
     "BaseClasses.ps1",      # Contains IManager, exceptions, enums - MUST BE FIRST
     "DataModels.ps1",       # Contains data models (duplicates removed)
+    "VersionChecker.ps1",   # Contains VersionChecker class
     "ConfigurationManager.ps1",
+    "SettingsManager.ps1",  # Contains SettingsManager class
     "NetworkManager.ps1", 
     "PasswordManager.ps1",
     "UIManager.ps1",
