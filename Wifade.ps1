@@ -1008,7 +1008,7 @@ function Show-Help {
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "- Windows 10/11 or Linux/MacOS(Coming soon)" -ForegroundColor White
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host "- PowerShell 5.1 or PowerShell 7.x" -ForegroundColor White
+    Write-Host "- PowerShell PowerShell 7.x" -ForegroundColor White
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "- Administrator privileges (recommended)" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
