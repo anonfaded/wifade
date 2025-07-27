@@ -23,8 +23,14 @@ class SettingsManager : IManager {
         $this.IsInitialized = $false
         $this.Configuration = @{}
         
-        # Set default config file path
-        $configDir = Join-Path $env:USERPROFILE ".wifade"
+        # Set default config file path (cross-platform)
+        $homeDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+        if (-not $homeDir) {
+            # Fallback to current directory if no home directory is found
+            $homeDir = $PWD.Path
+        }
+        
+        $configDir = Join-Path $homeDir ".wifade"
         if (-not (Test-Path $configDir)) {
             New-Item -ItemType Directory -Path $configDir -Force | Out-Null
         }

@@ -79,8 +79,69 @@ class NetworkManager : IManager {
         }
     }
     
-    # Detect available Wi-Fi adapters using WMI
+    # Detect available Wi-Fi adapters using OS-appropriate methods
     [System.Collections.ArrayList] DetectWiFiAdapters() {
+        try {
+            # Enhanced OS detection that properly handles WSL
+            $isWindowsOS = $this.IsWindowsEnvironment()
+            
+            if ($isWindowsOS) {
+                return $this.DetectWiFiAdaptersWindows()
+            }
+            else {
+                return $this.DetectWiFiAdaptersLinux()
+            }
+        }
+        catch {
+            throw [NetworkException]::new("Failed to detect Wi-Fi adapters: $($_.Exception.Message)", $_.Exception)
+        }
+    }
+    
+    # Enhanced Windows environment detection that handles WSL properly
+    [bool] IsWindowsEnvironment() {
+        try {
+            # Check if we're in WSL (Windows Subsystem for Linux)
+            if (Test-Path "/proc/version") {
+                $procVersion = Get-Content "/proc/version" -ErrorAction SilentlyContinue
+                if ($procVersion -and $procVersion -match "(Microsoft|WSL)") {
+                    Write-Verbose "Detected WSL environment - using Linux networking approach"
+                    return $false  # Treat WSL as Linux for networking purposes
+                }
+            }
+            
+            # Check for WSL environment variables
+            if ($env:WSL_DISTRO_NAME -or $env:WSLENV) {
+                Write-Verbose "Detected WSL via environment variables - using Linux networking approach"
+                return $false  # Treat WSL as Linux for networking purposes
+            }
+            
+            # Standard Windows detection
+            $isWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+            
+            # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
+            if ($isWindows) {
+                try {
+                    $null = Get-Command "netsh" -ErrorAction Stop
+                    Write-Verbose "Detected native Windows environment with netsh available"
+                    return $true
+                }
+                catch {
+                    Write-Verbose "Windows platform detected but netsh unavailable - likely WSL environment"
+                    return $false  # Treat as Linux if netsh is not available
+                }
+            }
+            
+            Write-Verbose "Detected non-Windows environment"
+            return $false
+        }
+        catch {
+            Write-Verbose "Error in OS detection, defaulting to Linux approach: $($_.Exception.Message)"
+            return $false  # Default to Linux approach if detection fails
+        }
+    }
+    
+    # Detect Wi-Fi adapters on Windows using WMI
+    [System.Collections.ArrayList] DetectWiFiAdaptersWindows() {
         try {
             Write-Verbose "Detecting Wi-Fi adapters using WMI..."
             
@@ -134,7 +195,229 @@ class NetworkManager : IManager {
             return $adapters
         }
         catch {
-            throw [NetworkException]::new("Failed to detect Wi-Fi adapters: $($_.Exception.Message)", $_.Exception)
+            throw [NetworkException]::new("Failed to detect Wi-Fi adapters on Windows: $($_.Exception.Message)", $_.Exception)
+        }
+    }
+    
+    # Detect Wi-Fi adapters on Linux using system commands
+    [System.Collections.ArrayList] DetectWiFiAdaptersLinux() {
+        try {
+            Write-Verbose "Detecting Wi-Fi adapters on Linux..."
+            
+            $adapters = [System.Collections.ArrayList]::new()
+            $this.AdapterCache.Clear()
+            
+            # Method 1: Check /proc/net/wireless for wireless interfaces
+            $wirelessInterfaces = @()
+            if (Test-Path "/proc/net/wireless") {
+                try {
+                    $wirelessContent = Get-Content "/proc/net/wireless" -ErrorAction SilentlyContinue
+                    foreach ($line in $wirelessContent) {
+                        if ($line -match '^\s*(\w+)\:') {
+                            $interfaceName = $matches[1].Trim()
+                            if ($interfaceName -ne "Inter" -and $interfaceName -ne "face") {
+                                $wirelessInterfaces += $interfaceName
+                                Write-Verbose "Found wireless interface in /proc/net/wireless: $interfaceName"
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-Verbose "Could not read /proc/net/wireless: $($_.Exception.Message)"
+                }
+            }
+            
+            # Method 2: Use ip command to find wireless interfaces
+            try {
+                $ipOutput = & ip link show 2>$null
+                if ($ipOutput) {
+                    foreach ($line in $ipOutput) {
+                        if ($line -match '^\d+\:\s*(\w+)\:') {
+                            $interfaceName = $matches[1]
+                            # Check if it's a wireless interface by looking for common wireless interface patterns
+                            if ($interfaceName -match "^(wlan|wlp|wlo|wifi)" -and $interfaceName -notin $wirelessInterfaces) {
+                                $wirelessInterfaces += $interfaceName
+                                Write-Verbose "Found wireless interface via ip command: $interfaceName"
+                            }
+                        }
+                    }
+                }
+            }
+            catch {
+                Write-Verbose "Could not use ip command: $($_.Exception.Message)"
+            }
+            
+            # Method 3: Check /sys/class/net for wireless interfaces
+            try {
+                if (Test-Path "/sys/class/net") {
+                    $netInterfaces = Get-ChildItem "/sys/class/net" -ErrorAction SilentlyContinue
+                    foreach ($interface in $netInterfaces) {
+                        $wirelessPath = "/sys/class/net/$($interface.Name)/wireless"
+                        if (Test-Path $wirelessPath) {
+                            if ($interface.Name -notin $wirelessInterfaces) {
+                                $wirelessInterfaces += $interface.Name
+                                Write-Verbose "Found wireless interface in /sys/class/net: $($interface.Name)"
+                            }
+                        }
+                    }
+                }
+            }
+            catch {
+                Write-Verbose "Could not check /sys/class/net: $($_.Exception.Message)"
+            }
+            
+            # Create adapter info for each found interface
+            foreach ($interfaceName in $wirelessInterfaces) {
+                try {
+                    $adapterInfo = $this.CreateAdapterInfoLinux($interfaceName)
+                    if ($adapterInfo) {
+                        [void]$adapters.Add($adapterInfo)
+                        $this.AdapterCache[$interfaceName] = $adapterInfo
+                        Write-Verbose "Found Wi-Fi adapter: $($adapterInfo.Name) (Status: $($adapterInfo.Status))"
+                    }
+                }
+                catch {
+                    Write-Warning "Failed to process Linux adapter ${interfaceName}: $($_.Exception.Message)"
+                }
+            }
+            
+            # Select primary adapter
+            $this.SelectPrimaryAdapter($adapters)
+            
+            # Update last scan time
+            $this.LastAdapterScan = Get-Date
+            
+            Write-Verbose "Detected $($adapters.Count) Wi-Fi adapter(s) on Linux"
+            return $adapters
+        }
+        catch {
+            throw [NetworkException]::new("Failed to detect Wi-Fi adapters on Linux: $($_.Exception.Message)", $_.Exception)
+        }
+    }
+    
+    # Create adapter information object from Linux system data
+    [hashtable] CreateAdapterInfoLinux([string]$interfaceName) {
+        if (-not $interfaceName) {
+            return $null
+        }
+        
+        try {
+            $adapterInfo = @{
+                DeviceID      = $interfaceName  # Use interface name as DeviceID on Linux
+                Name          = $interfaceName
+                Description   = "Linux Wireless Network Adapter ($interfaceName)"
+                MACAddress    = ""
+                Status        = "Unknown"
+                StatusCode    = 0
+                Enabled       = $false
+                Speed         = 0  # Will be set to 0 as mentioned in report.md
+                AdapterType   = "Wireless"
+                AdapterTypeId = 9
+                Manufacturer  = "Unknown"
+                LastUpdated   = Get-Date
+                IsWiFi        = $true
+                Capabilities  = @{}
+            }
+            
+            # Get MAC address
+            try {
+                $macPath = "/sys/class/net/$interfaceName/address"
+                if (Test-Path $macPath) {
+                    $macAddress = Get-Content $macPath -ErrorAction SilentlyContinue
+                    if ($macAddress) {
+                        $adapterInfo.MACAddress = $macAddress.Trim()
+                    }
+                }
+            }
+            catch {
+                Write-Verbose "Could not get MAC address for $interfaceName"
+            }
+            
+            # Get interface status
+            try {
+                # Check operstate
+                $operstatePath = "/sys/class/net/$interfaceName/operstate"
+                if (Test-Path $operstatePath) {
+                    $operstate = Get-Content $operstatePath -ErrorAction SilentlyContinue
+                    if ($operstate) {
+                        $operstate = $operstate.Trim()
+                        switch ($operstate) {
+                            "up" {
+                                $adapterInfo.Status = "Connected"
+                                $adapterInfo.StatusCode = 2
+                                $adapterInfo.Enabled = $true
+                            }
+                            "down" {
+                                $adapterInfo.Status = "Disconnected"
+                                $adapterInfo.StatusCode = 0
+                                $adapterInfo.Enabled = $false
+                            }
+                            "dormant" {
+                                $adapterInfo.Status = "Disconnected"
+                                $adapterInfo.StatusCode = 0
+                                $adapterInfo.Enabled = $true
+                            }
+                            default {
+                                $adapterInfo.Status = "Unknown"
+                                $adapterInfo.StatusCode = -1
+                                $adapterInfo.Enabled = $false
+                            }
+                        }
+                    }
+                }
+                
+                # Double-check with ip addr show
+                try {
+                    $ipOutput = & ip addr show $interfaceName 2>$null
+                    if ($ipOutput) {
+                        $ipLine = $ipOutput | Select-Object -First 1
+                        if ($ipLine -match "state UP") {
+                            $adapterInfo.Enabled = $true
+                            if ($adapterInfo.Status -eq "Unknown") {
+                                $adapterInfo.Status = "Connected"
+                                $adapterInfo.StatusCode = 2
+                            }
+                        }
+                        elseif ($ipLine -match "state DOWN") {
+                            $adapterInfo.Enabled = $false
+                            if ($adapterInfo.Status -eq "Unknown") {
+                                $adapterInfo.Status = "Disconnected"
+                                $adapterInfo.StatusCode = 0
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-Verbose "Could not use ip addr show for $interfaceName"
+                }
+            }
+            catch {
+                Write-Verbose "Could not get status for $interfaceName"
+            }
+            
+            # Try to get IP information if interface is up
+            if ($adapterInfo.Enabled) {
+                try {
+                    $ipOutput = & ip addr show $interfaceName 2>$null
+                    if ($ipOutput) {
+                        foreach ($line in $ipOutput) {
+                            if ($line -match 'inet\s+(\d+\.\d+\.\d+\.\d+)') {
+                                $adapterInfo.Capabilities.IPAddress = @($matches[1])
+                                break
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-Verbose "Could not get IP information for $interfaceName"
+                }
+            }
+            
+            return $adapterInfo
+        }
+        catch {
+            Write-Warning "Failed to create adapter info for Linux interface ${interfaceName}: $($_.Exception.Message)"
+            return $null
         }
     }
     
@@ -269,33 +552,13 @@ class NetworkManager : IManager {
                 throw [NetworkException]::new("No adapter specified and no primary adapter available")
             }
             
-            # Refresh adapter status from WMI
-            $wmiAdapter = Get-WmiObject -Class Win32_NetworkAdapter -Filter "DeviceID = '$($targetAdapter.DeviceID)'"
-            
-            if (-not $wmiAdapter) {
-                throw [NetworkException]::new("Adapter not found: $($targetAdapter.DeviceID)", $targetAdapter.Name)
+            # Use OS-specific logic for getting adapter status
+            if ($this.IsWindowsEnvironment()) {
+                return $this.GetAdapterStatusWindows($targetAdapter)
             }
-            
-            $status = @{
-                DeviceID     = $wmiAdapter.DeviceID
-                Name         = $wmiAdapter.Name
-                Status       = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
-                StatusCode   = $wmiAdapter.NetConnectionStatus
-                Enabled      = $wmiAdapter.NetEnabled
-                LastChecked  = Get-Date
-                IsHealthy    = $this.IsAdapterHealthy($wmiAdapter)
-                ErrorMessage = ""
+            else {
+                return $this.GetAdapterStatusLinux($targetAdapter)
             }
-            
-            # Update cache
-            if ($this.AdapterCache.ContainsKey($targetAdapter.DeviceID)) {
-                $this.AdapterCache[$targetAdapter.DeviceID].Status = $status.Status
-                $this.AdapterCache[$targetAdapter.DeviceID].StatusCode = $status.StatusCode
-                $this.AdapterCache[$targetAdapter.DeviceID].Enabled = $status.Enabled
-                $this.AdapterCache[$targetAdapter.DeviceID].LastUpdated = $status.LastChecked
-            }
-            
-            return $status
         }
         catch {
             $deviceId = "Unknown"
@@ -319,6 +582,93 @@ class NetworkManager : IManager {
             Write-Warning "Failed to get adapter status: $($_.Exception.Message)"
             return $errorStatus
         }
+    }
+    
+    # Get adapter status on Windows using WMI
+    [hashtable] GetAdapterStatusWindows([hashtable]$targetAdapter) {
+        # Refresh adapter status from WMI
+        $wmiAdapter = Get-WmiObject -Class Win32_NetworkAdapter -Filter "DeviceID = '$($targetAdapter.DeviceID)'"
+        
+        if (-not $wmiAdapter) {
+            throw [NetworkException]::new("Adapter not found: $($targetAdapter.DeviceID)", $targetAdapter.Name)
+        }
+        
+        $status = @{
+            DeviceID     = $wmiAdapter.DeviceID
+            Name         = $wmiAdapter.Name
+            Status       = $this.TranslateAdapterStatus($wmiAdapter.NetConnectionStatus)
+            StatusCode   = $wmiAdapter.NetConnectionStatus
+            Enabled      = $wmiAdapter.NetEnabled
+            LastChecked  = Get-Date
+            IsHealthy    = $this.IsAdapterHealthy($wmiAdapter)
+            ErrorMessage = ""
+        }
+        
+        # Update cache
+        if ($this.AdapterCache.ContainsKey($targetAdapter.DeviceID)) {
+            $this.AdapterCache[$targetAdapter.DeviceID].Status = $status.Status
+            $this.AdapterCache[$targetAdapter.DeviceID].StatusCode = $status.StatusCode
+            $this.AdapterCache[$targetAdapter.DeviceID].Enabled = $status.Enabled
+            $this.AdapterCache[$targetAdapter.DeviceID].LastUpdated = $status.LastChecked
+        }
+        
+        return $status
+    }
+    
+    # Get adapter status on Linux using system commands
+    [hashtable] GetAdapterStatusLinux([hashtable]$targetAdapter) {
+        $interfaceName = $targetAdapter.DeviceID  # On Linux, DeviceID is the interface name
+        
+        # Get current adapter info using CreateAdapterInfoLinux
+        $refreshedInfo = $this.CreateAdapterInfoLinux($interfaceName)
+        
+        if (-not $refreshedInfo) {
+            throw [NetworkException]::new("Adapter not found: $interfaceName", $targetAdapter.Name)
+        }
+        
+        $status = @{
+            DeviceID     = $refreshedInfo.DeviceID
+            Name         = $refreshedInfo.Name
+            Status       = $refreshedInfo.Status
+            StatusCode   = $refreshedInfo.StatusCode
+            Enabled      = $refreshedInfo.Enabled
+            LastChecked  = Get-Date
+            IsHealthy    = $this.IsAdapterHealthyLinux($refreshedInfo)
+            ErrorMessage = ""
+        }
+        
+        # Update cache
+        if ($this.AdapterCache.ContainsKey($targetAdapter.DeviceID)) {
+            $this.AdapterCache[$targetAdapter.DeviceID].Status = $status.Status
+            $this.AdapterCache[$targetAdapter.DeviceID].StatusCode = $status.StatusCode
+            $this.AdapterCache[$targetAdapter.DeviceID].Enabled = $status.Enabled
+            $this.AdapterCache[$targetAdapter.DeviceID].LastUpdated = $status.LastChecked
+        }
+        
+        return $status
+    }
+    
+    # Check if Linux adapter is healthy
+    [bool] IsAdapterHealthyLinux([hashtable]$adapterInfo) {
+        if (-not $adapterInfo) {
+            return $false
+        }
+        
+        # Check basic health indicators for Linux
+        $isHealthy = $true
+        
+        # Adapter should be enabled (up)
+        if (-not $adapterInfo.Enabled) {
+            $isHealthy = $false
+        }
+        
+        # Status should not indicate problems
+        $problemStatuses = @("Hardware not present", "Hardware disabled", "Hardware malfunction", "Error")
+        if ($adapterInfo.Status -in $problemStatuses) {
+            $isHealthy = $false
+        }
+        
+        return $isHealthy
     }
     
     # Check if adapter is healthy

@@ -111,15 +111,56 @@ param(
 # Set error action preference for consistent error handling
 $ErrorActionPreference = "Stop"
 
-# Load Windows Forms assembly for file dialog functionality
-# This must be done BEFORE loading any classes that might use it
-try {
-    Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-    Write-Verbose "Windows Forms assembly loaded successfully"
+# Function to detect if we're running on Windows
+function Test-IsWindows {
+    try {
+        # Check for /proc/version (Linux-specific)
+        if (Test-Path "/proc/version") {
+            return $false  # Definitely Linux
+        }
+        
+        # Check for WSL environment variables
+        if ($env:WSL_DISTRO_NAME -or $env:WSLENV) {
+            return $false  # Treat WSL as Linux for networking purposes
+        }
+        
+        # Standard Windows detection
+        $isWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+        
+        # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
+        if ($isWindows) {
+            try {
+                $null = Get-Command "netsh" -ErrorAction Stop
+                return $true
+            }
+            catch {
+                return $false  # Treat as Linux if netsh is not available
+            }
+        }
+        
+        return $false
+    }
+    catch {
+        return $false  # Default to Linux approach if detection fails
+    }
 }
-catch {
-    Write-Warning "Could not load Windows Forms assembly: $($_.Exception.Message)"
-    Write-Warning "File picker dialog functionality will not be available"
+
+# Load Windows Forms assembly for file dialog functionality (Windows only)
+# This must be done BEFORE loading any classes that might use it
+$Script:WindowsFormsAvailable = $false
+if (Test-IsWindows) {
+    try {
+        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+        $Script:WindowsFormsAvailable = $true
+        Write-Verbose "Windows Forms assembly loaded successfully"
+    }
+    catch {
+        Write-Warning "Could not load Windows Forms assembly: $($_.Exception.Message)"
+        Write-Warning "File picker dialog functionality will not be available"
+    }
+}
+else {
+    Write-Verbose "Non-Windows platform detected. Windows Forms functionality will not be available."
 }
 
 # Import required classes and modules
