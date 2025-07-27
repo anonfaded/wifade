@@ -16,6 +16,12 @@
 .PARAMETER Help
     Display help information
     
+.PARAMETER List
+    List all available command-line parameters
+    
+.PARAMETER Version
+    Display application version and exit
+    
 .PARAMETER VerboseOutput
     Enable verbose output mode
     
@@ -34,6 +40,10 @@
 .EXAMPLE
     .\wifade.ps1 -VerboseOutput
     Run with verbose output enabled
+    
+.EXAMPLE
+    .\wifade.ps1 -Version
+    Display the current application version
     
 .NOTES
     This tool is intended for educational purposes and ethical security testing only.
@@ -65,9 +75,8 @@ param(
     [Alias("v")]
     [switch]$VerboseOutput,
     
-
-    
-
+    [Parameter(Mandatory = $false, HelpMessage = "Display application version and exit")]
+    [switch]$Version,
     
     [Parameter(Mandatory = $false, HelpMessage = "Display current Wi-Fi private IP address and exit")]
     [switch]$IP,
@@ -754,6 +763,10 @@ function Show-ParameterList {
     Write-Host "                   " -NoNewline
     Write-Host "Show detailed help information" -ForegroundColor White
     Write-Host "│   " -ForegroundColor Red -NoNewline
+    Write-Host "-Version" -ForegroundColor Red -NoNewline
+    Write-Host "                     " -NoNewline
+    Write-Host "Show application version" -ForegroundColor White
+    Write-Host "│   " -ForegroundColor Red -NoNewline
     Write-Host "-List" -ForegroundColor Red -NoNewline
     Write-Host "                       " -NoNewline
     Write-Host "Show this parameter list" -ForegroundColor White
@@ -820,6 +833,12 @@ function Show-Help {
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "-Help, -h" -ForegroundColor Red -NoNewline
     Write-Host "                   Display this help information" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-Version" -ForegroundColor Red -NoNewline
+    Write-Host "                     Display application version and exit" -ForegroundColor White
+    Write-Host "│    " -ForegroundColor Red -NoNewline
+    Write-Host "-List" -ForegroundColor Red -NoNewline
+    Write-Host "                       List all available command-line parameters" -ForegroundColor White
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "-IP" -ForegroundColor Red -NoNewline
     Write-Host "                         Display current Wi-Fi private IP address and exit" -ForegroundColor White
@@ -1018,6 +1037,12 @@ function Main {
         # Show parameter list if requested
         if ($List.IsPresent) {
             Show-ParameterList
+            return
+        }
+        
+        # Show version if requested
+        if ($Version.IsPresent) {
+            Write-Host $Script:WIFADE_VERSION
             return
         }
         
