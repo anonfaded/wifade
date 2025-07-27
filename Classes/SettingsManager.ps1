@@ -95,7 +95,12 @@ class SettingsManager : IManager {
             if (Test-Path $this.ConfigFilePath) {
                 Write-Debug "Loading settings from: $($this.ConfigFilePath)"
                 $jsonContent = Get-Content -Path $this.ConfigFilePath -Raw -ErrorAction Stop
-                $loadedSettings = $jsonContent | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+                # Convert JSON to hashtable (PowerShell 5.1 compatible)
+                $jsonObject = $jsonContent | ConvertFrom-Json -ErrorAction Stop
+                $loadedSettings = @{}
+                $jsonObject.PSObject.Properties | ForEach-Object {
+                    $loadedSettings[$_.Name] = $_.Value
+                }
                 
                 # Merge with defaults (defaults take precedence for missing keys)
                 $this.Settings = $this.DefaultSettings.Clone()
@@ -238,7 +243,12 @@ class SettingsManager : IManager {
             }
             
             $jsonContent = Get-Content -Path $filePath -Raw -ErrorAction Stop
-            $importData = $jsonContent | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+            # Convert JSON to hashtable (PowerShell 5.1 compatible)
+            $jsonObject = $jsonContent | ConvertFrom-Json -ErrorAction Stop
+            $importData = @{}
+            $jsonObject.PSObject.Properties | ForEach-Object {
+                $importData[$_.Name] = $_.Value
+            }
             
             if ($importData.ContainsKey('Settings')) {
                 # Merge imported settings with current settings

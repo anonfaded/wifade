@@ -63,7 +63,7 @@ class NetworkManager : IManager {
             
             # Validate that we have at least one adapter (warn but don't fail)
             if (-not $this.PrimaryAdapter) {
-                Write-Warning "No Wi-Fi adapters detected or enabled. Network scanning will use netsh commands directly."
+                Write-Verbose "No Wi-Fi adapters detected or enabled. Network scanning will use netsh commands directly."
             }
             
             # Start monitoring if enabled
@@ -185,7 +185,7 @@ class NetworkManager : IManager {
                 }
             }
             
-            # Select primary adapter
+    # Select primary adapter
             $this.SelectPrimaryAdapter($adapters)
             
             # Update last scan time
@@ -492,7 +492,7 @@ class NetworkManager : IManager {
     [void] SelectPrimaryAdapter([System.Collections.ArrayList]$adapters) {
         if ($adapters.Count -eq 0) {
             $this.PrimaryAdapter = $null
-            Write-Warning "No Wi-Fi adapters available for selection"
+            Write-Verbose "No Wi-Fi adapters available for selection"
             return
         }
         
@@ -909,8 +909,8 @@ class NetworkManager : IManager {
                     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                     [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                     
-                    # Use cmd.exe to ensure proper encoding handling
-                    $refreshOutput = & cmd.exe /c "netsh wlan refresh" 2>&1
+                    # Execute netsh command with proper encoding
+            $refreshOutput = & netsh wlan refresh 2>&1
                     $refreshExitCode = $LASTEXITCODE
                 }
                 finally {
@@ -936,8 +936,8 @@ class NetworkManager : IManager {
                     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                     [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                     
-                    # Use cmd.exe to ensure proper encoding handling
-                    $profilesOutput = & cmd.exe /c "netsh wlan show profiles" 2>&1
+                    # Execute netsh command with proper encoding
+            $profilesOutput = & netsh wlan show profiles 2>&1
                     $profilesExitCode = $LASTEXITCODE
                 }
                 finally {
@@ -1009,8 +1009,8 @@ class NetworkManager : IManager {
                 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                 
-                # Use cmd.exe to ensure proper encoding handling
-                $profileOutput = & cmd.exe /c "netsh wlan show profiles" 2>&1
+                # Execute netsh command with proper encoding
+            $profileOutput = & netsh wlan show profiles 2>&1
                 $exitCode = $LASTEXITCODE
             }
             finally {
@@ -1078,8 +1078,8 @@ class NetworkManager : IManager {
                 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                 
-                # Use cmd.exe to ensure proper encoding handling
-                $networkOutput = & cmd.exe /c "netsh wlan show networks mode=bssid" 2>&1
+                # Execute netsh command with proper encoding
+            $networkOutput = & netsh wlan show networks mode=bssid 2>&1
                 $exitCode = $LASTEXITCODE
             }
             finally {
@@ -1107,8 +1107,8 @@ class NetworkManager : IManager {
                     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                     [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                     
-                    # Use cmd.exe to ensure proper encoding handling
-                    $networkOutput = & cmd.exe /c "netsh wlan show networks" 2>&1
+                    # Execute netsh command with proper encoding
+            $networkOutput = & netsh wlan show networks 2>&1
                     $exitCode = $LASTEXITCODE
                 }
                 finally {
@@ -1454,8 +1454,8 @@ class NetworkManager : IManager {
                 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
                 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
                 
-                # Use cmd.exe to ensure proper encoding handling
-                $connectionOutput = & cmd.exe /c "netsh wlan show interfaces" 2>&1
+                # Execute netsh command with proper encoding
+            $connectionOutput = & netsh wlan show interfaces 2>&1
                 $exitCode = $LASTEXITCODE
             }
             finally {

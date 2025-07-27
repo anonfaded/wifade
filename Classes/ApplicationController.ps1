@@ -378,27 +378,39 @@ class ApplicationController {
                     
                     Write-Host ""
                     Write-Host "╭─ 🔧 Available Options" -ForegroundColor $this.UIManager.ColorScheme.Border
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "1-$($networks.Count)") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Connect to network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "r") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Rescan networks" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "w") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Restart Wi-Fi adapter" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "d") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Disconnect from current network" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "s") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Show current connection status" -ForegroundColor $this.UIManager.ColorScheme.Secondary
-                    Write-Host "│ → " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
+                    $this.UIManager.WriteUnicodeChar("→", $this.UIManager.ColorScheme.Border, $true)
+                    Write-Host " " -NoNewline
                     Write-Host ("{0,-5}" -f "b") -ForegroundColor $this.UIManager.ColorScheme.Highlight -NoNewline
                     Write-Host ": " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                     Write-Host "Back to main menu" -ForegroundColor $this.UIManager.ColorScheme.Secondary

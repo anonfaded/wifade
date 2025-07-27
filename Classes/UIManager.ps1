@@ -120,6 +120,16 @@ class UIManager : IManager {
             $host = Get-Host
             $host.UI.RawUI.WindowTitle = "wifade - Wi-Fi Security Testing Tool"
             
+            # Ensure UTF-8 encoding for Unicode character support
+            try {
+                if ([Console]::OutputEncoding.CodePage -ne 65001) {
+                    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                }
+            }
+            catch {
+                Write-Verbose "Could not set console output encoding to UTF-8"
+            }
+            
             # Enable ANSI color support if possible
             $psVersion = Get-Variable PSVersionTable -ValueOnly -ErrorAction SilentlyContinue
             if ($psVersion -and $psVersion.PSVersion.Major -ge 7) {
@@ -150,6 +160,31 @@ class UIManager : IManager {
         }
         catch {
             Write-Verbose "Could not initialize console settings: $($_.Exception.Message)"
+        }
+    }
+    
+    # Helper function to write Unicode characters properly
+    [void] WriteUnicodeChar([string]$char, [string]$color = "White", [bool]$noNewline = $false) {
+        try {
+            # Ensure the character is properly encoded
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($char)
+            $unicodeChar = [System.Text.Encoding]::UTF8.GetString($bytes)
+            
+            if ($noNewline) {
+                Write-Host $unicodeChar -ForegroundColor $color -NoNewline
+            }
+            else {
+                Write-Host $unicodeChar -ForegroundColor $color
+            }
+        }
+        catch {
+            # Fallback to regular Write-Host if Unicode handling fails
+            if ($noNewline) {
+                Write-Host $char -ForegroundColor $color -NoNewline
+            }
+            else {
+                Write-Host $char -ForegroundColor $color
+            }
         }
     }
     
@@ -208,7 +243,9 @@ class UIManager : IManager {
         foreach ($option in $this.MenuOptions.Main) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            $this.WriteUnicodeChar("→", $this.ColorScheme.Border, $true)
+            Write-Host " " -NoNewline
             Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
             Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
             Write-Host "$($option.Text)" -ForegroundColor $textColor
@@ -299,7 +336,9 @@ class UIManager : IManager {
         foreach ($option in $this.MenuOptions.AttackMode) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            $this.WriteUnicodeChar("→", $this.ColorScheme.Border, $true)
+            Write-Host " " -NoNewline
             Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
             Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
             Write-Host "$($option.Text)" -ForegroundColor $textColor
@@ -341,7 +380,9 @@ class UIManager : IManager {
         foreach ($option in $this.MenuOptions.Settings) {
             $keyColor = $this.ColorScheme.Highlight
             $textColor = $this.ColorScheme.Secondary
-            Write-Host "│ → " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+            $this.WriteUnicodeChar("→", $this.ColorScheme.Border, $true)
+            Write-Host " " -NoNewline
             Write-Host ("{0,-$paddingLength}" -f "$($option.Key)") -ForegroundColor $keyColor -NoNewline
             Write-Host ": " -ForegroundColor $this.ColorScheme.Border -NoNewline
             Write-Host "$($option.Text)" -ForegroundColor $textColor

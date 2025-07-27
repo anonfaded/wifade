@@ -120,6 +120,30 @@ param(
 # Set error action preference for consistent error handling
 $ErrorActionPreference = "Stop"
 
+# Set console encoding to UTF-8 for proper Unicode character display (especially important for compiled executables)
+try {
+    # Set console code page to UTF-8 (65001) for proper Unicode support
+    if ([Console]::OutputEncoding.CodePage -ne 65001) {  # 65001 is UTF-8
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    }
+    if ([Console]::InputEncoding.CodePage -ne 65001) {
+        [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+    }
+    
+    # Set the current thread's culture to ensure proper character handling
+    [System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::InvariantCulture
+    [System.Threading.Thread]::CurrentThread.CurrentUICulture = [System.Globalization.CultureInfo]::InvariantCulture
+    
+    # For Windows PowerShell compatibility, also set the output encoding preference
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        $OutputEncoding = [System.Text.Encoding]::UTF8
+    }
+}
+catch {
+    # Silently continue if console encoding cannot be set
+    Write-Verbose "Could not set console encoding to UTF-8: $($_.Exception.Message)"
+}
+
 # Function to detect if we're running on Windows
 function Test-IsWindows {
     try {

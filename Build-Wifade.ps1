@@ -344,8 +344,8 @@ if (Test-Path $pngPath) {
     }
 }
 
-# Compile to executable using ps2exe
-Write-Host "Compiling to executable: $outputExe" -ForegroundColor Yellow
+# Compile to executables using ps2exe
+Write-Host "Compiling executables..." -ForegroundColor Yellow
 
 try {
     # Check if ps2exe is available
@@ -357,10 +357,16 @@ try {
     # Import ps2exe module
     Import-Module ps2exe -Force
     
-    # Compile parameters (compatible with current ps2exe version)
-    $compileParams = @{
+    # Define output paths
+    $coreExe = Join-Path $buildDir "WifadeCore.exe"
+    $launcherExe = Join-Path $buildDir "Wifade.exe"
+    $launcherScript = Join-Path $PSScriptRoot "WifadeLauncher.ps1"
+    
+    # 1. Compile the main application as WifadeCore.exe
+    Write-Host "  Building WifadeCore.exe (main application)..." -ForegroundColor Cyan
+    $coreParams = @{
         InputFile = $outputScript
-        OutputFile = $outputExe
+        OutputFile = $coreExe
         NoConsole = $false
         NoOutput = $false
         NoError = $false
@@ -368,9 +374,9 @@ try {
         Debug = $false
         LongPaths = $true
         UNICODEEncoding = $true
-        RequireAdmin = $true
-        Title = "Wifade - WiFi Security Testing Tool"
-        Description = "Wifi Manager with in-built Bruteforcer"
+        RequireAdmin = $false  # Launcher will handle admin requirements
+        Title = "WifadeCore - WiFi Security Testing Tool Core"
+        Description = "Wifi Manager with in-built Bruteforcer - Core Application"
         Company = "FadSec Lab"
         Version = "2.0"
         Copyright = "© 2024-2025 faded.dev"
@@ -378,36 +384,92 @@ try {
     
     # Add icon if it exists
     if ($iconPath -and (Test-Path $iconPath)) {
-        $compileParams.IconFile = $iconPath
-        Write-Host "Using processed icon: $iconPath" -ForegroundColor Cyan
-    } else {
-        Write-Host "No icon will be embedded in executable" -ForegroundColor Yellow
+        $coreParams.IconFile = $iconPath
+        Write-Host "    Using processed icon: $iconPath" -ForegroundColor Gray
     }
     
-    # Compile the script
-    Invoke-ps2exe @compileParams
+    # Compile the core application
+    Invoke-ps2exe @coreParams
     
-    if (Test-Path $outputExe) {
-        Write-Host ""
-        Write-Host "✅ Successfully built: $outputExe" -ForegroundColor Green
-        
-        # Get file size for display
-        $fileSize = [math]::Round((Get-Item $outputExe).Length / 1MB, 2)
-        Write-Host "   File size: $fileSize MB" -ForegroundColor Cyan
-        
-        # Test the executable
-        Write-Host ""
-        Write-Host "Testing executable..." -ForegroundColor Yellow
-        $testResult = & $outputExe -Version 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Executable test passed" -ForegroundColor Green
-            Write-Host "   Version output: $testResult" -ForegroundColor Cyan
-        } else {
-            Write-Warning "⚠️ Executable test failed with exit code: $LASTEXITCODE"
-            Write-Host "   Error output: $testResult" -ForegroundColor Red
+    if (-not (Test-Path $coreExe)) {
+        throw "Failed to create WifadeCore.exe"
+    }
+    
+    $coreFileSize = [math]::Round((Get-Item $coreExe).Length / 1MB, 2)
+    Write-Host "    ✅ WifadeCore.exe created ($coreFileSize MB)" -ForegroundColor Green
+    
+    # 2. Compile the launcher as Wifade.exe
+     Write-Host "  Building Wifade.exe (PowerShell launcher)..." -ForegroundColor Cyan
+     $launcherParams = @{
+         InputFile = $launcherScript
+         OutputFile = $launcherExe
+         NoConsole = $false
+         NoOutput = $false
+         NoError = $false
+         Verbose = $false
+         Debug = $false
+         LongPaths = $true
+         UNICODEEncoding = $true
+         RequireAdmin = $false  # Launcher handles admin check gracefully
+         Title = "Wifade - WiFi Security Testing Tool"
+         Description = "Wifi Manager with in-built Bruteforcer - PowerShell Launcher"
+         Company = "FadSec Lab"
+         Version = "2.0"
+         Copyright = "© 2024-2025 faded.dev"
+     }
+    
+    # Add icon if it exists
+    if ($iconPath -and (Test-Path $iconPath)) {
+        $launcherParams.IconFile = $iconPath
+        Write-Host "    Using processed icon: $iconPath" -ForegroundColor Gray
+    }
+    
+    # Compile the launcher
+    Invoke-ps2exe @launcherParams
+    
+    if (-not (Test-Path $launcherExe)) {
+        throw "Failed to create Wifade.exe launcher"
+    }
+    
+    $launcherFileSize = [math]::Round((Get-Item $launcherExe).Length / 1MB, 2)
+    Write-Host "    ✅ Wifade.exe launcher created ($launcherFileSize MB)" -ForegroundColor Green
+    
+    # Test both executables
+    Write-Host ""
+    Write-Host "Testing executables..." -ForegroundColor Yellow
+    
+    # Test core executable
+    Write-Host "  Testing WifadeCore.exe..." -ForegroundColor Cyan
+    $coreTestResult = & $coreExe -Version 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "    ✅ WifadeCore.exe test passed" -ForegroundColor Green
+        Write-Host "    Version output: $coreTestResult" -ForegroundColor Gray
+    } else {
+        Write-Warning "    ⚠️ WifadeCore.exe test failed with exit code: $LASTEXITCODE"
+        Write-Host "    Error output: $coreTestResult" -ForegroundColor Red
+    }
+    
+    # Test launcher executable
+    Write-Host "  Testing Wifade.exe launcher..." -ForegroundColor Cyan
+    
+    # Change to build directory for launcher test to ensure it finds WifadeCore.exe
+    $originalLocation = Get-Location
+    try {
+        Set-Location $buildDir
+        $launcherTestResult = & ".\Wifade.exe" -Version 2>&1
+        $launcherExitCode = $LASTEXITCODE
+    } finally {
+        Set-Location $originalLocation
+    }
+    
+    if ($launcherExitCode -eq 0) {
+        Write-Host "    ✅ Wifade.exe launcher test passed" -ForegroundColor Green
+        if ($launcherTestResult) {
+            Write-Host "    Launcher output: $launcherTestResult" -ForegroundColor Gray
         }
     } else {
-        throw "Compilation failed - executable not created"
+        Write-Warning "    ⚠️ Wifade.exe launcher test failed with exit code: $launcherExitCode"
+        Write-Host "    Error output: $launcherTestResult" -ForegroundColor Red
     }
 }
 catch {
@@ -424,18 +486,29 @@ Write-Host "                        BUILD COMPLETED SUCCESSFULLY!" -ForegroundCo
 Write-Host "============================================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "📁 Output Files:" -ForegroundColor Cyan
-Write-Host "   • Executable: $outputExe" -ForegroundColor White
-Write-Host "   • Source:     $outputScript" -ForegroundColor White
+Write-Host "   • Main Launcher:     $(Join-Path $buildDir "Wifade.exe")" -ForegroundColor White
+Write-Host "   • Core Application:  $(Join-Path $buildDir "WifadeCore.exe")" -ForegroundColor White
+Write-Host "   • Combined Source:   $outputScript" -ForegroundColor White
 Write-Host ""
-Write-Host "🚀 Usage Examples:" -ForegroundColor Cyan
-Write-Host "   .\build\Wifade.exe -Help          # Show help" -ForegroundColor White
-Write-Host "   .\build\Wifade.exe -Version       # Show version" -ForegroundColor White
-Write-Host "   .\build\Wifade.exe -Status        # Show WiFi status" -ForegroundColor White
-Write-Host "   .\build\Wifade.exe -Scan          # Scan for networks" -ForegroundColor White
+Write-Host "🚀 Usage:" -ForegroundColor Cyan
+Write-Host "   Simply run the main launcher - it will automatically start WifadeCore.exe in PowerShell:" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "   .\build\Wifade.exe                    # Launch Wifade in PowerShell" -ForegroundColor White
+Write-Host "   .\build\Wifade.exe -Help              # Show help in PowerShell" -ForegroundColor White
+Write-Host "   .\build\Wifade.exe -Version           # Show version in PowerShell" -ForegroundColor White
+Write-Host "   .\build\Wifade.exe -Scan              # Scan networks in PowerShell" -ForegroundColor White
+Write-Host ""
+Write-Host "✨ Key Benefits:" -ForegroundColor Cyan
+Write-Host "   • Clean UI: Only Wifade.exe is visible to users" -ForegroundColor Green
+Write-Host "   • PowerShell Environment: Runs in PowerShell, not cmd.exe" -ForegroundColor Green
+Write-Host "   • Unicode Support: Proper display of arrows (→) and special characters" -ForegroundColor Green
+Write-Host "   • Admin Elevation: Launcher handles administrator privileges" -ForegroundColor Green
+Write-Host "   • Portable: Both files work together as a complete package" -ForegroundColor Green
 Write-Host ""
 Write-Host "⚠️  Important Notes:" -ForegroundColor Yellow
-Write-Host "   • Run Wifade.exe as Administrator for full functionality" -ForegroundColor White
-Write-Host "   • Some features require elevated privileges" -ForegroundColor White
-Write-Host "   • The executable is portable and self-contained" -ForegroundColor White
+Write-Host "   • Keep both Wifade.exe and WifadeCore.exe in the same directory" -ForegroundColor White
+Write-Host "   • Wifade.exe is the launcher that users should run" -ForegroundColor White
+Write-Host "   • WifadeCore.exe contains the main application logic" -ForegroundColor White
+Write-Host "   • Administrator privileges are required for full functionality" -ForegroundColor White
 Write-Host ""
 Write-Host "Build completed successfully! 🎉" -ForegroundColor Green
