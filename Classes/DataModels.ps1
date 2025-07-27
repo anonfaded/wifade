@@ -1,55 +1,5 @@
 # Data Model Classes for wifade
 
-# Base interface for all manager classes
-class IManager {
-    [bool]$IsInitialized
-    [hashtable]$Configuration
-    
-    IManager() {
-        $this.IsInitialized = $false
-        $this.Configuration = @{}
-    }
-    
-    # Virtual methods to be implemented by derived classes
-    [void] Initialize([hashtable]$config) {
-        throw "Initialize method must be implemented by derived class"
-    }
-    
-    [bool] ValidateConfiguration([hashtable]$config) {
-        throw "ValidateConfiguration method must be implemented by derived class"
-    }
-    
-    [void] Dispose() {
-        throw "Dispose method must be implemented by derived class"
-    }
-}
-
-# Custom exception for configuration errors
-class ConfigurationException : System.Exception {
-    [string]$ConfigurationKey
-    [string]$ConfigurationValue
-    
-    ConfigurationException([string]$message) : base($message) {
-        $this.ConfigurationKey = ""
-        $this.ConfigurationValue = ""
-    }
-    
-    ConfigurationException([string]$message, [string]$key) : base($message) {
-        $this.ConfigurationKey = $key
-        $this.ConfigurationValue = ""
-    }
-    
-    ConfigurationException([string]$message, [string]$key, [string]$value) : base($message) {
-        $this.ConfigurationKey = $key
-        $this.ConfigurationValue = $value
-    }
-    
-    ConfigurationException([string]$message, [System.Exception]$innerException) : base($message, $innerException) {
-        $this.ConfigurationKey = ""
-        $this.ConfigurationValue = ""
-    }
-}
-
 # Network profile information
 class NetworkProfile {
     [string]$SSID

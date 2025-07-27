@@ -126,7 +126,21 @@ class UIManager : IManager {
                 try {
                     $psStyle = Get-Variable PSStyle -ValueOnly -ErrorAction SilentlyContinue
                     if ($psStyle) {
-                        $psStyle.OutputRendering = [System.Management.Automation.OutputRendering]::Ansi
+                        # Check if OutputRendering enum exists (PowerShell 7.2+) using string-based approach
+                        try {
+                            # Use Add-Type to check if the type exists without causing parse-time errors
+                            $typeName = "System.Management.Automation.OutputRendering"
+                            $type = [System.Type]::GetType($typeName)
+                            if ($type -and $type.IsEnum) {
+                                # Use reflection to set the property to avoid parse-time type resolution
+                                $ansiValue = [System.Enum]::Parse($type, "Ansi")
+                                $psStyle.OutputRendering = $ansiValue
+                            }
+                        }
+                        catch {
+                            # OutputRendering not available in this PowerShell version
+                            Write-Verbose "OutputRendering not available in this PowerShell version"
+                        }
                     }
                 }
                 catch {
