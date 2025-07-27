@@ -1,5 +1,6 @@
 # Build artifacts
 build/
+dist/
 Wifade-Flat.ps1
 *.exe
 *.exe.config

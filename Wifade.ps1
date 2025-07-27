@@ -30,19 +30,19 @@
 
     
 .EXAMPLE
-    .\wifade.ps1
+    wifade
     Run with default configuration files
     
 .EXAMPLE
-    .\wifade.ps1 -SSIDFile "custom_ssids.txt" -PasswordFile "custom_passwords.txt"
+    wifade -SSIDFile "custom_ssids.txt" -PasswordFile "custom_passwords.txt"
     Run with custom configuration files
     
 .EXAMPLE
-    .\wifade.ps1 -VerboseOutput
+    wifade -VerboseOutput
     Run with verbose output enabled
     
 .EXAMPLE
-    .\wifade.ps1 -Version
+    wifade -Version
     Display the current application version
     
 .NOTES
@@ -800,23 +800,23 @@ function Show-ParameterList {
     Write-Host "│ " -ForegroundColor Red -NoNewline
     Write-Host "💡 EXAMPLES:" -ForegroundColor Blue
     Write-Host "│   " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -IP" -ForegroundColor Red -NoNewline
+    Write-Host "wifade -IP" -ForegroundColor Red -NoNewline
     Write-Host "                    " -NoNewline
     Write-Host "# Show IP address" -ForegroundColor White
     Write-Host "│   " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -Scan" -ForegroundColor Red -NoNewline
+    Write-Host "wifade -Scan" -ForegroundColor Red -NoNewline
     Write-Host "                  " -NoNewline
     Write-Host "# List networks" -ForegroundColor White
     Write-Host "│   " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 MyWiFi password123" -ForegroundColor Red -NoNewline
+    Write-Host "wifade MyWiFi password123" -ForegroundColor Red -NoNewline
     Write-Host "     " -NoNewline
     Write-Host "# Connect to network" -ForegroundColor White
     Write-Host "│   " -ForegroundColor Red -NoNewline
-    Write-Host '.\wifade.ps1 "WiFi Name" password' -ForegroundColor Red -NoNewline
+    Write-Host 'wifade "WiFi Name" password' -ForegroundColor Red -NoNewline
     Write-Host "   " -NoNewline
     Write-Host "# Connect (SSID with spaces)" -ForegroundColor White
     Write-Host "│   " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1" -ForegroundColor Red -NoNewline
+    Write-Host "wifade" -ForegroundColor Red -NoNewline
     Write-Host "                        " -NoNewline
     Write-Host "# Launch interactive mode" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
@@ -824,7 +824,7 @@ function Show-ParameterList {
     # Footer
     Write-Host "│ " -ForegroundColor Red -NoNewline
     Write-Host "For detailed help: " -ForegroundColor White -NoNewline
-    Write-Host ".\wifade.ps1 -Help" -ForegroundColor Red
+    Write-Host "wifade -Help" -ForegroundColor Red
     Write-Host "╰────────────────────────────────────────────────────" -ForegroundColor Red
 }
 
@@ -848,7 +848,7 @@ function Show-Help {
     Write-Host "│ " -ForegroundColor Red -NoNewline
     Write-Host "🚀 USAGE:" -ForegroundColor Blue
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 [OPTIONS]" -ForegroundColor White
+    Write-Host "wifade [OPTIONS]" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     
     # OPTIONS Section
@@ -913,37 +913,37 @@ function Show-Help {
     Write-Host "│ " -ForegroundColor Red -NoNewline
     Write-Host "💡 EXAMPLES:" -ForegroundColor Blue
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1" -ForegroundColor Red
+    Write-Host "wifade" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Run the tool" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -IP" -ForegroundColor Red
+    Write-Host "wifade -IP" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Display current Wi-Fi private IP address and exit" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -Status" -ForegroundColor Red
+    Write-Host "wifade -Status" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Display comprehensive Wi-Fi connection status and exit" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -Scan" -ForegroundColor Red
+    Write-Host "wifade -Scan" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Scan and list available Wi-Fi networks and exit" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 -Connect MyNetwork mypassword123" -ForegroundColor Red
+    Write-Host "wifade -Connect MyNetwork mypassword123" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Connect to Wi-Fi network using -Connect flag" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 MyNetwork mypassword123" -ForegroundColor Red
+    Write-Host "wifade MyNetwork mypassword123" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
     Write-Host "Connect to Wi-Fi network using positional parameters" -ForegroundColor White
     Write-Host "│" -ForegroundColor Red
     Write-Host "│    " -ForegroundColor Red -NoNewline
-    Write-Host ".\wifade.ps1 " -ForegroundColor Red -NoNewline
+    Write-Host "wifade " -ForegroundColor Red -NoNewline
     Write-Host '"2nd Floor"' -ForegroundColor Red -NoNewline
     Write-Host " mypassword123" -ForegroundColor Red
     Write-Host "│        " -ForegroundColor Red -NoNewline
@@ -1185,8 +1185,8 @@ function Main {
         if ($Connect.IsPresent -or $ConnectSSID) {
             if ([string]::IsNullOrWhiteSpace($ConnectSSID)) {
                 Write-Host "Error: SSID is required for connection" -ForegroundColor Red
-                Write-Host "Usage: .\wifade.ps1 -Connect 'SSID Name' 'password'" -ForegroundColor Yellow
-                Write-Host "   or: .\wifade.ps1 'SSID Name' 'password'" -ForegroundColor Yellow
+                Write-Host "Usage: wifade -Connect 'SSID Name' 'password'" -ForegroundColor Yellow
+                Write-Host "   or: wifade 'SSID Name' 'password'" -ForegroundColor Yellow
                 exit 1
             }
             
