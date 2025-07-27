@@ -1,1 +1,17 @@
+# Build artifacts
+build/
 Wifade-Flat.ps1
+*.exe
+*.exe.config
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.vs/
+
+# Windows specific
+Thumbs.db
+Desktop.ini
