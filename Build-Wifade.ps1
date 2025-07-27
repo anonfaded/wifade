@@ -367,6 +367,7 @@ try {
         Verbose = $false
         Debug = $false
         LongPaths = $true
+        UNICODEEncoding = $true
         Title = "Wifade - WiFi Security Testing Tool"
         Description = "Windows PowerShell Wi-Fi Security Testing Tool"
         Company = "Wifade Project"
