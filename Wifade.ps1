@@ -1179,6 +1179,11 @@ function Main {
             PasswordFile = $PasswordFile
         }
         
+        # Set verbose preference for Write-Verbose output
+        if ($VerboseOutput.IsPresent) {
+            $global:VerbosePreference = "Continue"
+        }
+        
         Write-Host "Starting Wifade..." -ForegroundColor Green
         
         # Initialize version checker (uses version constant from VersionChecker.ps1)

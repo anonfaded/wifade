@@ -116,10 +116,10 @@ class NetworkManager : IManager {
             }
             
             # Standard Windows detection
-            $isWindows = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
+            $isWindowsOS = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
             
             # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
-            if ($isWindows) {
+            if ($isWindowsOS) {
                 try {
                     $null = Get-Command "netsh" -ErrorAction Stop
                     Write-Verbose "Detected native Windows environment with netsh available"
@@ -894,15 +894,64 @@ class NetworkManager : IManager {
             Write-Verbose "Triggering fresh network scan..."
             try {
                 # Force a comprehensive scan
-                & netsh wlan refresh 2>$null | Out-Null
+                Write-Verbose "Executing: netsh wlan refresh"
+                
+                # Initialize variables to avoid PowerShell assignment errors
+                $refreshExitCode = -1
+                $refreshOutput = $null
+                $profilesExitCode = -1
+                $profilesOutput = $null
+                
+                # Set console encoding to handle netsh output properly in compiled executable
+                $originalOutputEncoding = [Console]::OutputEncoding
+                $originalInputEncoding = [Console]::InputEncoding
+                try {
+                    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                    [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                    
+                    # Use cmd.exe to ensure proper encoding handling
+                    $refreshOutput = & cmd.exe /c "netsh wlan refresh" 2>&1
+                    $refreshExitCode = $LASTEXITCODE
+                }
+                finally {
+                    # Restore original encoding
+                    [Console]::OutputEncoding = $originalOutputEncoding
+                    [Console]::InputEncoding = $originalInputEncoding
+                }
+                
+                Write-Verbose "netsh wlan refresh exit code: $refreshExitCode"
+                if ($refreshOutput) {
+                    Write-Verbose "netsh wlan refresh output: $($refreshOutput -join '; ')"
+                }
+                
                 Start-Sleep -Milliseconds 3000  # Wait longer for scan to complete
                 
                 # Additional scan trigger for better results when connected
-                & netsh wlan show profiles 2>$null | Out-Null
+                Write-Verbose "Executing: netsh wlan show profiles"
+                
+                # Set console encoding for profiles command as well
+                $originalOutputEncoding2 = [Console]::OutputEncoding
+                $originalInputEncoding2 = [Console]::InputEncoding
+                try {
+                    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                    [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                    
+                    # Use cmd.exe to ensure proper encoding handling
+                    $profilesOutput = & cmd.exe /c "netsh wlan show profiles" 2>&1
+                    $profilesExitCode = $LASTEXITCODE
+                }
+                finally {
+                    # Restore original encoding
+                    [Console]::OutputEncoding = $originalOutputEncoding2
+                    [Console]::InputEncoding = $originalInputEncoding2
+                }
+                
+                Write-Verbose "netsh wlan show profiles exit code: $profilesExitCode"
+                
                 Start-Sleep -Milliseconds 1000
             }
             catch {
-                Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan"
+                Write-Verbose "Could not trigger netsh wlan refresh, continuing with regular scan. Error: $($_.Exception.Message)"
             }
             
             # Clear existing networks
@@ -947,10 +996,31 @@ class NetworkManager : IManager {
             $savedNetworks = [System.Collections.ArrayList]::new()
             
             # Execute netsh command to get profiles
-            $profileOutput = & netsh wlan show profiles 2>$null
+            Write-Verbose "Executing: netsh wlan show profiles"
             
-            if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Failed to retrieve saved network profiles (Exit code: $LASTEXITCODE)"
+            # Initialize variables to avoid PowerShell assignment errors
+            $exitCode = -1
+            $profileOutput = $null
+            
+            # Set console encoding to handle netsh output properly in compiled executable
+            $originalOutputEncoding = [Console]::OutputEncoding
+            $originalInputEncoding = [Console]::InputEncoding
+            try {
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                
+                # Use cmd.exe to ensure proper encoding handling
+                $profileOutput = & cmd.exe /c "netsh wlan show profiles" 2>&1
+                $exitCode = $LASTEXITCODE
+            }
+            finally {
+                # Restore original encoding
+                [Console]::OutputEncoding = $originalOutputEncoding
+                [Console]::InputEncoding = $originalInputEncoding
+            }
+            
+            if ($exitCode -ne 0) {
+                Write-Warning "Failed to retrieve saved network profiles (Exit code: $exitCode)"
                 return $savedNetworks
             }
             
@@ -986,17 +1056,75 @@ class NetworkManager : IManager {
             # Try multiple approaches to get comprehensive network list
             $networkOutput = $null
             
-            # First attempt: Standard scan with BSSID mode
-            $networkOutput = & netsh wlan show networks mode=bssid 2>$null
+            # Check if netsh command is available
+            $netshPath = Get-Command netsh -ErrorAction SilentlyContinue
+            if (-not $netshPath) {
+                Write-Warning "netsh command not found in PATH. Cannot scan for networks."
+                return $networkList
+            }
             
-            if ($LASTEXITCODE -ne 0) {
-                Write-Verbose "Standard network scan failed, trying alternative approach..."
+            Write-Verbose "Using netsh from: $($netshPath.Source)"
+            
+            # First attempt: Standard scan with BSSID mode
+            Write-Verbose "Executing: netsh wlan show networks mode=bssid"
+            
+            # Initialize variables to avoid PowerShell assignment errors
+            $exitCode = -1
+            
+            # Set console encoding to handle netsh output properly in compiled executable
+            $originalOutputEncoding = [Console]::OutputEncoding
+            $originalInputEncoding = [Console]::InputEncoding
+            try {
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                
+                # Use cmd.exe to ensure proper encoding handling
+                $networkOutput = & cmd.exe /c "netsh wlan show networks mode=bssid" 2>&1
+                $exitCode = $LASTEXITCODE
+            }
+            finally {
+                # Restore original encoding
+                [Console]::OutputEncoding = $originalOutputEncoding
+                [Console]::InputEncoding = $originalInputEncoding
+            }
+            
+            Write-Verbose "netsh exit code: $exitCode"
+            if ($networkOutput) {
+                Write-Verbose "netsh output length: $($networkOutput.Length) lines"
+                Write-Verbose "First few lines of output: $($networkOutput | Select-Object -First 3 | Out-String)"
+            }
+            
+            if ($exitCode -ne 0) {
+                Write-Verbose "Standard network scan failed (exit code: $exitCode), trying alternative approach..."
                 
                 # Second attempt: Basic scan without BSSID mode
-                $networkOutput = & netsh wlan show networks 2>$null
+                Write-Verbose "Executing: netsh wlan show networks"
                 
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "Failed to retrieve available networks (Exit code: $LASTEXITCODE). This usually means Wi-Fi is disabled or no Wi-Fi adapter is active."
+                # Set console encoding for fallback command as well
+                $originalOutputEncoding2 = [Console]::OutputEncoding
+                $originalInputEncoding2 = [Console]::InputEncoding
+                try {
+                    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                    [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                    
+                    # Use cmd.exe to ensure proper encoding handling
+                    $networkOutput = & cmd.exe /c "netsh wlan show networks" 2>&1
+                    $exitCode = $LASTEXITCODE
+                }
+                finally {
+                    # Restore original encoding
+                    [Console]::OutputEncoding = $originalOutputEncoding2
+                    [Console]::InputEncoding = $originalInputEncoding2
+                }
+                
+                Write-Verbose "Alternative netsh exit code: $exitCode"
+                if ($networkOutput) {
+                    Write-Verbose "Alternative netsh output length: $($networkOutput.Length) lines"
+                }
+                
+                if ($exitCode -ne 0) {
+                    Write-Warning "Failed to retrieve available networks (Exit code: $exitCode). This usually means Wi-Fi is disabled or no Wi-Fi adapter is active."
+                    Write-Warning "netsh output: $($networkOutput -join '; ')"
                     Write-Verbose "Try enabling Wi-Fi adapter or check if wireless service is running"
                     return $networkList
                 }
@@ -1315,11 +1443,29 @@ class NetworkManager : IManager {
         try {
             Write-Verbose "Getting current Wi-Fi connection information..."
             
-            # Execute netsh command to get current connection
-            $connectionOutput = & netsh wlan show interfaces 2>$null
+            # Initialize variables to avoid PowerShell assignment errors
+            $exitCode = -1
+            $connectionOutput = $null
             
-            if ($LASTEXITCODE -ne 0) {
-                Write-Verbose "Failed to get current connection info (Exit code: $LASTEXITCODE)"
+            # Set console encoding to handle netsh output properly in compiled executable
+            $originalOutputEncoding = [Console]::OutputEncoding
+            $originalInputEncoding = [Console]::InputEncoding
+            try {
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+                
+                # Use cmd.exe to ensure proper encoding handling
+                $connectionOutput = & cmd.exe /c "netsh wlan show interfaces" 2>&1
+                $exitCode = $LASTEXITCODE
+            }
+            finally {
+                # Restore original encoding
+                [Console]::OutputEncoding = $originalOutputEncoding
+                [Console]::InputEncoding = $originalInputEncoding
+            }
+            
+            if ($exitCode -ne 0) {
+                Write-Verbose "Failed to get current connection info (Exit code: $exitCode)"
                 return $null
             }
             

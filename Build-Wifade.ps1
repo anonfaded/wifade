@@ -96,11 +96,11 @@ $mainContent = Get-Content $mainScript -Raw
 
 # Extract the header (CmdletBinding and param) and footer (main logic) from Wifade.ps1
 $headerEndPattern = '(?s)^(.*?param\s*\([^)]*\)\s*)(#.*?$)'
-$matches = [regex]::Match($mainContent, $headerEndPattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
+$regexMatches = [regex]::Match($mainContent, $headerEndPattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
 
-if ($matches.Success) {
-    $header = $matches.Groups[1].Value
-    $footer = $mainContent.Substring($matches.Groups[1].Length)
+if ($regexMatches.Success) {
+    $header = $regexMatches.Groups[1].Value
+    $footer = $mainContent.Substring($regexMatches.Groups[1].Length)
 } else {
     # Fallback: find the param block more carefully
     $lines = $mainContent -split "`r?`n"
@@ -368,11 +368,12 @@ try {
         Debug = $false
         LongPaths = $true
         UNICODEEncoding = $true
+        RequireAdmin = $true
         Title = "Wifade - WiFi Security Testing Tool"
-        Description = "Windows PowerShell Wi-Fi Security Testing Tool"
-        Company = "Wifade Project"
-        Version = "2.0.0.0"
-        Copyright = "© 2024 Wifade Project"
+        Description = "Wifi Manager with in-built Bruteforcer"
+        Company = "FadSec Lab"
+        Version = "2.0"
+        Copyright = "© 2024-2025 faded.dev"
     }
     
     # Add icon if it exists
