@@ -23,29 +23,12 @@ class SettingsManager : IManager {
         $this.IsInitialized = $false
         $this.Configuration = @{}
         
-        # Set config file path to hardcoded installation directory for consistency
-        # Primary: Use hardcoded installation path (for installed/compiled version)
-        $hardcodedAppRoot = "C:\Program Files\Wifade"
-        $configDir = Join-Path $hardcodedAppRoot "config"
-        
-        # Fallback: Use project root for development/testing when running as script
-        if (-not (Test-Path $hardcodedAppRoot)) {
-            # For development, use the project root directory
-            $projectRoot = if ($PSScriptRoot) { 
-                Split-Path $PSScriptRoot -Parent  # Go up from Classes to project root
-            } else { 
-                $PWD.Path 
-            }
-            $configDir = Join-Path $projectRoot "config"
-            Write-Debug "Using development config directory: $configDir"
-        } else {
-            Write-Debug "Using hardcoded config directory: $configDir"
+        # Always use user's AppData directory for config (no admin required)
+        $userConfigDir = Join-Path $env:APPDATA "Wifade"
+        if (-not (Test-Path $userConfigDir)) {
+            New-Item -ItemType Directory -Path $userConfigDir -Force | Out-Null
         }
-        
-        if (-not (Test-Path $configDir)) {
-            New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-        }
-        $this.ConfigFilePath = Join-Path $configDir "config.json"
+        $this.ConfigFilePath = Join-Path $userConfigDir "wifade_config.json"
         
         # Initialize default settings
         $this.DefaultSettings = @{

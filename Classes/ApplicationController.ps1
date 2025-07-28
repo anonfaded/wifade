@@ -91,33 +91,9 @@ class ApplicationController {
                 Write-Warning "Could not initialize UIManager: $($_.Exception.Message)"
             }
             
-            # Initialize Network Manager
-            $this.UIManager.ShowInfo("Initializing Network Manager...")
-            $networkConfig = @{
-                AdapterScanInterval = 30
-                MonitoringEnabled   = $false
-            }
-            try {
-                $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
-                $this.NetworkManager.Initialize($networkConfig)
-                $this.UIManager.ShowSuccess("Network Manager initialized")
-            }
-            catch {
-                $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
-                $this.UIManager.WaitForKeyPress("Press any key to continue...")
-                return
-            }
-            
-            # Initialize Password Manager
-            $this.UIManager.ShowInfo("Initializing Password Manager...")
-            $passwordManagerConfig = @{
-                PasswordFile = $this.AppConfig.PasswordFile
-            }
-            $this.PasswordManager = New-Object PasswordManager
-            $this.PasswordManager.Initialize($passwordManagerConfig)
-            $this.UIManager.ShowSuccess("Password Manager initialized")
-
-            $this.UIManager.ShowSuccess("All managers initialized successfully")
+            # Don't initialize Network Manager and Password Manager at startup
+            # They will be initialized lazily when first needed
+            $this.UIManager.ShowSuccess("Application initialized successfully")
             
             $this.IsInitialized = $true
             Write-Verbose "ApplicationController initialization completed successfully"
@@ -173,6 +149,45 @@ class ApplicationController {
         }
         catch {
             Write-Error "Fatal error in application: $($_.Exception.Message)"
+        }
+    }
+    
+    # Lazy initialization for NetworkManager
+    [void] EnsureNetworkManager() {
+        if ($null -eq $this.NetworkManager) {
+            $this.UIManager.ShowInfo("Initializing Network Manager...")
+            $networkConfig = @{
+                AdapterScanInterval = 30
+                MonitoringEnabled   = $false
+            }
+            try {
+                $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
+                $this.NetworkManager.Initialize($networkConfig)
+                $this.UIManager.ShowSuccess("Network Manager initialized")
+            }
+            catch {
+                $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
+                throw
+            }
+        }
+    }
+    
+    # Lazy initialization for PasswordManager
+    [void] EnsurePasswordManager() {
+        if ($null -eq $this.PasswordManager) {
+            $this.UIManager.ShowInfo("Initializing Password Manager...")
+            $passwordManagerConfig = @{
+                PasswordFile = $this.AppConfig.PasswordFile
+            }
+            try {
+                $this.PasswordManager = New-Object PasswordManager
+                $this.PasswordManager.Initialize($passwordManagerConfig)
+                $this.UIManager.ShowSuccess("Password Manager initialized")
+            }
+            catch {
+                $this.UIManager.ShowError("Failed to initialize Password Manager: $($_.Exception.Message)")
+                throw
+            }
         }
     }
     
@@ -326,24 +341,8 @@ class ApplicationController {
             Write-Host ""
             
             try {
-                # Initialize NetworkManager if not already done
-                if ($null -eq $this.NetworkManager) {
-                    $this.UIManager.ShowInfo("Initializing Network Manager...")
-                    $networkConfig = @{
-                        AdapterScanInterval = 30
-                        MonitoringEnabled   = $false
-                    }
-                    try {
-                        $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
-                        $this.NetworkManager.Initialize($networkConfig)
-                        $this.UIManager.ShowSuccess("Network Manager initialized")
-                    }
-                    catch {
-                        $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
-                        $this.UIManager.WaitForKeyPress("Press any key to continue...")
-                        return
-                    }
-                }
+                # Initialize NetworkManager lazily
+                $this.EnsureNetworkManager()
                 
                 # Show current connection status
                 $currentConnection = $this.NetworkManager.GetCurrentConnection()
@@ -1556,77 +1555,13 @@ class ApplicationController {
     # Initialize attack managers (NetworkManager and PasswordManager)
     [void] InitializeAttackManagers() {
         try {
-            # Initialize NetworkManager if not already done
-            if ($null -eq $this.NetworkManager) {
-                $this.UIManager.ShowInfo("Initializing Network Manager...")
-                $networkConfig = @{
-                    AdapterScanInterval = 30
-                    MonitoringEnabled   = $false
-                }
-                $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
-                $this.NetworkManager.Initialize($networkConfig)
-                $this.UIManager.ShowSuccess("Network Manager initialized")
-            }
-            
-            # Initialize PasswordManager if not already done
-            if ($null -eq $this.PasswordManager) {
-                $this.UIManager.ShowInfo("Initializing Password Manager...")
-                # Use the globally defined, reliable application root directory
-                $projectRoot = $global:AppRoot
-                
-                # Default password file path
-                $defaultPasswordFile = "passwords\probable-v2-wpa-top4800.txt"
-                
-                # Determine the password file path
-                $passwordFilePath = ""
-                
-                # If a custom password file is specified in AppConfig, use that
-                if ($this.AppConfig.PasswordFile) {
-                    # Check if it's a relative path
-                    if (-not [System.IO.Path]::IsPathRooted($this.AppConfig.PasswordFile)) {
-                        # Convert relative path to absolute
-                        $passwordFilePath = Join-Path -Path $projectRoot -ChildPath $this.AppConfig.PasswordFile
-                    }
-                    else {
-                        # Use the absolute path as is
-                        $passwordFilePath = $this.AppConfig.PasswordFile
-                    }
-                }
-                else {
-                    # Use default password file
-                    $passwordFilePath = Join-Path -Path $projectRoot -ChildPath $defaultPasswordFile
-                    $this.UIManager.ShowInfo("Using default password file: $passwordFilePath")
-                }
-                
-                # Verify the password file exists
-                if (-not (Test-Path $passwordFilePath)) {
-                    $this.UIManager.ShowError("Password file not found at: $passwordFilePath")
-                    throw "Required password file not found: $passwordFilePath"
-                }
-                else {
-                    # Only show the full path in verbose mode
-                    $this.UIManager.ShowVerbose("Using password file: $passwordFilePath")
-                    
-                    # In normal mode, just show a simple confirmation
-                    $fileName = Split-Path -Leaf $passwordFilePath
-                    $this.UIManager.ShowInfo("Using password file: $fileName")
-                }
-                
-                $passwordConfig = @{
-                    PasswordFilePath = $passwordFilePath
-                    RateLimitEnabled = $this.AppConfig.StealthMode -eq $true
-                    MinDelayMs       = if ($this.AppConfig.RateLimit) { $this.AppConfig.RateLimit } else { 1000 }
-                    MaxDelayMs       = if ($this.AppConfig.RateLimit) { $this.AppConfig.RateLimit * 2 } else { 2000 }
-                    AttackStrategy   = [AttackStrategy]::Dictionary
-                    StealthMode      = $this.AppConfig.StealthMode -eq $true
-                }
-                $this.PasswordManager = New-Object PasswordManager -ArgumentList $passwordConfig
-                $this.PasswordManager.Initialize($passwordConfig)
-                $this.UIManager.ShowSuccess("Password Manager initialized")
-            }
+            # Use lazy initialization methods
+            $this.EnsureNetworkManager()
+            $this.EnsurePasswordManager()
         }
         catch {
-            throw "Failed to initialize attack managers: $($_.Exception.Message)"
+            $this.UIManager.ShowError("Failed to initialize attack managers: $($_.Exception.Message)")
+            throw
         }
     }
     
