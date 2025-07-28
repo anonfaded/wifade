@@ -510,6 +510,19 @@ Write-Host "   • Unicode Support: Proper display of arrows (→) and special c
 Write-Host "   • Admin Elevation: Launcher handles administrator privileges" -ForegroundColor Green
 Write-Host "   • Portable: Both files work together as a complete package" -ForegroundColor Green
 Write-Host ""
+
+# Copy passwords directory to build directory so the executable can find password files
+Write-Host "Copying passwords directory to build folder..." -ForegroundColor Yellow
+$passwordsSource = Join-Path $scriptRoot "passwords"
+$passwordsDest = Join-Path $buildDir "passwords"
+if (Test-Path $passwordsSource) {
+    Copy-Item -Path $passwordsSource -Destination $passwordsDest -Recurse -Force
+    Write-Host "✅ Passwords directory copied successfully" -ForegroundColor Green
+} else {
+    Write-Warning "⚠️ Passwords directory not found in root. Password attack features may not work."
+}
+
+Write-Host ""
 Write-Host "⚠️  Important Notes:" -ForegroundColor Yellow
 Write-Host "   • Keep both wifade.exe and WifadeCore.exe in the same directory" -ForegroundColor White
 Write-Host "   • wifade.exe is the launcher that users should run" -ForegroundColor White

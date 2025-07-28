@@ -187,14 +187,55 @@ else {
 }
 
 
-# Establish a reliable application root path for both the script and the compiled EXE.
-# This variable is made global so all classes and functions can access it.
+
+
+# Establish a reliable application root path
+# This block was modified to robustly determine the application's root directory,
+# ensuring it works correctly whether run as a script or as a compiled executable.
+# It now includes guards against resolving to the PowerShell installation directory.
 try {
-    # This .NET method is the most reliable way for an EXE to find its own path.
-    $global:AppRoot = Split-Path -Parent ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)
+    $debugPaths = @{}
+    $debugPaths["PSScriptRoot"] = $PSScriptRoot
+    $debugPaths["MyInvocation.MyCommand.Path"] = $MyInvocation.MyCommand.Path
+    $debugPaths["Get-Location"] = (Get-Location).Path
+
+    # Always prefer $PSScriptRoot if available
+    if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+        $global:AppRoot = $PSScriptRoot
+    } elseif ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
+        $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    } else {
+        $global:AppRoot = (Get-Location).Path
+    }
+
+    # Extra guard: If AppRoot resolves to a known PowerShell install directory, forcibly override to script location
+    $pwshInstallDirs = @(
+        $PSHOME,
+        "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.5.2.0_x64__8wekyb3d8bbwe",
+        "C:\\Program Files\\PowerShell\\7"
+    )
+    foreach ($badDir in $pwshInstallDirs) {
+        if ($global:AppRoot -eq $badDir) {
+            Write-Verbose "[DEBUG] AppRoot matched PowerShell install dir, forcing to script location."
+            if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+                $global:AppRoot = $PSScriptRoot
+            } elseif ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
+                $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+            } else {
+                $global:AppRoot = (Get-Location).Path
+            }
+        }
+    }
+
+    Write-Verbose "[DEBUG] Path variables: $(($debugPaths | Out-String).Trim())"
+    Write-Verbose "[DEBUG] AppRoot resolved to: $global:AppRoot"
+    if (-not (Test-Path "$global:AppRoot\Classes")) {
+        Write-Host "[ERROR] Classes directory not found at: $global:AppRoot\Classes" -ForegroundColor Red
+        throw "Classes directory not found at: $global:AppRoot\Classes. AppRoot was resolved to: $global:AppRoot"
+    }
 } catch {
-    # This is the fallback for when running as a .ps1 script.
-    $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    Write-Host "[FATAL] Could not resolve AppRoot: $($_.Exception.Message)" -ForegroundColor Red
+    throw
 }
 
 # Import required classes and modules using the new global path
