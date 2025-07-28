@@ -201,17 +201,17 @@ $versionDefinition = @"
 
 "@
 
-# --- FINAL AND ROBUST LOGIC ---
+
 # This logic uses a specific regex to find and remove ONLY the class import block from Wifade.ps1.
 # This ensures that all other setup code and helper functions are correctly preserved.
 
 # Define a regex that specifically targets the start of the AppRoot definition
 # and ends after the last class has been imported.
-$importBlockRegex = '(?s)# Establish a reliable application root path.*?ApplicationController\.ps1"'
+$importBlockRegex = '(?s)# Establish application root path.*?ApplicationController\.ps1"'
 
 # Check if the import block was found
 if (-not ($footer -match $importBlockRegex)) {
-    throw "Build Error: The build script could not find the class import block in Wifade.ps1. This block should start with the comment '# Establish a reliable application root path'."
+    throw "Build Error: The build script could not find the class import block in Wifade.ps1. This block should start with the comment '# Establish application root path'."
 }
 
 # Remove ONLY the import block to get the clean main application logic

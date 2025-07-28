@@ -62,12 +62,12 @@ class PasswordManager : IManager {
             }
             
             # Validate required configuration
-            if (-not $config.ContainsKey('PasswordFilePath')) {
-                throw [ConfigurationException]::new("PasswordFilePath is required for PasswordManager initialization", "PasswordFilePath")
+            if (-not $config.ContainsKey('PasswordFile')) {
+                throw [ConfigurationException]::new("PasswordFile is required for PasswordManager initialization", "PasswordFile")
             }
             
             # Load passwords from file
-            $this.LoadPasswords($config['PasswordFilePath'])
+            $this.LoadPasswords($config['PasswordFile'])
             
             # Initialize attack statistics
             $this.AttackStatistics = [AttackStatistics]::new()
@@ -107,61 +107,67 @@ class PasswordManager : IManager {
         }
     }
     
-    # Load passwords from file
+    # Load passwords from a given file path
     [void] LoadPasswords([string]$filePath) {
         try {
-            Write-Verbose "Loading passwords from file: $filePath"
+            if ([string]::IsNullOrWhiteSpace($filePath)) {
+                throw "Password file path cannot be null or empty."
+            }
+            Write-Verbose "Attempting to load passwords from provided path: '$filePath'"
+
+            $resolvedPath = $null
             
-            if (-not (Test-Path $filePath)) {
-                throw [ConfigurationException]::new("Password file not found: $filePath", "PasswordFilePath", $filePath)
+            # Primary approach: Use hardcoded installation path since we enforce installation to C:\Program Files\Wifade
+            $hardcodedAppRoot = "C:\Program Files\Wifade"
+            $potentialHardcodedPath = Join-Path $hardcodedAppRoot $filePath
+            if (Test-Path $potentialHardcodedPath) {
+                $resolvedPath = $potentialHardcodedPath
+                Write-Verbose "Path resolved using hardcoded installation path: '$resolvedPath'"
             }
             
-            # Clear existing passwords
+            # Fallback 1: Check if the path is already absolute
+            if (-not $resolvedPath -and (Test-Path $filePath)) {
+                $resolvedPath = $filePath
+                Write-Verbose "Path appears to be absolute and valid: '$resolvedPath'"
+            }
+            
+            # Fallback 2: Development environment - try relative to current script location
+            if (-not $resolvedPath) {
+                # For development, try common development paths
+                $devPaths = @(
+                    (Get-Location).Path,
+                    (Split-Path $PSScriptRoot -Parent),
+                    $PSScriptRoot
+                )
+                
+                foreach ($devPath in $devPaths) {
+                    if ($devPath) {
+                        $potentialPath = Join-Path $devPath $filePath
+                        if (Test-Path $potentialPath) {
+                            $resolvedPath = $potentialPath
+                            Write-Verbose "Path resolved for development: '$resolvedPath'"
+                            break
+                        }
+                    }
+                }
+            }
+
+            if (-not $resolvedPath -or -not (Test-Path $resolvedPath)) {
+                throw "Could not find password file. Provided Path: '$filePath'. Hardcoded path tried: '$potentialHardcodedPath'. Current Location: '$(Get-Location)'."
+            }
+            
             $this.PasswordList.Clear()
-            $this.PasswordCache.Clear()
             
-            # Read file content
-            $fileContent = Get-Content -Path $filePath -ErrorAction Stop
-            
-            if (-not $fileContent -or $fileContent.Count -eq 0) {
-                throw [ConfigurationException]::new("Password file is empty or unreadable: $filePath", "PasswordFilePath", $filePath)
+            # Fix type conversion issue: explicitly cast to string array
+            $passwordContent = Get-Content -Path $resolvedPath | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Get-Unique
+            foreach ($password in $passwordContent) {
+                $this.PasswordList.Add([string]$password)
             }
             
-            # Process each line
-            $lineNumber = 0
-            foreach ($line in $fileContent) {
-                $lineNumber++
-                $password = $line.Trim()
-                
-                # Skip empty lines and comments
-                if ([string]::IsNullOrWhiteSpace($password) -or $password.StartsWith('#')) {
-                    continue
-                }
-                
-                # Validate password length (reasonable limits)
-                if ($password.Length -gt 63) {
-                    Write-Warning "Password on line $lineNumber is too long (>63 characters), skipping"
-                    continue
-                }
-                
-                # Add to password list if not already present
-                if (-not $this.PasswordCache.ContainsKey($password)) {
-                    $this.PasswordList.Add($password)
-                    $this.PasswordCache[$password] = $true
-                }
-            }
-            
-            # Reset current index
-            $this.CurrentIndex = 0
-            
-            Write-Verbose "Loaded $($this.PasswordList.Count) unique passwords from $filePath"
-            
-            if ($this.PasswordList.Count -eq 0) {
-                throw [ConfigurationException]::new("No valid passwords found in file: $filePath", "PasswordFilePath", $filePath)
-            }
+            Write-Verbose "Successfully loaded $($this.PasswordList.Count) unique passwords from '$resolvedPath'"
         }
         catch {
-            throw [ConfigurationException]::new("Failed to load passwords from $filePath : $($_.Exception.Message)", "PasswordFilePath", $filePath)
+            throw [ConfigurationException]::new("Failed to load passwords from file '$filePath': $($_.Exception.Message)", $_.Exception)
         }
     }
     

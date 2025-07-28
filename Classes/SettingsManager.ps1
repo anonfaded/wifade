@@ -23,14 +23,25 @@ class SettingsManager : IManager {
         $this.IsInitialized = $false
         $this.Configuration = @{}
         
-        # Set default config file path (cross-platform)
-        $homeDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
-        if (-not $homeDir) {
-            # Fallback to current directory if no home directory is found
-            $homeDir = $PWD.Path
+        # Set config file path to hardcoded installation directory for consistency
+        # Primary: Use hardcoded installation path (for installed/compiled version)
+        $hardcodedAppRoot = "C:\Program Files\Wifade"
+        $configDir = Join-Path $hardcodedAppRoot "config"
+        
+        # Fallback: Use project root for development/testing when running as script
+        if (-not (Test-Path $hardcodedAppRoot)) {
+            # For development, use the project root directory
+            $projectRoot = if ($PSScriptRoot) { 
+                Split-Path $PSScriptRoot -Parent  # Go up from Classes to project root
+            } else { 
+                $PWD.Path 
+            }
+            $configDir = Join-Path $projectRoot "config"
+            Write-Debug "Using development config directory: $configDir"
+        } else {
+            Write-Debug "Using hardcoded config directory: $configDir"
         }
         
-        $configDir = Join-Path $homeDir ".wifade"
         if (-not (Test-Path $configDir)) {
             New-Item -ItemType Directory -Path $configDir -Force | Out-Null
         }

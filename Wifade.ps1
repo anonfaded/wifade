@@ -189,53 +189,46 @@ else {
 
 
 
-# Establish a reliable application root path
-# This block was modified to robustly determine the application's root directory,
-# ensuring it works correctly whether run as a script or as a compiled executable.
-# It now includes guards against resolving to the PowerShell installation directory.
-try {
-    $debugPaths = @{}
-    $debugPaths["PSScriptRoot"] = $PSScriptRoot
-    $debugPaths["MyInvocation.MyCommand.Path"] = $MyInvocation.MyCommand.Path
-    $debugPaths["Get-Location"] = (Get-Location).Path
+# Establish application root path - HARDCODED for reliable operation
+# Since we enforce installation to C:\Program Files\Wifade, use that as primary path
+$global:AppRoot = "C:\Program Files\Wifade"
 
-    # Always prefer $PSScriptRoot if available
-    if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+# For development/testing, fall back to script location if hardcoded path doesn't exist
+if (-not (Test-Path "$global:AppRoot\Classes")) {
+    Write-Verbose "[DEBUG] Hardcoded path not found, trying script-based paths for development..."
+    
+    if ($PSScriptRoot -and (Test-Path "$PSScriptRoot\Classes")) {
         $global:AppRoot = $PSScriptRoot
-    } elseif ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
-        $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+        Write-Verbose "[DEBUG] Using PSScriptRoot: '$global:AppRoot'"
+    } elseif ($MyInvocation.MyCommand.Path) {
+        $tempPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+        if (Test-Path "$tempPath\Classes") {
+            $global:AppRoot = $tempPath
+            Write-Verbose "[DEBUG] Using MyInvocation path: '$global:AppRoot'"
+        }
     } else {
-        $global:AppRoot = (Get-Location).Path
-    }
-
-    # Extra guard: If AppRoot resolves to a known PowerShell install directory, forcibly override to script location
-    $pwshInstallDirs = @(
-        $PSHOME,
-        "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.5.2.0_x64__8wekyb3d8bbwe",
-        "C:\\Program Files\\PowerShell\\7"
-    )
-    foreach ($badDir in $pwshInstallDirs) {
-        if ($global:AppRoot -eq $badDir) {
-            Write-Verbose "[DEBUG] AppRoot matched PowerShell install dir, forcing to script location."
-            if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
-                $global:AppRoot = $PSScriptRoot
-            } elseif ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
-                $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-            } else {
-                $global:AppRoot = (Get-Location).Path
-            }
+        # Final fallback for development
+        $currentPath = (Get-Location).Path
+        if (Test-Path "$currentPath\Classes") {
+            $global:AppRoot = $currentPath
+            Write-Verbose "[DEBUG] Using current directory: '$global:AppRoot'"
         }
     }
+} else {
+    Write-Verbose "[DEBUG] Using hardcoded installation path: '$global:AppRoot'"
+}
 
-    Write-Verbose "[DEBUG] Path variables: $(($debugPaths | Out-String).Trim())"
-    Write-Verbose "[DEBUG] AppRoot resolved to: $global:AppRoot"
-    if (-not (Test-Path "$global:AppRoot\Classes")) {
-        Write-Host "[ERROR] Classes directory not found at: $global:AppRoot\Classes" -ForegroundColor Red
-        throw "Classes directory not found at: $global:AppRoot\Classes. AppRoot was resolved to: $global:AppRoot"
-    }
-} catch {
-    Write-Host "[FATAL] Could not resolve AppRoot: $($_.Exception.Message)" -ForegroundColor Red
-    throw
+# Clean up the path
+$global:AppRoot = $global:AppRoot.TrimEnd('\').TrimEnd('/')
+
+Write-Verbose "[DEBUG] Final AppRoot resolved to: '$global:AppRoot'"
+
+# Validate that we can find the Classes directory
+if (-not (Test-Path "$global:AppRoot\Classes")) {
+    Write-Host "[ERROR] Classes directory not found at '$global:AppRoot\Classes'" -ForegroundColor Red
+    Write-Host "[DEBUG] Expected installation path: C:\Program Files\Wifade" -ForegroundColor Yellow
+    Write-Host "[DEBUG] Please ensure Wifade is properly installed or run from source directory" -ForegroundColor Yellow
+    throw "Classes directory not found. AppRoot was resolved to: '$global:AppRoot'"
 }
 
 # Import required classes and modules using the new global path

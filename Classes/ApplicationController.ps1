@@ -15,13 +15,9 @@ class ApplicationController {
     [hashtable]$AppConfig
 
     # Constructor
-    ApplicationController() {
-        $this.InitializeProperties()
-    }
-    
-    # Constructor with configuration
     ApplicationController([hashtable]$config) {
         $this.InitializeProperties()
+        $this.AppConfig = $config
         $this.ApplyConfiguration($config)
     }
     
@@ -94,6 +90,34 @@ class ApplicationController {
                 Write-Verbose "Full error: $($_.Exception)"
                 Write-Warning "Could not initialize UIManager: $($_.Exception.Message)"
             }
+            
+            # Initialize Network Manager
+            $this.UIManager.ShowInfo("Initializing Network Manager...")
+            $networkConfig = @{
+                AdapterScanInterval = 30
+                MonitoringEnabled   = $false
+            }
+            try {
+                $this.NetworkManager = New-Object NetworkManager -ArgumentList $networkConfig
+                $this.NetworkManager.Initialize($networkConfig)
+                $this.UIManager.ShowSuccess("Network Manager initialized")
+            }
+            catch {
+                $this.UIManager.ShowError("Failed to initialize Network Manager: $($_.Exception.Message)")
+                $this.UIManager.WaitForKeyPress("Press any key to continue...")
+                return
+            }
+            
+            # Initialize Password Manager
+            $this.UIManager.ShowInfo("Initializing Password Manager...")
+            $passwordManagerConfig = @{
+                PasswordFile = $this.AppConfig.PasswordFile
+            }
+            $this.PasswordManager = New-Object PasswordManager
+            $this.PasswordManager.Initialize($passwordManagerConfig)
+            $this.UIManager.ShowSuccess("Password Manager initialized")
+
+            $this.UIManager.ShowSuccess("All managers initialized successfully")
             
             $this.IsInitialized = $true
             Write-Verbose "ApplicationController initialization completed successfully"
@@ -1615,7 +1639,7 @@ class ApplicationController {
             # Display ASCII art and animation
             Write-Host @"
                         ⠀⠀⠀⠀⣀⣤⣤⣶⣾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  ⠀ ⣷⣶⣦⣤⣀⠀⠀⠀⠀⠀
-                        ⢀⣴⣶⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⣧⣼⠀⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣿⣷⣦⣄⡀
+                        ⢀⣴⣶⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⣧⣼⠀⠀⠀⠀⣀⣴⣿⣿⣿⣿⣿⣷⣦⣄⡀
                         ⠀⠀⠀⠈⠉⠛⣿⣿⣿⣿⣿⣷⣦⣀⢸⣿⣿⡇⣀⣤⣿⣿⣿⣿⣿⣿⠟⠋⠉⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠸⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠋⠀⠀⠀⠀⠀⠀⠀
                         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠉⠻⣿⣿⣿⣿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
