@@ -97,46 +97,23 @@ class NetworkManager : IManager {
         }
     }
     
-    # Enhanced Windows environment detection that handles WSL properly
+    # Simplified and robust Windows vs. non-Windows detection.
     [bool] IsWindowsEnvironment() {
         try {
-            # Check if we're in WSL (Windows Subsystem for Linux)
-            if (Test-Path "/proc/version") {
-                $procVersion = Get-Content "/proc/version" -ErrorAction SilentlyContinue
-                if ($procVersion -and $procVersion -match "(Microsoft|WSL)") {
-                    Write-Verbose "Detected WSL environment - using Linux networking approach"
-                    return $false  # Treat WSL as Linux for networking purposes
-                }
+            # This is the single most reliable check. If the .NET platform ID says
+            # it's Win32NT, it's a Windows environment. Anything else is not.
+            if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
+                Write-Verbose "Detected Windows environment."
+                return $true
+            } else {
+                Write-Verbose "Detected non-Windows (Linux/macOS) environment."
+                return $false
             }
-            
-            # Check for WSL environment variables
-            if ($env:WSL_DISTRO_NAME -or $env:WSLENV) {
-                Write-Verbose "Detected WSL via environment variables - using Linux networking approach"
-                return $false  # Treat WSL as Linux for networking purposes
-            }
-            
-            # Standard Windows detection
-            $isWindowsOS = [System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT
-            
-            # Additional check: if we're on "Windows" but netsh doesn't exist, we're probably in WSL
-            if ($isWindowsOS) {
-                try {
-                    $null = Get-Command "netsh" -ErrorAction Stop
-                    Write-Verbose "Detected native Windows environment with netsh available"
-                    return $true
-                }
-                catch {
-                    Write-Verbose "Windows platform detected but netsh unavailable - likely WSL environment"
-                    return $false  # Treat as Linux if netsh is not available
-                }
-            }
-            
-            Write-Verbose "Detected non-Windows environment"
-            return $false
         }
         catch {
-            Write-Verbose "Error in OS detection, defaulting to Linux approach: $($_.Exception.Message)"
-            return $false  # Default to Linux approach if detection fails
+            Write-Warning "Critical error during OS detection. Defaulting to Windows mode."
+            # Default to true, as this is primarily a Windows tool.
+            return $true
         }
     }
     

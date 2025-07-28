@@ -186,17 +186,27 @@ else {
     Write-Verbose "Non-Windows platform detected. Windows Forms functionality will not be available."
 }
 
-# Import required classes and modules
-$ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-. "$ScriptRoot\Classes\BaseClasses.ps1"
-. "$ScriptRoot\Classes\DataModels.ps1"
-. "$ScriptRoot\Classes\ConfigurationManager.ps1"
-. "$ScriptRoot\Classes\NetworkManager.ps1"
-. "$ScriptRoot\Classes\PasswordManager.ps1"
-. "$ScriptRoot\Classes\SettingsManager.ps1"
-. "$ScriptRoot\Classes\UIManager.ps1"
-. "$ScriptRoot\Classes\VersionChecker.ps1"
-. "$ScriptRoot\Classes\ApplicationController.ps1"
+
+# Establish a reliable application root path for both the script and the compiled EXE.
+# This variable is made global so all classes and functions can access it.
+try {
+    # This .NET method is the most reliable way for an EXE to find its own path.
+    $global:AppRoot = Split-Path -Parent ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)
+} catch {
+    # This is the fallback for when running as a .ps1 script.
+    $global:AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+
+# Import required classes and modules using the new global path
+. "$global:AppRoot\Classes\BaseClasses.ps1"
+. "$global:AppRoot\Classes\DataModels.ps1"
+. "$global:AppRoot\Classes\ConfigurationManager.ps1"
+. "$global:AppRoot\Classes\NetworkManager.ps1"
+. "$global:AppRoot\Classes\PasswordManager.ps1"
+. "$global:AppRoot\Classes\SettingsManager.ps1"
+. "$global:AppRoot\Classes\UIManager.ps1"
+. "$global:AppRoot\Classes\VersionChecker.ps1"
+. "$global:AppRoot\Classes\ApplicationController.ps1"
 
 # Application constants
 $Script:APP_NAME = "wifade"

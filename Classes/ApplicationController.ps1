@@ -1547,11 +1547,8 @@ class ApplicationController {
             # Initialize PasswordManager if not already done
             if ($null -eq $this.PasswordManager) {
                 $this.UIManager.ShowInfo("Initializing Password Manager...")
-                # Get the script root directory (Classes)
-                $scriptRoot = $PSScriptRoot
-                
-                # Get the project root directory (parent of Classes)
-                $projectRoot = Split-Path -Parent $scriptRoot
+                # Use the globally defined, reliable application root directory
+                $projectRoot = $global:AppRoot
                 
                 # Default password file path
                 $defaultPasswordFile = "passwords\probable-v2-wpa-top4800.txt"

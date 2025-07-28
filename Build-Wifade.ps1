@@ -201,22 +201,27 @@ $versionDefinition = @"
 
 "@
 
-# Remove dot-sourcing lines and fix ScriptRoot for compiled executable
-$footerFixed = $footer -replace '# Import required classes and modules\s*\r?\n\$ScriptRoot = Split-Path -Parent \$MyInvocation\.MyCommand\.Path\s*\r?\n(\. "\$ScriptRoot\\Classes\\[^"]+\.ps1"\s*\r?\n)*', @"
-# Classes are embedded in this compiled script - no external imports needed
-# Set ScriptRoot for compiled executable compatibility
-`$ScriptRoot = if (`$MyInvocation.MyCommand.Path) { 
-    Split-Path -Parent `$MyInvocation.MyCommand.Path 
-} else { 
-    # For compiled executable, use current directory
-    `$PWD.Path 
+# --- FINAL AND ROBUST LOGIC ---
+# This logic uses a specific regex to find and remove ONLY the class import block from Wifade.ps1.
+# This ensures that all other setup code and helper functions are correctly preserved.
+
+# Define a regex that specifically targets the start of the AppRoot definition
+# and ends after the last class has been imported.
+$importBlockRegex = '(?s)# Establish a reliable application root path.*?ApplicationController\.ps1"'
+
+# Check if the import block was found
+if (-not ($footer -match $importBlockRegex)) {
+    throw "Build Error: The build script could not find the class import block in Wifade.ps1. This block should start with the comment '# Establish a reliable application root path'."
 }
 
-"@
+# Remove ONLY the import block to get the clean main application logic
+$mainLogic = $footer -replace $importBlockRegex, ''
 
-$combinedScript = $header + "`n" + $versionDefinition + $combinedClasses + "`n" + $footerFixed
+# Assemble the final, clean, flattened script.
+# It now correctly contains: Header -> Version Info -> All Classes -> Main Program Logic
+$combinedScript = $header + "`n" + $versionDefinition + $combinedClasses + "`n" + $mainLogic
 
-# Write the combined script
+# Write the combined script to the flat file
 Set-Content -Path $outputScript -Value $combinedScript -Encoding UTF8
 
 # Process icon to create proper multi-resolution ICO file
@@ -513,11 +518,11 @@ Write-Host "   • Administrator privileges are required for full functionality"
 Write-Host ""
 Write-Host "Build completed successfully! 🎉" -ForegroundColor Green
 
-# Copy wifade.cmd from root to build directory
-$cmdSource = Join-Path $scriptRoot "wifade.cmd"
-if (Test-Path $cmdSource) {
-    Copy-Item -Path $cmdSource -Destination $buildDir -Force
-    Write-Host "Copied wifade.cmd to build directory." -ForegroundColor Green
-} else {
-    Write-Warning "wifade.cmd not found in root directory. Please add it manually."
-}
+# # Copy wifade.cmd from root to build directory
+# $cmdSource = Join-Path $scriptRoot "wifade.cmd"
+# if (Test-Path $cmdSource) {
+#     Copy-Item -Path $cmdSource -Destination $buildDir -Force
+#     Write-Host "Copied wifade.cmd to build directory." -ForegroundColor Green
+# } else {
+#     Write-Warning "wifade.cmd not found in root directory. Please add it manually."
+# }
