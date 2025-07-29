@@ -143,7 +143,6 @@ wifade -help
 │    -List                       List all available command-line parameters
 ```
 
-_Linux and macOS usage instructions coming soon._
 
 ## `>_` 💀 Attack Mode
 
@@ -208,7 +207,6 @@ If you want to build the project yourself, follow these steps:
 </details>
 <!-- markdownlint-enable MD033 -->
 
-_Linux/macOS build instructions will be added when those versions are released._
 
 ## `>_` ⚖️ Disclaimer
 
