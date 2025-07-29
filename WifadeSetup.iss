@@ -14,7 +14,7 @@
 #define MyAppURL "https://github.com/anonfaded/wifade"
 #define MyAppExeName "wifade.exe"
 #define MyAppCoreExeName "WifadeCore.exe"
-#define MyAppDescription "WiFi Security Testing Tool with Built-in Bruteforcer"
+#define MyAppDescription "Command-Line WiFi Manager with Integrated Brute-Forcer"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -146,7 +146,7 @@ begin
 end;
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nWifade is a powerful WiFi security testing tool with built-in bruteforcer capabilities. It provides both interactive and command-line interfaces for network analysis and security testing.%n%nIt is recommended that you close all other applications before continuing.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nWifade is a command-line WiFi manager with an integrated brute-forcer. It provides both interactive and CLI interfaces for advanced WiFi management and password testing.%n%nIt is recommended that you close all other applications before continuing.
 FinishedLabelNoIcons=Setup has finished installing [name] on your computer.%n%nYou can now use 'wifade' command in any terminal or command prompt to access the tool.
 FinishedLabel=Setup has finished installing [name] on your computer.%n%nYou can now use 'wifade' command in any terminal or command prompt to access the tool.
 

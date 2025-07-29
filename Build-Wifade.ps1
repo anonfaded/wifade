@@ -380,8 +380,8 @@ try {
         LongPaths = $true
         UNICODEEncoding = $true
         RequireAdmin = $false  # Launcher will handle admin requirements
-        Title = "WifadeCore - WiFi Security Testing Tool Core"
-        Description = "Wifi Manager with in-built Bruteforcer - Core Application"
+        Title = "WifadeCore - Command-Line WiFi Manager with Integrated Brute-Forcer"
+        Description = "Command-Line WiFi Manager with Integrated Brute-Forcer"
         Company = "FadSec Lab"
         Version = "2.0"
         Copyright = "© 2024-2025 faded.dev"
@@ -416,8 +416,8 @@ try {
          LongPaths = $true
          UNICODEEncoding = $true
          RequireAdmin = $false  # Launcher handles admin check gracefully
-         Title = "Wifade - WiFi Security Testing Tool"
-         Description = "Wifi Manager with in-built Bruteforcer"
+         Title = "Wifade - Command-Line WiFi Manager with Integrated Brute-Forcer"
+         Description = "Command-Line WiFi Manager with Integrated Brute-Forcer"
          Company = "FadSec Lab"
          Version = "2.0"
          Copyright = "© 2024-2025 faded.dev"
