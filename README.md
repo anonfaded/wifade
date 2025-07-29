@@ -80,36 +80,37 @@ Use flags to perform actions instantly without entering the interactive menu. Th
 
 ```powershell
 # Display comprehensive Wi-Fi status
-wifade -Status
+wifade -status
 # Sample output:
 Wi-Fi Connection Status
-SSID       : MyNetwork
-Signal     : ████ 85%
-Private IP : 192.168.1.42
-Gateway    : 192.168.1.1
-DNS        : 8.8.8.8, 1.1.1.1
-MAC Address: 00:1A:2B:3C:4D:5E
-Link Speed : 300 Mbps
+SSID        : MyNetwork
+Signal      : ████ 85%
+Private IP  : 192.168.1.42
+Gateway     : 192.168.1.1
+DNS         : 8.8.8.8, 1.1.1.1
+MAC Address : 00:1A:2B:3C:4D:5E
+Link Speed  : 300 Mbps
 
 # Scan for and list available networks
-wifade -Scan
+wifade -scan
 # Sample output:
-Available Wi-Fi Networks
-SSID               Signal Encryption
---------------------------------------
-MyNetwork          85%    WPA2
-GuestWiFi          60%    Open
-WorkNet            75%    WPA3
+╭─ 📶 Available Networks
+│
+│ #  SSID                     Signal     Encryption      Status
+│ ──────────────────────────────────────────────────────────────────
+│ 1  Home                      ████ 98%  WPA2           Available
+│ 2  Wifi_asdwead              ████ 100% Open           Available
+│ 3  HomeFloor2                ████ 90%  WPA2           Available
 
 # Get your private IP address
-wifade -IP
+wifade -ip
 # Sample output:
-Private IP: 192.168.1.42
+192.168.1.42
 
 # Get your public IP address
-wifade -PublicIP
+wifade -publicip
 # Sample output:
-Public IP : 203.0.113.7
+2xx.0.113.7
 
 # Connect to a network directly
 wifade "MyNetwork" mypassword123
@@ -118,30 +119,28 @@ Connecting to 'MyNetwork'...
 Connection successful!
 
 # See a quick reference of all commands
-wifade -List
+wifade -list
 # Sample output:
-Available Commands:
--Status       Show Wi-Fi status
--Scan         Scan for networks
--IP           Show private IP address
--PublicIP     Show public IP address
--Connect      Connect to a network
--List         List all commands
--Help         Show help information
+╭─ 📋 Wifade - Quick Parameter Reference
+│
+│ ⚡ QUICK ACTIONS:
+│   -IP                         Show current private IP address
+│   -Status                     Show Wi-Fi connection status
+│   -Scan                       List available Wi-Fi networks
+│   -PublicIP                   Show current public IP address
 
 # Show detailed help documentation
-wifade -Help
+wifade -help
 # Sample output:
-Usage: wifade [options] [SSID password]
-
-Options:
-  -Status       Show Wi-Fi status
-  -Scan         Scan for available networks
-  -IP           Display private IP address
-  -PublicIP     Display public IP address
-  -Connect      Connect to a network by SSID and password
-  -List         List all available commands
-  -Help         Show detailed help documentation
+╭─ 📖 Wifade Help Documentation
+│
+│ 🚀 USAGE:
+│    wifade [OPTIONS]
+│
+│ ⚙️ OPTIONS:
+│    -Help, -h                   Display this help information
+│    -Version                    Display application version and exit
+│    -List                       List all available command-line parameters
 ```
 
 _Linux and macOS usage instructions coming soon._
