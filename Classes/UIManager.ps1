@@ -291,6 +291,9 @@ class UIManager : IManager {
         Write-Host "💬 Discord: " -ForegroundColor $this.ColorScheme.Info -NoNewline
         Write-Host "https://discord.gg/kvAZvdkuuN" -ForegroundColor $this.ColorScheme.Success
         Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+        Write-Host "🕸️ Website: " -ForegroundColor $this.ColorScheme.Info -NoNewline
+        Write-Host "https://wifade.faded.dev" -ForegroundColor $this.ColorScheme.Success
+        Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
         Write-Host "📂 GitHub: " -ForegroundColor $this.ColorScheme.Info -NoNewline
         Write-Host "https://github.com/anonfaded/wifade" -ForegroundColor $this.ColorScheme.Success
         Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
