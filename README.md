@@ -230,7 +230,7 @@ This tool is intended for **educational purposes and ethical security testing on
 * The developer of Wifade is not responsible for any misuse of this tool.
 
 
-## `>_` 🙏 Credits
+## `>_` 📜 Credits
 
 - The password list `probable-v2-wpa-top4800.txt` is taken from: [danielmiessler/SecLists](https://github.com/danielmiessler/SecLists)
 - Public IP address detection uses the free service: [api.ipify.org](https://api.ipify.org)
