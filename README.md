@@ -53,6 +53,41 @@ Wifade is a modern, terminal-based WiFi manager with an integrated brute-forcer 
 
 *Linux and macOS support is planned and in development. Stay tuned for cross-platform releases!*
 
+## `>_` 📸 Screenshots
+
+
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/1.png" alt="Interactive menu" width="400" /><br/>
+      <sub>Interactive menu-driven interface showing available options</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="img/screenshots/2.png" alt="Help Page" width="400" /><br/>
+      <sub>Help page</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/3.png" alt="Network scanning mode" width="400" /><br/>
+      <sub>Network scanning mode</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="img/screenshots/4.png" alt="Status Checking page" width="400" /><br/>
+      <sub>Status output displaying connection details and IP information</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/5.png" alt="Attack Mode" width="400" /><br/>
+      <sub>Attack Mode displaying password cracking attempts and progress status</sub>
+    </td>
+    <td></td>
+  </tr>
+</table>
+
+
 ## `>_` 📦 Installation (Windows)
 
 1. Go to the [**GitHub Releases**](https://github.com/anonfaded/wifade/releases) page.
@@ -156,39 +191,7 @@ Upon entering Attack Mode for the first time, you will be required to accept an 
 
 
 
-## `>_` 📸 Screenshots
 
-
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="img/screenshots/1.png" alt="Interactive menu" width="400" /><br/>
-      <sub>_Interactive menu-driven interface showing available options._</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="img/screenshots/2.png" alt="Help Page" width="400" /><br/>
-      <sub>_Help page_</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="img/screenshots/3.png" alt="Network scanning mode" width="400" /><br/>
-      <sub>_Network scanning mode_</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="img/screenshots/4.png" alt="Status Checking page" width="400" /><br/>
-      <sub>_Status output displaying connection details and IP information._</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="img/screenshots/5.png" alt="Attack Mode" width="400" /><br/>
-      <sub>_Attack Mode displaying password cracking attempts and progress status._</sub>
-    </td>
-    <td></td>
-  </tr>
-</table>
 
 <details>
     <summary>🛠️ Building from Source (Windows)</summary>
