@@ -158,30 +158,14 @@ Upon entering Attack Mode for the first time, you will be required to accept an 
 
 ## `>_` 📸 Screenshots
 
-<p align="center">
-  <img src="img/screenshots/1.png" alt="Interactive menu" width="600" />
-</p>
-*Interactive menu-driven interface showing available options.*
 
-<p align="center">
-  <img src="img/screenshots/2.png" alt="Help Page" width="600" />
-</p>
-*Help page*
-
-<p align="center">
-  <img src="img/screenshots/3.png" alt="Network scanning mode" width="600" />
-</p>
-*Network Scanning mode*
-
-<p align="center">
-  <img src="img/screenshots/4.png" alt="Status Checking page" width="600" />
-</p>
-*Status output displaying connection details and IP information.**
-
-<p align="center">
-  <img src="img/screenshots/5.png" alt="Attack Mode" width="600" />
-</p>
-*Attack Mode displaying password cracking attempts and progress status.*
+| Screenshot | Description |
+|---|---|
+| <img src="img/screenshots/1.png" alt="Interactive menu" width="600" /> | _Interactive menu-driven interface showing available options._ |
+| <img src="img/screenshots/2.png" alt="Help Page" width="600" /> | _Help page_ |
+| <img src="img/screenshots/3.png" alt="Network scanning mode" width="600" /> | _Network scanning mode_ |
+| <img src="img/screenshots/4.png" alt="Status Checking page" width="600" /> | _Status output displaying connection details and IP information._ |
+| <img src="img/screenshots/5.png" alt="Attack Mode" width="600" /> | _Attack Mode displaying password cracking attempts and progress status._ |
 
 <details>
     <summary>🛠️ Building from Source (Windows)</summary>
@@ -215,6 +199,12 @@ This tool is intended for **educational purposes and ethical security testing on
 * Do not test networks you do not own or have explicit, written permission to test.
 * Unauthorized access to computer networks is illegal. You are solely responsible for your actions.
 * The developer of Wifade is not responsible for any misuse of this tool.
+
+
+## `>_` 🙏 Credits
+
+- The password list `probable-v2-wpa-top4800.txt` is taken from: [danielmiessler/SecLists](https://github.com/danielmiessler/SecLists)
+- Public IP address detection uses the free service: [api.ipify.org](https://api.ipify.org)
 
 ## `>_` 🤝 Contributing
 
