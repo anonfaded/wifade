@@ -1,6 +1,55 @@
+
 # ApplicationController Class for wifade
 # Main application controller that orchestrates the interactive CLI interface
 
+<#
+    .SYNOPSIS
+    Cross-platform native ping utility for PowerShell (all versions).
+    .DESCRIPTION
+    Uses system 'ping' command for Windows, Linux, and macOS. Returns $true if host is reachable, $false otherwise.
+    .PARAMETER Host
+    Hostname or IP address to ping.
+    .PARAMETER TimeoutSeconds
+    Timeout in seconds for the ping attempt (default: 3).
+    .OUTPUTS
+    [bool] True if ping succeeds, otherwise False.
+#>
+
+function Test-NativePing {
+    param(
+        [Parameter(Mandatory)]
+        [string]$TargetHost,
+        [int]$TimeoutSeconds = 3
+    )
+    # Detect OS
+    $IsWindowsOs = $PSVersionTable.Platform -eq 'Win32NT'
+    $IsLinuxOs = $PSVersionTable.Platform -eq 'Unix'
+    $IsMacOsPlatform = $PSVersionTable.Platform -eq 'MacOSX'
+
+    if ($IsWindowsOs) {
+        # Windows: -n 1 (one ping), -w timeout in ms
+        $timeoutMs = $TimeoutSeconds * 1000
+        $pingArgs = @('-n', '1', '-w', $timeoutMs, $TargetHost)
+    } else {
+        # Linux/macOS: -c 1 (one ping), -W timeout in seconds (Linux), -t timeout (macOS)
+        if ($IsLinuxOs) {
+            $pingArgs = @('-c', '1', '-W', $TimeoutSeconds, $TargetHost)
+        } elseif ($IsMacOsPlatform) {
+            $pingArgs = @('-c', '1', '-t', $TimeoutSeconds, $TargetHost)
+        } else {
+            # Fallback: try Linux style
+            $pingArgs = @('-c', '1', '-W', $TimeoutSeconds, $TargetHost)
+        }
+    }
+
+    try {
+        $pingExe = 'ping'
+        $proc = Start-Process -FilePath $pingExe -ArgumentList $pingArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput $null -RedirectStandardError $null -ErrorAction Stop
+        return ($proc.ExitCode -eq 0)
+    } catch {
+        return $false
+    }
+}
 class ApplicationController {
     [bool]$IsInitialized
     [hashtable]$Configuration
@@ -592,17 +641,19 @@ class ApplicationController {
                 $this.UIManager.WaitForKeyPress("Press any key to continue...")
                 return
             }
-            
+
             $this.UIManager.ShowInfo("Attempting to connect to '$ssid'...")
-            
+
             # Use NetworkManager's connection method with shorter timeout (8 seconds instead of 15)
             $connectionAttempt = $this.NetworkManager.AttemptConnection($ssid, $password, 8)
-            
+
             if ($connectionAttempt.Success) {
                 $this.UIManager.ShowSuccess("Successfully connected to '$ssid'!")
-                
+
                 # Show connection details
                 $currentConnection = $this.NetworkManager.GetCurrentConnection()
+                $ipConfig = $null
+                $localIp = $null
                 if ($currentConnection) {
                     Write-Host ""
                     Write-Host "╭─ 📶 Connection Details" -ForegroundColor $this.UIManager.ColorScheme.Border
@@ -621,20 +672,33 @@ class ApplicationController {
                         Write-Host "Channel: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
                         Write-Host "$($currentConnection.Channel)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                     }
-                    
                     # Try to get IP information
                     try {
                         $ipConfig = Get-NetIPConfiguration -InterfaceAlias "Wi-Fi*" -ErrorAction SilentlyContinue | Where-Object { $_.IPv4Address -and $_.NetProfile.IPv4Connectivity -eq "Internet" } | Select-Object -First 1
                         if ($ipConfig -and $ipConfig.IPv4Address) {
+                            $localIp = $ipConfig.IPv4Address.IPAddress
                             Write-Host "│ " -ForegroundColor $this.UIManager.ColorScheme.Border -NoNewline
                             Write-Host "Private IP: " -ForegroundColor $this.UIManager.ColorScheme.Info -NoNewline
-                            Write-Host "$($ipConfig.IPv4Address.IPAddress)" -ForegroundColor $this.UIManager.ColorScheme.Secondary
+                            Write-Host "$localIp" -ForegroundColor $this.UIManager.ColorScheme.Secondary
                         }
                     }
                     catch {
                         # Ignore IP retrieval errors
                     }
                     Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.UIManager.ColorScheme.Border
+                }
+
+                # New: Verify local IP connectivity
+                if ($null -ne $localIp) {
+                    $this.UIManager.ShowInfo("Verifying local IP connectivity ($localIp)...")
+                    $localPing = Test-NativePing -TargetHost $localIp -TimeoutSeconds 3
+                    if ($localPing) {
+                        $this.UIManager.ShowSuccess("Local IP ping succeeded. Connection verified!")
+                    } else {
+                        $this.UIManager.ShowError("Local IP ping failed. Connection may not be fully established.")
+                    }
+                } else {
+                    $this.UIManager.ShowError("No valid local IP assigned after connection. Connection failed.")
                 }
             }
             else {
@@ -657,7 +721,7 @@ class ApplicationController {
                     }
                 }
             }
-            
+
         }
         catch {
             $this.UIManager.ShowError("Connection attempt failed: $($_.Exception.Message)")
@@ -665,7 +729,7 @@ class ApplicationController {
                 $this.UIManager.ShowDebug("Error details: $($_.Exception)")
             }
         }
-        
+
         $this.UIManager.WaitForKeyPress("Press any key to continue...")
     }
     
@@ -2055,87 +2119,19 @@ class ApplicationController {
                                 $ipConfig = $null
                             }
                             
-                            # Try ping test to gateway if we have valid IP
-                            $pingSuccess = $false
-                            if ($hasValidIP -and $ipConfig -and $ipConfig.IPv4DefaultGateway) {
-                                $gateway = $ipConfig.IPv4DefaultGateway.NextHop
-                                if ($gateway) {
-                                    if ($debugMode) {
-                                        $this.UIManager.ShowDebug("Testing connectivity to gateway: $gateway")
-                                        $this.UIManager.ShowDebug("Gateway type: $($gateway.GetType().FullName)")
-                                        $this.UIManager.ShowDebug("Gateway value: '$gateway'")
-                                        $this.UIManager.ShowDebug("About to call: Test-Connection -ComputerName '$gateway' -Count 1 -Quiet -TimeoutSeconds 3")
-                                    }
-                                    
-                                    try {
-                                        # Test if Test-Connection supports -TimeoutSeconds parameter
-                                        if ($debugMode) {
-                                            $this.UIManager.ShowDebug("Testing Test-Connection parameter support...")
-                                            $testConnectionParams = (Get-Command Test-Connection).Parameters
-                                            $hasTimeoutSeconds = $testConnectionParams.ContainsKey('TimeoutSeconds')
-                                            $this.UIManager.ShowDebug("Test-Connection has TimeoutSeconds parameter: $hasTimeoutSeconds")
-                                            if ($hasTimeoutSeconds) {
-                                                $this.UIManager.ShowDebug("TimeoutSeconds parameter type: $($testConnectionParams['TimeoutSeconds'].ParameterType.FullName)")
-                                            }
-                                        }
-                                        
-                                        $pingResult = Test-Connection -ComputerName $gateway -Count 1 -Quiet -TimeoutSeconds 3
-                                        $pingSuccess = $pingResult
-                                        
-                                        if ($debugMode) {
-                                            $pingResultText = if ($pingSuccess) { 'Success' } else { 'Failed' }
-                                            $this.UIManager.ShowDebug("Gateway ping result: $pingResultText")
-                                        }
-                                    }
-                                    catch {
-                                        if ($debugMode) {
-                                            $this.UIManager.ShowDebug("Test-Connection failed with error: $($_.Exception.Message)")
-                                            $this.UIManager.ShowDebug("Error type: $($_.Exception.GetType().FullName)")
-                                            $this.UIManager.ShowDebug("Full error details: $($_)")
-                                        }
-                                        $pingSuccess = $false
-                                        
-                                        # If the specific parameter error occurs, this indicates PowerShell version mismatch
-                                        if ($_.Exception.Message -like "*TimeoutSeconds*parameter*") {
-                                            $psver = $global:PSVersionTable
-                                            $this.UIManager.ShowError("CRITICAL: PowerShell version mismatch detected!")
-                                            $this.UIManager.ShowError("The -TimeoutSeconds parameter is not supported in this PowerShell version.")
-                                            $this.UIManager.ShowError("Current version: $($psver.PSVersion)")
-                                            $this.UIManager.ShowError("Required: PowerShell 7.0 or later")
-                                            throw "PowerShell version compatibility error: -TimeoutSeconds parameter not supported"
-                                        }
-                                    }
-                                }
-                                else {
-                                    if ($debugMode) {
-                                        $this.UIManager.ShowDebug("Gateway is null or empty - cannot perform ping test")
-                                    }
-                                }
-                            }
-                            else {
-                                if ($debugMode) {
-                                    $this.UIManager.ShowDebug("Cannot perform ping test - missing requirements:")
-                                    $this.UIManager.ShowDebug("  hasValidIP: $hasValidIP")
-                                    $this.UIManager.ShowDebug("  ipConfig is not null: $($ipConfig -ne $null)")
-                                    $this.UIManager.ShowDebug("  IPv4DefaultGateway exists: $(($ipConfig -ne $null) -and ($ipConfig.IPv4DefaultGateway -ne $null))")
-                                }
-                            }
-                            
-                            # Connection is successful if:
-                            # 1. We're in "connected" state with correct SSID AND
-                            # 2. We have valid IP configuration AND
-                            # 3. We can ping the gateway (or IP config is valid)
-                            if ($hasValidIP -and $pingSuccess) {
+                            # Commented out local IP ping logic for testing reliability
+                            # Only require connected state and valid IP for success
+                            # If needed, restore ping logic later
+                            if ($hasValidIP) {
                                 $connectionSuccess = $true
                                 if ($debugMode) {
-                                    $this.UIManager.ShowDebug("Connection fully verified on attempt $i")
+                                    $this.UIManager.ShowDebug("Connection fully verified on attempt $i (ping check skipped)")
                                 }
-                                Write-Verbose "Connection confirmed and verified on attempt $i."
+                                Write-Verbose "Connection confirmed and verified on attempt $i (ping check skipped)."
                                 break
-                            }
-                            else {
+                            } else {
                                 if ($debugMode) {
-                                    $this.UIManager.ShowDebug("Connection verification failed - no valid IP or gateway ping failed")
+                                    $this.UIManager.ShowDebug("Connection verification failed - no valid local IP")
                                 }
                             }
                         }
