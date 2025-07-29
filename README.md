@@ -32,7 +32,14 @@ _Linux and macOS support coming soon!_
 
 [![GitHub all releases](https://img.shields.io/github/downloads/anonfaded/wifade/total?label=Downloads&logo=github)](https://github.com/anonfaded/wifade/releases/)
 
+[![ko-fi badge](https://img.shields.io/badge/buy_me_a-coffee-red)](https://ko-fi.com/D1D510FNSV)
+[![Discord](https://img.shields.io/discord/1263384048194027520?label=Join%20Us%20on%20Discord&logo=discord)](https://discord.gg/kvAZvdkuuN )
+
 </div>
+
+<p align="center">
+        <img src="https://raw.githubusercontent.com/bornmay/bornmay/Update/svg/Bottom.svg" alt="Github Stats" />
+</p>
 
 ---
 
