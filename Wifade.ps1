@@ -872,13 +872,13 @@ function Show-Help {
     
     Write-Host ""
     Write-Host "╭─ " -ForegroundColor Red -NoNewline
-    Write-Host "📖 Wifade Help Documentation" -ForegroundColor Blue -NoNewline
+    Write-Host "📖 Wifade Help Documentation" -ForegroundColor Blue
 
 
-    
+    Write-Host "│" -ForegroundColor Red
+
     # USAGE Section
-    Write-Host ""
-    Write-Host ""
+
     Write-Host "│ " -ForegroundColor Red -NoNewline
     Write-Host "🚀 USAGE:" -ForegroundColor Blue
     Write-Host "│    " -ForegroundColor Red -NoNewline
@@ -893,7 +893,7 @@ function Show-Help {
     Write-Host "                   Display this help information" -ForegroundColor White
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "-Version" -ForegroundColor Red -NoNewline
-    Write-Host "                     Display application version and exit" -ForegroundColor White
+    Write-Host "                    Display application version and exit" -ForegroundColor White
     Write-Host "│    " -ForegroundColor Red -NoNewline
     Write-Host "-List" -ForegroundColor Red -NoNewline
     Write-Host "                       List all available command-line parameters" -ForegroundColor White
