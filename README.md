@@ -4,10 +4,10 @@
 
 **Command-Line WiFi Manager with Integrated Brute-Forcer.**
 
-**Linux and macOS support coming soon!**
+_Linux and macOS support coming soon!_
 
 
-<img src="img/1.jpg" style="width: 700px; height: auto;" >
+<img src="img/icon.png" style="width: 220px; height: auto;" >
 
 
 [![GitHub all releases](https://img.shields.io/github/downloads/anonfaded/wifade/total?label=Downloads&logo=github)](https://github.com/anonfaded/wifade/releases/)
@@ -57,29 +57,6 @@ wifade
 ### CLI Mode (Quick Actions)
 
 Use flags to perform actions instantly without entering the interactive menu. This is perfect for scripting or quick checks.
-
-```bash
-# Display comprehensive Wi-Fi status
-wifade -Status
-
-# Scan for and list available networks
-wifade -Scan
-
-# Get your private and public IP addresses
-wifade -IP
-wifade -PublicIP
-
-# Connect to a network directly
-# (Use quotes if the SSID has spaces)
-wifade "My Network Name" mypassword123
-wifade -Connect "My Network Name" mypassword123
-
-# See a quick reference of all commands
-wifade -List
-
-# Show detailed help documentation
-wifade -Help
-```
 
 ```bash
 # Display comprehensive Wi-Fi status
@@ -147,7 +124,7 @@ Options:
   -Help         Show detailed help documentation
 ```
 
-*Linux and macOS usage instructions coming soon.*
+_Linux and macOS usage instructions coming soon._
 
 ## 💀 Attack Mode
 
@@ -158,9 +135,9 @@ Wifade's password security testing features are accessible from the interactive 
 
 Upon entering Attack Mode for the first time, you will be required to accept an **ethical usage disclaimer**.
 
-<!-- markdownlint-disable MD033 -->
+
 <details>
-<summary>🛠️ Building from Source (Windows)</summary>
+    <summary>🛠️ Building from Source (Windows)</summary>
 
 If you want to build the project yourself, follow these steps:
 
@@ -179,9 +156,10 @@ If you want to build the project yourself, follow these steps:
 
 4. The compiled executables (`wifade.exe`, `WifadeCore.exe`) and other assets will be placed in the `build/` directory.
 
-<!-- markdownlint-enable MD033 -->
+
 </details>
-*Linux/macOS build instructions will be added when those versions are released.*
+
+_Linux/macOS build instructions will be added when those versions are released._
 
 ## ⚖️ Disclaimer
 
