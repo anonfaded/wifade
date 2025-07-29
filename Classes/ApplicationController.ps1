@@ -1836,6 +1836,17 @@ class ApplicationController {
         }
         
         try {
+            # Debug: Show PowerShell version and execution context
+            if ($debugMode) {
+                $psver = $global:PSVersionTable
+                $hostinfo = $global:Host
+                $this.UIManager.ShowDebug("=== POWERSHELL ENVIRONMENT DEBUG ===")
+                $this.UIManager.ShowDebug("PowerShell Version: $($psver.PSVersion)")
+                $this.UIManager.ShowDebug("PowerShell Edition: $($psver.PSEdition)")
+                $this.UIManager.ShowDebug("Host Name: $($hostinfo.Name)")
+                $this.UIManager.ShowDebug("Executable Path: $([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)")
+            }
+            
             Write-Verbose "Attempting real Wi-Fi connection to '$ssid' with password: [REDACTED]"
             
             # Validate inputs
@@ -2051,9 +2062,23 @@ class ApplicationController {
                                 if ($gateway) {
                                     if ($debugMode) {
                                         $this.UIManager.ShowDebug("Testing connectivity to gateway: $gateway")
+                                        $this.UIManager.ShowDebug("Gateway type: $($gateway.GetType().FullName)")
+                                        $this.UIManager.ShowDebug("Gateway value: '$gateway'")
+                                        $this.UIManager.ShowDebug("About to call: Test-Connection -ComputerName '$gateway' -Count 1 -Quiet -TimeoutSeconds 3")
                                     }
                                     
                                     try {
+                                        # Test if Test-Connection supports -TimeoutSeconds parameter
+                                        if ($debugMode) {
+                                            $this.UIManager.ShowDebug("Testing Test-Connection parameter support...")
+                                            $testConnectionParams = (Get-Command Test-Connection).Parameters
+                                            $hasTimeoutSeconds = $testConnectionParams.ContainsKey('TimeoutSeconds')
+                                            $this.UIManager.ShowDebug("Test-Connection has TimeoutSeconds parameter: $hasTimeoutSeconds")
+                                            if ($hasTimeoutSeconds) {
+                                                $this.UIManager.ShowDebug("TimeoutSeconds parameter type: $($testConnectionParams['TimeoutSeconds'].ParameterType.FullName)")
+                                            }
+                                        }
+                                        
                                         $pingResult = Test-Connection -ComputerName $gateway -Count 1 -Quiet -TimeoutSeconds 3
                                         $pingSuccess = $pingResult
                                         
@@ -2064,9 +2089,35 @@ class ApplicationController {
                                     }
                                     catch {
                                         if ($debugMode) {
-                                            $this.UIManager.ShowDebug("Gateway ping error: $($_.Exception.Message)")
+                                            $this.UIManager.ShowDebug("Test-Connection failed with error: $($_.Exception.Message)")
+                                            $this.UIManager.ShowDebug("Error type: $($_.Exception.GetType().FullName)")
+                                            $this.UIManager.ShowDebug("Full error details: $($_)")
+                                        }
+                                        $pingSuccess = $false
+                                        
+                                        # If the specific parameter error occurs, this indicates PowerShell version mismatch
+                                        if ($_.Exception.Message -like "*TimeoutSeconds*parameter*") {
+                                            $psver = $global:PSVersionTable
+                                            $this.UIManager.ShowError("CRITICAL: PowerShell version mismatch detected!")
+                                            $this.UIManager.ShowError("The -TimeoutSeconds parameter is not supported in this PowerShell version.")
+                                            $this.UIManager.ShowError("Current version: $($psver.PSVersion)")
+                                            $this.UIManager.ShowError("Required: PowerShell 7.0 or later")
+                                            throw "PowerShell version compatibility error: -TimeoutSeconds parameter not supported"
                                         }
                                     }
+                                }
+                                else {
+                                    if ($debugMode) {
+                                        $this.UIManager.ShowDebug("Gateway is null or empty - cannot perform ping test")
+                                    }
+                                }
+                            }
+                            else {
+                                if ($debugMode) {
+                                    $this.UIManager.ShowDebug("Cannot perform ping test - missing requirements:")
+                                    $this.UIManager.ShowDebug("  hasValidIP: $hasValidIP")
+                                    $this.UIManager.ShowDebug("  ipConfig is not null: $($ipConfig -ne $null)")
+                                    $this.UIManager.ShowDebug("  IPv4DefaultGateway exists: $(($ipConfig -ne $null) -and ($ipConfig.IPv4DefaultGateway -ne $null))")
                                 }
                             }
                             
