@@ -155,6 +155,35 @@ Wifade's password security testing features are accessible from the interactive 
 Upon entering Attack Mode for the first time, you will be required to accept an **ethical usage disclaimer**.
 
 
+
+
+## `>_` 📸 Screenshots
+
+<p align="center">
+  <img src="img/screenshots/1.png" alt="Interactive menu" width="600" />
+</p>
+*Interactive menu-driven interface showing available options.*
+
+<p align="center">
+  <img src="img/screenshots/2.png" alt="Help Page" width="600" />
+</p>
+*Help page*
+
+<p align="center">
+  <img src="img/screenshots/3.png" alt="Network scanning mode" width="600" />
+</p>
+*Network Scanning mode*
+
+<p align="center">
+  <img src="img/screenshots/4.png" alt="Status Checking page" width="600" />
+</p>
+*Status output displaying connection details and IP information.**
+
+<p align="center">
+  <img src="img/screenshots/5.png" alt="Attack Mode" width="600" />
+</p>
+*Attack Mode displaying password cracking attempts and progress status.*
+
 <details>
     <summary>🛠️ Building from Source (Windows)</summary>
 
@@ -177,6 +206,7 @@ If you want to build the project yourself, follow these steps:
 
 
 </details>
+<!-- markdownlint-enable MD033 -->
 
 _Linux/macOS build instructions will be added when those versions are released._
 
