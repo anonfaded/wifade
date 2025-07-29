@@ -159,13 +159,36 @@ Upon entering Attack Mode for the first time, you will be required to accept an 
 ## `>_` 📸 Screenshots
 
 
-| Screenshot | Description |
-|---|---|
-| <img src="img/screenshots/1.png" alt="Interactive menu" width="600" /> | _Interactive menu-driven interface showing available options._ |
-| <img src="img/screenshots/2.png" alt="Help Page" width="600" /> | _Help page_ |
-| <img src="img/screenshots/3.png" alt="Network scanning mode" width="600" /> | _Network scanning mode_ |
-| <img src="img/screenshots/4.png" alt="Status Checking page" width="600" /> | _Status output displaying connection details and IP information._ |
-| <img src="img/screenshots/5.png" alt="Attack Mode" width="600" /> | _Attack Mode displaying password cracking attempts and progress status._ |
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/1.png" alt="Interactive menu" width="400" /><br/>
+      <sub>_Interactive menu-driven interface showing available options._</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="img/screenshots/2.png" alt="Help Page" width="400" /><br/>
+      <sub>_Help page_</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/3.png" alt="Network scanning mode" width="400" /><br/>
+      <sub>_Network scanning mode_</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="img/screenshots/4.png" alt="Status Checking page" width="400" /><br/>
+      <sub>_Status output displaying connection details and IP information._</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/5.png" alt="Attack Mode" width="400" /><br/>
+      <sub>_Attack Mode displaying password cracking attempts and progress status._</sub>
+    </td>
+    <td></td>
+  </tr>
+</table>
 
 <details>
     <summary>🛠️ Building from Source (Windows)</summary>
