@@ -1,0 +1,10 @@
+# Add patterns to ignore here, one per line
+# Example:
+# *.log
+# tmp/
+passwords/*
+.kiro/*
+.github/*
+Legacy/*
+repomix.config.json
+.repomixignore
