@@ -85,6 +85,13 @@ Wifade is a modern, terminal-based WiFi manager with an integrated brute-forcer 
     </td>
     <td></td>
   </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="img/screenshots/6.png" alt="Quick param" width="400" /><br/>
+      <sub>Using quick parameters for instant actions</sub>
+    </td>
+    <td></td>
+  </tr>
 </table>
 
 
