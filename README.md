@@ -1,6 +1,26 @@
 <div align="center">
+    
+<!-- <img src="https://github.com/user-attachments/assets/9c1c7f9e-8798-4baa-b803-fa82cf1a6bd7" style="width: 700px; height: auto;" >  this is the old banner -->
 
-# Wifade
+<img src="img/wifade_banner_png.png" style="width: 900px; height: auto;" >
+
+<!-- https://github.com/user-attachments/assets/c9eeaf74-6649-4810-b420-e2c4ad4bd365 -->
+
+
+<br>
+</div>
+
+> [!Tip]
+> This project is part of the [FadSec Lab suite](https://github.com/fadsec-lab). <br> Discover our focus on ad-free, privacy-first applications and stay updated on future releases
+
+
+---
+
+
+
+<div align="center">
+
+# `>_` Wifade
 
 **Command-Line WiFi Manager with Integrated Brute-Forcer.**
 
@@ -16,7 +36,7 @@ _Linux and macOS support coming soon!_
 
 ---
 
-## 🚀 Features
+## `>_` 🚀 Features
 
 Wifade is a modern, terminal-based WiFi manager with an integrated brute-forcer for Windows (Linux/macOS support coming soon). It offers:
 
@@ -33,7 +53,7 @@ Wifade is a modern, terminal-based WiFi manager with an integrated brute-forcer 
 
 *Linux and macOS support is planned and in development. Stay tuned for cross-platform releases!*
 
-## 📦 Installation (Windows)
+## `>_` 📦 Installation (Windows)
 
 1. Go to the [**GitHub Releases**](https://github.com/anonfaded/wifade/releases) page.
 2. Download the latest `WifadeSetup-X.X.exe` installer.
@@ -42,11 +62,11 @@ Wifade is a modern, terminal-based WiFi manager with an integrated brute-forcer 
 
 *Linux and macOS installation instructions will be provided when those versions are released.*
 
-## 🖥️ Usage (Windows)
+## `>_` 🖥️ Usage (Windows)
 
 Wifade can be launched in two modes: Interactive Mode for a full user interface, or CLI Mode for quick, direct commands.
 
-### Interactive Mode
+### `>_` Interactive Mode
 
 Simply run the command without any parameters to launch the full interactive interface.
 
@@ -54,11 +74,11 @@ Simply run the command without any parameters to launch the full interactive int
 wifade
 ```
 
-### CLI Mode (Quick Actions)
+### `>_` CLI Mode (Quick Actions)
 
 Use flags to perform actions instantly without entering the interactive menu. This is perfect for scripting or quick checks.
 
-```bash
+```powershell
 # Display comprehensive Wi-Fi status
 wifade -Status
 # Sample output:
@@ -126,7 +146,7 @@ Options:
 
 _Linux and macOS usage instructions coming soon._
 
-## 💀 Attack Mode
+## `>_` 💀 Attack Mode
 
 Wifade's password security testing features are accessible from the interactive menu.
 
@@ -161,7 +181,7 @@ If you want to build the project yourself, follow these steps:
 
 _Linux/macOS build instructions will be added when those versions are released._
 
-## ⚖️ Disclaimer
+## `>_` ⚖️ Disclaimer
 
 This tool is intended for **educational purposes and ethical security testing only**.
 
@@ -169,6 +189,6 @@ This tool is intended for **educational purposes and ethical security testing on
 * Unauthorized access to computer networks is illegal. You are solely responsible for your actions.
 * The developer of Wifade is not responsible for any misuse of this tool.
 
-## 🤝 Contributing
+## `>_` 🤝 Contributing
 
 Contributions are welcome! If you'd like to help improve **Wifade** or test upcoming Linux/macOS support, fork the repository, make your changes, and submit a pull request. Please open an issue for bugs or feature requests.
