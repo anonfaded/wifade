@@ -82,14 +82,14 @@ Use flags to perform actions instantly without entering the interactive menu. Th
 # Display comprehensive Wi-Fi status
 wifade -status
 # Sample output:
-Wi-Fi Connection Status
-SSID        : MyNetwork
-Signal      : ████ 85%
-Private IP  : 192.168.1.42
-Gateway     : 192.168.1.1
-DNS         : 8.8.8.8, 1.1.1.1
-MAC Address : 00:1A:2B:3C:4D:5E
-Link Speed  : 300 Mbps
+╭─ 📶 Wi-Fi Connection Status
+│ SSID       : HomeWifi
+│ Signal     : ████ 96%
+│ Encryption : WPA2
+│ Private IP : 192.168.1.8
+│ Public IP  : xx.xx.xx.1
+│ Gateway    : 192.168.1.1
+╰────────────────────────────────────
 
 # Scan for and list available networks
 wifade -scan
