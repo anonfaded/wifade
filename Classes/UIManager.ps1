@@ -205,7 +205,7 @@ class UIManager : IManager {
             ░     ░               ░  ░   ░       ░  ░
                                         ░        
                                         
-            █▓▒­░⡷⠂ 𝒫𝓇𝑜𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
+            █▓▒­░⡷⠂ 𝒫𝓇𝒪𝒿𝑒𝒸𝓉 𝒷𝓎 𝐹𝒶𝒹𝒮𝑒𝒸 𝐿𝒶𝒷 ⠐⢾░▒▓█
             
 "@
 
@@ -295,7 +295,7 @@ class UIManager : IManager {
         Write-Host "https://github.com/anonfaded/wifade" -ForegroundColor $this.ColorScheme.Success
         Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
         Write-Host "🏢 Project by: " -ForegroundColor $this.ColorScheme.Info -NoNewline
-        Write-Host "FadSec Lab" -ForegroundColor $this.ColorScheme.Secondary
+        Write-Host "FadSec Lab - Pakistan" -ForegroundColor $this.ColorScheme.Secondary
         Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
         Write-Host ""
         
@@ -555,9 +555,28 @@ class UIManager : IManager {
         elseif ($signalStrength -ge 20) { return "█░░░" }
         else { return "░░░░" }
     }
-    
 
-    
+    # Display attack statistics summary in styled box
+    [void] ShowStatisticsSummary([string[]]$lines) {
+        # Header
+        Write-Host "╭─ 📊 Attack Statistics" -ForegroundColor $this.ColorScheme.Border
+        # Stats lines (skip summary header)
+        foreach ($line in $lines) {
+            $trimmed = $line.Trim()
+            if ($trimmed -and -not ($trimmed -like "*Summary*")) {
+                # Remove leading dash and space
+                if ($trimmed.StartsWith("- ")) {
+                    $trimmed = $trimmed.Substring(2)
+                }
+                # Print with red border pipe and secondary text
+                Write-Host "│ " -ForegroundColor $this.ColorScheme.Border -NoNewline
+                Write-Host $trimmed -ForegroundColor $this.ColorScheme.Secondary
+            }
+        }
+        # Footer border matches width of header
+        Write-Host "╰──────────────────────────────────────" -ForegroundColor $this.ColorScheme.Border
+    }
+
     # Toggle verbose mode
     [void] ToggleVerboseMode() {
         $this.VerboseMode = -not $this.VerboseMode

@@ -1861,8 +1861,9 @@ class ApplicationController {
             # Show statistics
             $stats = $this.PasswordManager.GetStatistics()
             Write-Host ""
-            $this.UIManager.ShowInfo("Attack Statistics:")
-            Write-Host $stats.GetSummary() -ForegroundColor $this.UIManager.ColorScheme.Secondary
+            # Styled attack statistics summary
+            $summaryLines = $stats.GetSummary() -split "`n"
+            $this.UIManager.ShowStatisticsSummary($summaryLines)
             
             # Restore original connection if user wants
             if ($originalConnection -and -not $successfulConnection) {
